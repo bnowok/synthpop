@@ -1,0 +1,73 @@
+export(syn,
+       syn.strata, 
+#       syn.cartbboot,
+       syn.cart,
+       syn.ctree,
+       syn.logreg,
+       syn.norm,
+       syn.normrank,
+       syn.passive,
+       syn.pmm,
+       syn.polr,
+       syn.polyreg,
+       syn.sample,
+       syn.survctree,
+       syn.lognorm,
+       syn.sqrtnorm,
+       syn.cubertnorm,
+       syn.rf,
+       syn.bag,
+       syn.nested)
+
+export(compare, compare.synds, compare.fit.synds, multi.compare, 
+       print.compare.fit.synds,	lm.synds, glm.synds, 
+       print.fit.synds, print.synds,
+       summary.synds, print.summary.synds,
+       summary.fit.synds, print.summary.fit.synds,
+       replicated.uniques, sdc, read.obs, write.syn,
+       utility.gen, utility.tab)
+
+S3method(compare, default)
+S3method(compare, synds)
+S3method(compare, fit.synds)
+S3method(print, synds)
+S3method(summary, synds)
+S3method(print, summary.synds)
+S3method(print, fit.synds)
+S3method(summary, fit.synds)
+S3method(print, summary.fit.synds)
+S3method(print, compare.fit.synds)
+S3method(print, compare.synds)
+S3method(print, utility.gen)
+S3method(print, utility.tab)
+
+#exportClasses(synds)
+#exportClasses(fit.synds)
+
+import(MASS,
+       methods, 
+       nnet,
+       lattice,
+       foreign,
+       ggplot2,
+       plyr,
+       proto)
+
+importFrom(party, ctree)
+importFrom(party, where)
+importFrom(party, cforest, cforest_unbiased)
+importFrom(party, ctree_control)
+importFrom(rpart, rpart)                 
+importFrom(rpart, rpart.control)
+importFrom(stats, glm)
+importFrom(stats, lm)
+importFrom(polspline, polymars, predict.polymars, polyclass, ppolyclass)
+importFrom(randomForest, randomForest) 
+#importFrom(glmnet, glmnet, predict.glmnet) not used at the moment
+
+importFrom("graphics", "hist")
+importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment", 
+           "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
+           "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
+           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq")
+importFrom("utils", "head", "read.csv", "read.table", "tail", "write.csv", "write.table")

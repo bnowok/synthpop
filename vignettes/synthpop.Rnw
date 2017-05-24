@@ -1,0 +1,425 @@
+%\documentclass[article,shortnames]{jss}
+\documentclass[nojss]{jss}
+
+%\usepackage{thumbpdf,lmodern}
+%\graphicspath{{Figures/}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% declarations for jss.cls %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% almost as usual
+\author{Beata Nowok\\University of Edinburgh \And 
+        Gillian M Raab\\University of Edinburgh  \And 
+        Chris Dibben\\University of Edinburgh}
+\Plainauthor{Beata Nowok, Gillian M Raab, Chris Dibben} %% comma-separated
+
+\title{\pkg{synthpop}: Bespoke Creation of Synthetic Data in \proglang{R}}
+\Plaintitle{synthpop: Bespoke Creation of Synthetic Data in R} %% without formatting
+\Shorttitle{\pkg{synthpop}: Synthetic Populations in \proglang{R}} %% a short title
+
+%% an abstract and keywords
+\Abstract{
+In many contexts, confidentiality constraints severely restrict access to unique and valuable microdata. Synthetic data which mimic the original observed data and preserve the relationships between variables but do not contain any disclosive records are one possible solution to this problem. The \pkg{synthpop} package for \proglang{R}, introduced in this paper, provides routines to generate synthetic versions of original data sets. We describe the methodology and its consequences for the data characteristics. We illustrate the package features using a survey data example.
+}
+\Keywords{synthetic data, disclosure control, CART, \proglang{R}, UK Longitudinal Studies}
+\Plainkeywords{synthetic data, disclosure control, CART, R, UK Longitudinal Studies} %% without formatting
+%% at least one keyword must be supplied
+
+%% publication information
+%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
+%% \Volume{50}
+%% \Issue{9}
+%% \Month{June}
+%% \Year{2012}
+%% \Submitdate{2012-06-04}
+%% \Acceptdate{2012-06-04}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+\Address{
+  Beata Nowok\\
+  Institute of Geography\\
+  School of GeoSciences\\
+  University of Edinburgh\\
+  Drummond Street\\
+  Edinburgh EH8 9XP, United Kingdom\\
+  E-mail: \email{beata.nowok@ed.ac.uk}}
+%% URL: \url{http:/}}
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/512/507-7103
+%% Fax: +43/512/507-2851
+
+%% need no \usepackage{Sweave.sty}
+
+% \VignetteIndexEntry{Using synthpop}
+
+%% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+<<echo=false>>=
+options(prompt="R> ", width=77, digits=4, useFancyQuotes=FALSE)
+@
+
+This introduction to the \proglang{R} package \pkg{synthpop} is a slightly amended version of
+Nowok B, Raab GM, Dibben C (2016). \pkg{synthpop}: Bespoke Creation of Synthetic Data in \proglang{R}. \textit{Journal of Statistical Software}, \textbf{74}(11), 1-26. doi:10.18637/jss.v074.i11. URL \url{https://www.jstatsoft.org/article/view/v074i11}.
+
+
+\section{Introduction and background}
+\label{sec:intro}
+\subsection{Synthetic data for disclosure control}
+National statistical agencies and other institutions gather large amounts of information about individuals and organisations. Such data can be used to understand population processes so as to inform policy and planning. The cost of such data can be considerable, both for the collectors and the subjects who provide their data. Because of confidentiality constraints and guarantees issued to data subjects the full access to such data is often restricted to the staff of the collection agencies. Traditionally, data collectors have used anonymisation along with simple perturbation methods such as aggregation, recoding, record-swapping, suppression of sensitive values or adding random noise to prevent the identification of data subjects. Advances in computer technology have shown that such measures may not prevent disclosure \citep{Ohm_2010} and in addition they may compromise the conclusions one can draw from such data \citep{elliot_purdam_2007, Winkler_2007}.
+
+In response to these limitations there have been several initiatives, most of them centred around the U.S.~Census Bureau, to generate synthetic data which can be released to users outside the setting where the original data are held. The basic idea of synthetic data is to replace some or all of the observed values by sampling from appropriate probability distributions so that the essential statistical features of the original data are preserved. The approach has been developed along similar lines to recent practical experience with multiple imputation methods although synthesis is not the same as imputation. Imputation replaces data which are missing with modelled values and adjusts the inference for the additional uncertainty due to this process. For synthesis, in the circumstances when some data are missing two approaches are possible, one being to impute missing values prior to synthesis and the other to synthesise the observed patterns of missing data without estimating the missing values. In both cases all data to be synthesised are treated as known and they are used to create the synthetic data which are then used for inference. The data collection agency generates multiple synthetic data sets and inferences are obtained by combining the results of models fitted to each of them. The formulae for the variance of estimates from synthetic data are different from those used for imputed data.  
+
+The synthetic data methods were first proposed by \cite{Rubin_1993} and \cite{Little_1993} and have been developed by \cite{RRR_2003}, \cite{reiter_partial} and \cite{RR_JASA_2007}. They have been discussed and exemplified in a further series of papers \citep[][]{abowd_lane_2004, abowd_woodcock, Reiter_2010, Reiter_RSS,  DR_jasa_2010, kinney_R_B_2010, KinneyEtAl2011}. Non-parametric synthesising methods were introduced by \cite{reiter_cart} who first suggested to use classification and regression trees \citep[CART;][]{Breiman1984} to generate synthetic data. CART was then compared with more powerful machine learning procedures such as random forests, bagging and support vector machines \citep[][]{Caiola_and_R_2010, DandR2011}. The monograph by \cite{Drechsler_book} summarises some of the theoretical, practical and policy developments and provides an excellent introduction to synthetic data for those new to the field.  
+
+The original aim of producing synthetic data has been to provide publicly available datasets that can be used for inference in place of the actual data. However, such inferences will only be valid if the model used to construct the synthetic data is the true mechanism that has generated the observed data, which is very difficult, if at all possible, to achieve. Our aim in writing the \pkg{synthpop} package \citep{synthpop} for \proglang{R} \citep{Rsoft} is a more modest one of providing test data for users of confidential datasets. Note that currently all values of variables chosen for synthesis are replaced but this will be relaxed in future versions of the package. These test data should resemble the actual data as closely as possible, but would never be used in any final analyses. The users carry out exploratory analyses and test models on the synthetic data, but they, or perhaps staff of the data collection agencies, would use the code developed on the synthetic data to run their final analyses on the original data. This approach recognises the limitations of synthetic data produced by these methods. It is interesting to note that a similar approach is currently being used for both of the synthetic products made available by the U.S.~Census Bureau (see \url{https://www.census.gov/ces/dataproducts/synlbd/} and \url{http://www.census.gov/programs-surveys/sipp/guidance/sipp-synthetic-beta-data-product.html}), where results obtained from the synthetic data are validated on the original data (``gold standard files"). 
+
+
+\subsection[Motivation for the development of synthpop]{Motivation for the development of \pkg{synthpop}}
+The England and Wales Longitudinal Study \citep[ONS LS;][]{hat}, the Scottish Longitudinal Study \citep[SLS;][]{boyle} and the Northern Ireland Longitudinal Study \citep[NILS;][]{or} are rich micro-datasets linking samples from the national census in each country to administrative data (births, deaths, marriages, cancer registrations and other sources) for individuals and their immediate families across several decades. Whilst unique and valuable resources, the sensitive nature of the information they contain means that access to the microdata is restricted to approved researchers and longitudinal study (LS) support staff, who can only view and work with the data in safe settings controlled by the national statistical agencies. Consequently, compared to other census data products such as the aggregate statistics or samples of anonymised records, the three longitudinal studies (LSs) are used by a small number of researchers, a situation which limits their potential impact. Given that confidentiality constraints and legal restrictions mean that open access is not possible with the original microdata, alternative options are needed to allow academics and other users to carry out their research more freely. To address this the SYLLS (Synthetic Data Estimation for UK Longitudinal Studies) project (see \url{http://www.lscs.ac.uk/projects/synthetic-data-estimation-for-uk-longitudinal-studies/}) has been funded by the Economic and Social Research Council to develop techniques to produce synthetic data which mimics the observed data and preserves the relationships between variables and transitions of individuals over time, but can be made available to accredited researchers to analyse on their own computers. The \pkg{synthpop} package for \proglang{R} has been written as part of the SYLLS project to allow LS support staff to produce synthetic data for users of the LSs, that are tailored to the needs of each individual user. Hereinafter, we will use the term ``synthesiser" for someone like an LS support officer who is producing the synthetic data from the observed data and hence has access to both. The term ``analyst" will refer to someone like an LS user who has no access to the observed data and will be using the synthetic data for exploratory analyses. After the exploratory analysis the analyst will develop confirmatory models and can send the code to a synthesiser to run the gold standard analyses. As well as providing routines to generate the synthetic data the \pkg{synthpop} package contains routines that can be used by the analyst to summarise synthetic data and fitted models from synthetic data and those that can be used by the synthesiser to compare gold standard analyses with those from the synthetic data. 
+
+Although primarily targeted to the data from the LSs, the \pkg{synthpop} package is written in a form that makes it applicable to other confidential data where the resource of synthetic data would be valuable. By providing a comprehensive and flexible framework with parametric and non-parametric methods it fills a gap in tools for generating synthetic versions of original data sets. The \proglang{R} package \pkg{simPop} \citep{simPop} which is a successor to the \pkg{simPopulation} package \citep{Alfons_etal_2011, simPopulation} implements model-based methods to simulate synthetic populations based on household survey data and auxiliary information. The approach used concentrates on simulation of close-to-reality population and is similar to microsimulation rather than multiple imputation. The software \pkg{IVEware} for \proglang{SAS} \citep{SAS} and its stand-alone version \pkg{SRCware} \citep{IVEware_2002, IVEware}, originally developed for multiple imputation, include the \code{SYNTHESIZE} module that allows to produce synthetic data. \pkg{IVEware} uses conditionally specified parametric models with proper imputation and these can be adjusted for clustered, weighted or stratified samples. All item missing values are imputed when generating synthetic data sets. No analysis methods are available in this software because only the formulae for imputation are available which are not appropriate for synthetic data.
+
+
+\subsection{Structure of this paper}
+The structure of this paper is as follows. The next section introduces the notation, terminology and the main theoretical results needed for the simplest and, we expect, the most common use of the package. More details of the theoretical results for the general case can be found in \cite{synthpop_RSS}. Readers not interested in the theoretical details can now proceed directly to Section~\ref{sec:synthpop} which presents the package and its basic functionality. Section~\ref{sec:examples} that follows provides some illustrative examples. The concluding Section~\ref{sec:conclusions} indicates directions for future developments.   
+
+\section{Overview of method}
+\label{sec:notation}
+Observed data from a survey or a sample from a census or population register are available to the synthesiser. They consist of a sample of $n$ units consisting of $(x_{\mathit{obs}},y_{\mathit{obs}})$ where $x_{\mathit{obs}}$, which may be null, is a matrix of data that can be released unchanged to the analyst and $y_{\mathit{obs}}$ is an $n \times p$ matrix of $p$ variables that require to be synthesised.  We consider here the simple case when the synthetic data sets (syntheses) will each have the same number of records as the original data and the method of generating the synthetic sample (e.g., simple random sampling or a complex sample design) matches that of the observed data. This condition allows to make inferences from synthetic data generated from distributions with parameters fitted to the observed data without sampling
+the parameters from their posterior distributions. We refer to such synthesis as ``simple synthesis". When synthetic data are generated from distributions with parameters sampled from their posterior distributions we refer to this as ``proper synthesis". 
+\subsection{Generating synthetic data} 
+The observed data are assumed to be a sample from a population with parameters that can be estimated by the synthesiser, specifically $y_{\mathit{obs}}$ is assumed to be a sample from $f(Y|x_{\mathit{obs}},\theta)$ where $\theta$ is a vector of parameters. This could be a hypothetical infinite super-population or a finite population which is large enough for finite population corrections to be ignored. The synthesiser fits the data to the assumed distribution and obtains estimates of its parameters. In most implementations of synthetic data generation, including \pkg{synthpop}, the joint distribution is defined in terms of a series of conditional distributions. A column of $y_{\mathit{obs}}$ is selected and the distribution of this variable, conditional on $x_{\mathit{obs}}$ is estimated.  Then the next column is selected and its distribution is estimated conditional on $x_{\mathit{obs}}$ and the column of $y_{\mathit{obs}}$ already selected.  The distribution of subsequent columns of $y_{\mathit{obs}}$ are estimated conditional on $x_{\mathit{obs}}$ and all previous columns of $y_{\mathit{obs}}$.
+
+The generation of the synthetic data sets proceeds in parallel to the fitting of each conditional distribution. Each column of the synthetic data is generated from the assumed distribution, conditional on $x_{\mathit{obs}}$, the fitted parameters of the conditional distribution (simple synthesis) and the synthesised values of all the previous columns of $y_{\mathit{obs}}$. Alternatively the synthetic values can be generated from the posterior distribution of the parameters (proper synthesis). In both cases, a total of $m$ synthetic data sets are generated. 
+\subsection{Inference from the synthetic data}
+An analyst who wants to estimate a model from the synthetic data will fit the model to each of the $m$ synthetic data sets and obtain an estimate of its vector of parameters $\beta$ from each synthetic data set as $(\hat{\beta}_{1},\cdots,\hat{\beta}_{i},\cdots,
+\hat{\beta}_{m})$. If the model for the data is correct the $m$ estimates from the synthetic data will be centred around the estimate $\hat{\beta}$ that would have been obtained from the observed data. We are assuming that it is the goal of the analyst to use the synthetic data to estimate $\hat{\beta}$ and its variance-covariance matrix $V_{\hat{\beta}}$. If the method of inference used to fit the model provides consistent estimates of the parameters and the same is true for analyses of the synthetic data then the mean of $m$ synthetic estimates, $\bar{\hat{\beta}} =\sum{\hat{\beta}_{i}}/m$ provides a consistent estimate of $\hat{\beta}$. Provided the observed and synthetic data are generated by the common sampling scheme then $V_{\bar{\hat{\beta}}} = \sum{V_{\hat{\beta}_{i}}}/m$ will be a consistent estimate of $V_{\hat{\beta}}$. The variance-covariance matrix of $\bar{\hat{\beta}}$, conditional on $\hat{\beta}$ and $V_{\hat{\beta}}$, becomes  $V_{\hat{\beta}}/m$ which can be estimated from $V_{\bar{\hat{\beta}}}/m$. Thus the stochastic error in the mean of the synthetic estimates about the values from the observed data can be reduced to a negligible quantity by increasing $m$. It must be remembered, however that the consistency of $\bar{\hat{\beta}}$  only applies when observed data are a sample from the distribution used for synthesis. In practical applications differences between the analyses on the observed data and those from the mean of the syntheses will be found because the data do not conform to the model used for synthesis. Such differences will not be reduced by increasing $m$. The synthesiser, with access to the observed data, can estimate $\bar{\hat{\beta}}-{\hat{\beta}}$ and compare it to its standard error in order to judge the extent that this model mismatch affects the estimates.
+
+Note that this result is different from the literature cited above which aims to use the results of the synthetic data to make inference about the population from which the original gold standard data have been generated.  But our aim, in the simplest case we describe above, is only to make inferences to the results that would have been obtained by the gold standard analysis, with the expectation that the analyst will run final models on the observed data. Also, unlike most of the literature above, in the simplest case we do not sample from the predictive distribution of the parameters to create the synthetic data but an option to do so is available in \pkg{synthpop}. This approach has been proposed recently by \cite{reiter_kinney_2012} for partially synthetic data. The justification for this approach for completely synthesised data is in \cite{synthpop_RSS} along with the details of how the \pkg{synthpop} package can be used to make inferences to the population.
+
+\section[The synthpop package in practice]{The \pkg{synthpop} package in practice}
+\label{sec:synthpop}
+\subsection{Obtaining the software}
+The \pkg{synthpop} package is an add-on package to the statistical software \proglang{R}. It is freely available from the Comprehensive \proglang{R} Archive Network (CRAN)  at \url{http://CRAN.R-project.org/package=synthpop}. It utilises the structure and some functions of the \pkg{mice} multiple imputation package \citep{mice_jss_2011} but adopts and extends it for the specific purpose of generating and analysing synthetic data. 
+
+\subsection{Basic functionality}
+\label{sec:basicfun}
+The \pkg{synthpop} package aims to provide a user with an easy way of generating synthetic versions of original observed data sets. Via the function \code{syn()} a synthetic data set is produced using a single command. The only required argument is \code{data} which is a data frame or a matrix containing the data to be synthesised. By default, a single synthetic data set is produced using simple synthesis, i.e., without sampling from the posterior distribution of the parameters of the synthesising models. Multiple data sets can be obtained by setting parameter \code{m} to a desired number. Proper synthesis with synthetic data sampled from the posterior predictive distribution of the observed data is conducted when argument \code{proper} is set to \code{TRUE}. Data synthesis can be further customized with other optional parameters. Below, we only present the salient features of the \code{syn()} function. See examples in Section~\ref{sec:examples} and the \proglang{R} documentation for the function \code{syn()} for more details (command \code{?syn} at the \proglang{R} console).
+
+\subsubsection{Choice of synthesising method}
+The synthesising models are defined by a parameter \code{method} which can be a single string or a vector of strings. Providing a single method name assumes the same synthesising method for each variable, unless a variable's data type precludes it. Note that a variable to be synthesised first that has no predictors is a special case and its synthetic values are by default generated by random sampling with replacement from the original data (\code{"sample"} method). In general, a user can choose between parametric and non-parametric methods. The latter are based on classification and regression trees (CART) that can handle any type of data. By default \code{"cart"} method is used for all variables that have predictors. It utilizes function \code{rpart()} available in package \pkg{rpart} \citep{rpart}. An alternative implementation of the CART technique from package \pkg{party} \citep{party} can be used by selecting \code{"ctree"} method. Setting the parameter \code{method} to \code{"parametric"} assigns default parametric methods to variables to be synthesised based on their types. The default parametric methods for numeric, binary, unordered factor and ordered factor data type are specified in vector \code{default.method} which may be customised if desired. Alternatively a method can be chosen out of the available methods for each variable separately. The methods currently implemented are listed in Table~\ref{tab:meth}. Their default settings can be modified via additional parameters of the \code{syn()} function that have to be named using period-separated method and parameter name (\code{method.parameter}). For instance, in order to set a \code{minbucket} (minimum number of observations in any terminal node of a CART model) for a \code{"cart"} synthesising method, \code{cart.minbucket} has to be specified. Those arguments are method-specific and are used for all variables to be synthesised using that method. For variables to be left unchanged an empty \code{method} (\code{""}) should be used. A new synthesising method can be easily introduced by writing a function named \code{syn.newmethod()} and then specifying \code{method} parameter of \code{syn()} function as \code{"newmethod"}.\\
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{l l l}
+\hline Method & Description & Data type   \\ 
+\hline 
+\noalign{\vskip 5pt}  
+\textit{Non-parametric}  \\ 
+ \code{ctree, cart} & Classification and regression trees & Any \\ 
+ \code{surv.ctree} & Classification and regression trees & Duration \\ 
+\noalign{\vskip 5pt} 
+\textit{Parametric}\\ 
+ \code{norm} & Normal linear regression  & Numeric \\ 
+ \code{normrank}* & Normal linear regression preserving & Numeric \\ 
+  & the marginal distribution  &  \\ 
+ \code{logreg}*  & Logistic regression                    & Binary \\ 
+ \code{polyreg}* & Polytomous logistic regression         & Factor, $>2$ levels\\ 
+ \code{polr}*    & Ordered polytomous logistic regression & Ordered factor, $>2$ levels\\ 
+ \code{pmm}      & Predictive mean matching & Numeric \\ 
+\noalign{\vskip 5pt} 
+\textit{Other}  \\
+ \code{sample} & Random sample from the observed data & Any \\
+ \code{passive} & Function of other synthesised data & Any \\  
+\hline 
+\end{tabular} \\
+ \caption{Built-in synthesising methods. * Indicates default parametric methods.}\label{tab:meth}
+\end{table}
+
+\subsubsection{Controlling the predictions}
+The synthetic values of the variables are generated sequentially from their conditional distributions given variables already synthesised with parameters from the same distributions fitted with the observed data. Next to choosing model types, a user may determine the order in which variables should be synthesised (\code{visit.sequence} parameter) and also the set of variables to include as predictors in the synthesising model (\code{predictor.matrix} parameter). As mentioned above, the choice of explanatory variables is restricted by the synthesis sequence and variables that are not synthesised yet cannot be used in prediction models. It is possible, however, to include predictor variables in the synthesis that will not be synthesized themselves.\\
+
+\subsubsection{Handling data with missing or restricted values} 
+The aim of producing a synthetic version of observed data here is to mimic their characteristics in all possible ways, which may include missing and restricted values data. Values representing missing data in categorical variables are treated as additional categories and reproducing them is straightforward. Continuous variables with missing data are modelled in two steps. In the first step, we synthesise an auxiliary binary variable specifying whether a value is missing or not. Depending on the method specified by a user for the original variable a logit or CART model is used for synthesis. If there are different types of missing values an auxiliary categorical variable is created to reflect this and an appropriate model is used for synthesis (a polytomous or CART model). In the second step, a synthesising model is fitted to the non-missing values in the original variable and then used to generate synthetic values for the non-missing category records in our auxiliary variable. The auxiliary variable and a variable with non-missing values and zeros for remaining records are used instead of the original variable for prediction of other variables. The missing data codes have to be specified by a user in \code{cont.na} parameter of the \code{syn()} function if they differ from the \proglang{R} missing data code \code{NA}. The \code{cont.na} argument has to be provided as a named list with names of its elements corresponding to the variables names for which the missing data codes need to be specified.
+
+Restricted values are those where the values for some cases are determined explicitly by those of other variables. In such cases the rules and the corresponding values should be specified using \code{rules} and \code{rvalues} parameters. They are supplied in the form of named lists in the same manner as the missing data codes parameter. The variables used in \code{rules} have to be synthesised prior to the variable they refer to. In the synthesis process the restricted values are assigned first and then only the records with unrestricted values are synthesised.\\ 
+
+\subsection{Additional functionality}
+\subsubsection{Disclosure control}
+Completely synthesised  data such as those generated by the \code{syn()} function with default settings do not by definition include real units, so disclosure of a real person is acknowledged to be unlikely. It has been confirmed by \cite{ElliotSYLLS} in his report on the disclosure risk associated with the synthetic data produced using \pkg{synthpop} package. Nonetheless, there are some options that are designed to further protect data and limit the perceived disclosure. For the CART model (\code{"ctree"} or \code{"cart"} method), the final leaves to be sampled from may include only a very small number of individuals, which elevates risk of replicating real persons. To avoid this, a user can specify, for instance, a minimum size of a final node that a CART model can produce. It can be done using the \code{cart.minbucket} and the \code{ctree.minbucket} parameter for the \code{"cart"} and \code{"ctree"} methods respectively. However, the right balance needs to be found between disclosure risk and synthetic data quality. For the \code{"ctree"}, \code{"cart"}, \code{"normrank"} and \code{"sample"} methods there is also the risk of releasing real unusual values for continuous variables and therefore use of a smoothing option is essential for protecting confidentiality. If the \code{smoothing} parameter is set to \code{"density"} a Gaussian kernel density smoothing is applied to the synthesised values. 
+
+There are also additional precautionary options built into the package, which can be applied using \code{sdc()} function (\code{sdc} stands for statistical disclosure control). The function allows top and bottom coding, adding labels to the synthetic data sets to make it clear that the data are fake so no one mistakenly believes them to be real and removing from the synthetic data set any unique cases with variable sequences that are identical to unique individuals in the real dataset. The last tool reduces the chances of a person who is in the real data believing that their actual data is in the synthetic data. 
+
+\section{Illustrative examples}
+\label{sec:examples}
+\subsection{Data}
+The \pkg{synthpop} package includes a data frame \code{SD2011} with individual microdata that will be used for illustration. The data set is a subset of survey data collected in 2011 within the Social Diagnosis project \citep{SD2011} which aims to investigate objective and subjective quality of life in Poland. The complete data set is freely available at \url{http://www.diagnoza.com/index-en.html} along with a detailed documentation. The \code{SD2011} subset contains 35 selected variables of various type for a sample of 5,000 individuals aged 16 and over.           
+
+\subsection{Simple example}
+\label{sec:simex}
+To get access to \pkg{synthpop} functions and the \code{SD2011} data set we need to load the package via
+<<>>=
+library("synthpop")
+@
+For our illustrative examples of the \code{syn()} function we use seven variables of various data types which are listed in Table~\ref{tab:vars}.  
+
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{l l l}
+\hline Variable name & Description & Data type  \\ 
+\hline \code{sex} & Sex & Binary \\ 
+ \code{age} & Age & Numeric \\ 
+ \code{edu} & Highest educational qualification & Factor, $ >2 $ levels \\ 
+ \code{marital} & Marital status  & Factor, $ >2 $ levels \\ 
+ \code{income} & Personal monthly net income  & Numeric \\ 
+ \code{ls} & Overall life satisfaction & Factor, $ >2 $ levels \\ 
+ \code{wkabint} & Plans to go abroad to work in the next two years & Factor, $ >2 $ levels \\ 
+\hline 
+\end{tabular} \\
+ \caption{Variables to be synthesised.}\label{tab:vars}
+\end{table}
+
+
+Although function \code{syn()} allows synthesis of a subset of variables (see Section \ref{subsec:extended}), for ease of presentation here we extract variables of interest from the \code{SD2011} data set and store them in a data frame called \code{ods} which stands for ``observed data set". The structure of the \code{ods} data can be investigated using the \code{head()} function which prints the first rows of a data frame.
+<<ods>>=
+vars <- c("sex", "age", "edu", "marital", "income", "ls", "wkabint")
+ods <- SD2011[, vars]
+head(ods)
+@
+
+To run a default synthesis only the data to be synthesised have to be provided as a function argument. Here, an additional parameter \code{seed} is used to fix the pseudo random number generator seed and make the results reproducible. To monitor the progress of the synthesising process the function \code{syn()} prints to the console the current synthesis number and the name of a variable that is being synthesised. This output can be suppressed by setting an argument \code{print.flag} to \code{FALSE}.
+
+<<>>=
+my.seed <- 17914709
+sds.default <- syn(ods, seed = my.seed)
+@
+
+The resulting object of class `\code{synds}' called here \code{sds.default}, where \code{sds} stands for ``synthesised data set", is a list. The \code{print} method displays its selected components (see below). An element \code{syn} contains a synthesised data set which can be accessed using a standard list referencing (\code{sds.default$syn}). 
+
+<<>>=
+sds.default
+@
+
+The remaining (undisplayed) list elements include other \code{syn()} function parameters used in the synthesis. Their names can be listed via the \code{names()} function. For a complete description see the \code{syn()} function help page (\code{?syn}).
+
+<<>>=
+names(sds.default)
+@
+
+By default, all variables except for the first one in the visit sequence (\code{visit.sequence}) are synthesised using the \code{"cart"} method. The first variable to be synthesised cannot have predictors that are to be synthesised later on and therefore a random sample (with replacement) is drawn from its observed values. The default visit sequence reflects the order of variables in the original data set - columns are synthesised from left to right. 
+
+The default predictor selection matrix (\code{predictor.matrix}) is defined by the visit sequence. All variables that are earlier in the visit sequence are used as predictors. A value of \code{1} in a predictor selection matrix means that the column variable is used as a predictor for the target variable in the row. Since the order of variables is exactly the same as in the original data, for the default visit sequence the default predictor selection matrix has values of \code{1} in the lower triangle.\\
+
+Synthesising data with default parametric methods is run with the methods listed below. Values of the other \code{syn()} arguments remain the same as for the default synthesis.  
+
+<<results=hide>>=
+sds.parametric <- syn(ods, method = "parametric", seed = my.seed)
+@
+<<>>=
+sds.parametric$method
+@
+
+\subsection{Extended example}
+\label{subsec:extended}
+To extend the simple example presented in Section~\ref{sec:simex} we change the order of synthesis, synthesise only selected variables, customise selection of predictors, handle missing values in a continuous variable and apply some rules that a variable has to follow.  
+
+\subsubsection{Sequence and scope of synthesis}
+The default algorithm of synthesising variables in columns from left to right can be changed via the \code{visit.sequence} argument. The vector \code{visit.sequence} should include indices of columns in an order desired by a user. Alternatively, names of variables can be used. If we do not want to synthesise some variables we can exclude them from visit sequence. By default those variables are not used to predict other variables but they are saved in the synthesised
+data. In order to remove their original values from the resulting synthetic data sets an argument \code{drop.not.used} has to be set to \code{TRUE}. To synthesize variables \code{sex}, \code{age}, \code{ls}, \code{marital} and \code{edu} in this order we run the \code{syn()} function with the following specification
+
+<<>>=
+sds.selection <- syn(ods, visit.sequence = c(1, 2, 6, 4, 3), 
+  seed = my.seed, drop.not.used = TRUE)
+@
+
+An appropriate prediction matrix is created automatically. To avoid having to alter other parameters when the visit sequence is changed and to ensure the synthetic data have the same structure as the original ones, the variables in \code{sds.selection$predictor.matrix} are arranged in the same order as in the original data. The same applies to \code{sds.selection$method} and synthesised data set \code{sds.selection$syn}. As noted above, if the parameter \code{drop.not.used} is set to \code{TRUE} and there are variables that are not used in synthesis, they are not included in the output. In this case the column indices in visit sequence, which align to the synthetic data columns, may not be the same as in the original data.    
+
+<<>>=
+sds.selection
+@
+
+Note that a user-defined \code{method} vector (setting method for each variable separately) and a specified \code{predictor.matrix} both have to include information for all variables present in the original observed data set regardless of whether they are in \code{visit.sequence} or not. This allows changes in \code{visit.sequence} without adjustments to other arguments. For variables not to be synthesised but still to be used as predictors, which needs to be reflected in a \code{predictor.matrix}, an empty \code{method} (\code{""}) should be set. By default the original observed values of those variables are included in the synthesised data sets but it can be changed using an argument \code{drop.pred.only}. 
+
+\subsubsection{Selection of predictors}
+The most important rule when selecting predictors is that independent variables in a prediction model have to be already synthesised. The only exception is when a variable is used only as a predictor and is not going to be synthesised at all. Assume we want to synthesise all variables except \code{wkabint} and:
+\begin{itemize}
+ \item{exclude life satisfaction (\code{ls}) from the predictors of marital status (\code{marital});} 
+ \item{use monthly income (\code{income}) as a predictor of life satisfaction (\code{ls}), education (\code{edu}) and marital status (\code{marital}) but do not synthesise income variable itself;}
+ \item{use polytomous logistic regression (\code{polyreg}) to generate marital status (\code{marital}) instead of a default \code{ctree} method.}
+\end{itemize}
+
+In order to build an adequate predictor selection matrix, instead of doing it from scratch we can define an initial \code{visit.sequence} and corresponding \code{method} vector and run \code{syn()} function with parameter \code{drop.not.used} set to \code{FALSE} (otherwise \code{method} and \code{predictor.matrix} will miss information on \code{wkabint}), parameter \code{m} indicating number of synthesis set to zero and other arguments left as defaults. Then we can adjust the predictor selection matrix used in this synthesis and rerun the function with new parameters. The \proglang{R} code for this is given below.
+
+<<results=hide>>=
+visit.sequence.ini <- c(1, 2, 5, 6, 4, 3)
+method.ini <- c("sample", "ctree", "ctree", "polyreg", "", "ctree", "")
+sds.ini <- syn(data = ods, visit.sequence = visit.sequence.ini,
+  method = method.ini, m = 0, drop.not.used = FALSE)
+@
+<<>>=
+sds.ini$predictor.matrix
+predictor.matrix.corrected <- sds.ini$predictor.matrix
+predictor.matrix.corrected["marital", "ls"] <- 0
+predictor.matrix.corrected
+@
+<<results=hide>>=
+sds.corrected <- syn(data = ods, visit.sequence = visit.sequence.ini,
+  method = method.ini, predictor.matrix = predictor.matrix.corrected,
+  seed = my.seed)
+@
+
+\subsubsection{Handling missing values in continuous variables}
+Data can be missing for a number of reasons (e.g. refusal, inapplicability, lack of knowledge) and multiple missing data codes are used to represent this variety. By default, numeric missing data codes for a continuous variable are treated as non-missing values. This may lead to erroneous synthetic values, especially when standard parametric models are used or when synthetic values are smoothed to decrease disclosure risk. The problem refers not only to the variable in question, but also to variables predicted from it. The parameter \code{cont.na} of the \code{syn()} function allows to define missing-data codes for continuous variables in order to model them separately (see Section~\ref{sec:basicfun}). In our simple example a continuous variable \code{income} has two types of missing values (\code{NA} and \code{-8}) and they should be provided in a list element named \code{"income"}. The following code shows the recommended settings for synthesis of income variable, which includes smoothing and separate synthesis of missing values   
+
+<<results=hide>>=
+sds.income <- syn(ods, cont.na = list(income = c(NA, -8)), 
+  smoothing = list(income = "density"), seed = NA)
+@ 
+
+\subsubsection{Rules for restricted values}
+To illustrate application of rules for restricted values consider marital status. According to Polish law males have to be at least 18 to get married. Thus, in our synthesised data set all male individuals younger than 18 should have marital status \code{SINGLE} which is the case in the observed data set. Running without rules gives incorrect results with some of the males under 18 classified as \code{MARRIED} (see summary output table below).   
+
+<<>>=
+M18.ods <- table(subset(ods,
+  age < 18 & sex == "MALE", marital))
+M18.default <- table(subset(sds.default$syn,
+  age < 18 & sex == "MALE", marital))
+M18.parametric <- table(subset(sds.parametric$syn,
+  age < 18 & sex == "MALE", marital))
+cbind("Observed data" = M18.ods, CART = M18.default,
+  Parametric = M18.parametric)
+@
+
+Application of a rule, as specified below using named lists, leads to the correct results
+<<results=hide>>=
+rules.marital <- list(marital = "age < 18 & sex == 'MALE'")
+rvalues.marital <- list(marital = "SINGLE")
+sds.rmarital <- syn(ods, rules = rules.marital,
+  rvalues = rvalues.marital, seed = my.seed)
+sds.rmarital.param <- syn(ods, rules = rules.marital,
+  rvalues = rvalues.marital, method = "parametric", seed = my.seed)
+@
+A summary table can be produced using the following code 
+<<>>=
+rM18.default <- table(subset(sds.rmarital$syn,
+  age < 18 & sex == "MALE", marital))
+rM18.parametric <- table(subset(sds.rmarital.param$syn,
+  age < 18 & sex == "MALE", marital))
+cbind("Observed data" = M18.ods, CART = rM18.default,
+  Parametric = rM18.parametric)
+@
+
+\subsection{Synthetic data analysis}
+
+Ideally, if the models used for synthesis truly represents the process that generated the original observed data, an analysis based on the synthesised data should lead to the same statistical inferences as an analysis based on the actual data. For illustration we estimate here a simple logistic regression model where our dependent variable is a probability of intention to work abroad. We use the \code{wkabint} variable which specifies the intentions of work migration but we adjust it to disregard the destination country group. Besides we recode the current missing data code of variable \code{income} (\code{-8}) into the \proglang{R} missing data code \code{NA}.
+
+<<>>=
+ods$wkabint <- as.character(ods$wkabint)
+ods$wkabint[ods$wkabint == "YES, TO EU COUNTRY" |
+  ods$wkabint == "YES, TO NON-EU COUNTRY"] <- "YES"
+ods$wkabint <- factor(ods$wkabint) 
+ods$income[ods$income == -8] <- NA
+@
+
+We generate five synthetic data sets. 
+ 
+<<results=hide>>=
+sds <- syn(ods, method = "ctree", m = 5, seed = my.seed)
+@
+
+Before running the models let us compare some descriptive statistics of the observed and synthetic data sets. A very useful function in \proglang{R} for this purpose is \code{summary()}. When a data frame is provided as an argument, here our original data set \code{ods}, it produces summary statistics of each variable. 
+
+<<>>=
+summary(ods)
+@
+
+The \code{summary()} function with the \code{synds} object as an argument gives summary statistics of the variables in the synthesised data set. If more than one synthetic data set has been generated, as default summaries are calculated by averaging summary values for all synthetic data copies. 
+
+<<>>=                                              
+summary(sds)
+@
+
+Summary of individual data sets can be displayed by supplying the \code{msel} parameter, which can be a single number or a vector with selected synthesis numbers. An example code is presented below but the corresponding output is suppressed for space reasons.
+
+<<results=hide>>=                       
+summary(sds, msel = 2)
+summary(sds, msel = 1:5)
+@                                                
+
+To compare the synthesised variables with the original ones more easily, the synthesiser can use a \code{compare()} function. It is a generic function for comparison of various aspects of synthesised and observed data. The function invokes particular methods depending on the class of the first argument. If a synthetic data object and a data frame with original data are provided it compares relative frequency distributions of each variable in tabular and graphic form. The number of plots per page can be specified via \code{nrow} and \code{ncol} arguments. Alternatively, the function can be used for a subset of variables specified by a \code{vars} argument. Output for \code{income} is presented below and in Figure~\ref{fig:income}. For quantitative variables, such as \code{income}, missing data categories are plotted on the same plot as non-missing values and they are indicated by \code{miss.} suffix. If a synthetic data object contains multiple data sets by default pooled synthetic data are used for comparison.  
+
+<<fig=FALSE>>=  
+compare(sds, ods, vars = "income")  
+@
+
+\begin{figure}[!t]
+ \centering
+ \includegraphics[width=5in]{Figure2income.pdf}
+ %\includegraphics[width=4.9in, trim = 0 10 0 25, clip]{Figure2income.pdf}
+ \caption{Relative frequency distribution of non-missing values and missing data categories for income variable for observed and synthetic data.}\label{fig:income}
+\end{figure}
+
+An argument \code{msel} can be used to compare the observed data with a single or multiple individual synthetic data sets, which is illustrated below and in Figure~\ref{fig:ls} for a life satisfaction factor variable (\code{ls}).  
+
+<<fig=FALSE>>=  
+compare(sds, ods, vars = "ls", msel = 1:3)
+@
+
+\begin{figure}[!ht]
+ \centering
+ \includegraphics[width=4in]{Figure1ls.pdf}
+ %\includegraphics[width=3.9in, trim = 0 10 0 25, clip]{Figure1ls.pdf}
+ \caption{Relative frequency distribution of life satisfaction (\code{ls}) for observed and synthetic data.}\label{fig:ls}
+\end{figure}
+
+Returning to the logistic regression model for \code{wkabint}, we estimate the original data model using generalised linear models implemented in \proglang{R} \code{glm()} function. A \pkg{synthpop} package function \code{glm.synds()} is an equivalent function for estimating models for each of the \code{m} synthesised data sets. A similar function called \code{lm.synds()} is available for a standard linear regression model. An outcome of \code{glm.synds()} and \code{lm.synds()} function is an object of class `\code{fit.synds}'. If \code{m > 1}, printing a `\code{fit.synds}' object gives the combined (average) coefficient estimates. Results for coefficient estimates based on individual synthetic data sets can be displayed using an \code{msel} argument of a \code{print} method. 
+ 
+<<>>=   
+model.ods <- glm(wkabint ~ sex + age + edu + log(income), 
+  family = "binomial", data = ods) 
+model.ods
+                             
+model.sds <- glm.synds(wkabint ~ sex + age + edu + log(income), 
+  family = "binomial", data = sds) 
+model.sds
+@
+
+The \code{summary()} function of a \code{fit.synds} object can be used by the analyst to combine estimates based on all the synthesised data sets. By default inference is made to original data quantities. In order to make inference to population quantities the parameter \code{population.inference} has to be set to \code{TRUE}. The function's result provides point estimates of coefficients (\code{B.syn}), their standard errors (\code{se(B.syn)}) and $ Z $ scores (\code{Z.syn}) for population and observed data quantities respectively. For inference to original data quantities it contains in addition estimates of the actual standard errors based on synthetic data (\code{se(Beta).syn}) and standard errors of $ Z $ scores (\code{se(Z.syn)}). Note that not all these quantities are printed automatically.
+
+The mean of the estimates from each of the \code{m} synthetic data sets yields unbiased estimates of the coefficients if the data conform to the model used for synthesis. The variance is estimated differently depending whether inference is made to the original data quantities or the population parameters and whether synthetic data were produced using simple or proper synthesis (for details see \citealt{synthpop_RSS}; expressions used to calculate variance for different cases are presented in Table 1). By default a simple synthesis is conducted and inference is made to original data quantities.
+
+<<>>= 
+summary(model.sds)
+@
+
+Function \code{compare()} allows the synthesiser to compare the estimates based on the synthesised data sets with those based on the original data and presents the results in both tabular and graphical form (see Figure~\ref{fig:Z}). 
+
+<<fig=FALSE>>=
+compare(model.sds, ods)
+@
+
+\begin{figure}[!t]
+ \centering
+ \includegraphics[width=5in]{Figure3Z.pdf}
+ % \includegraphics[width=5in, trim = 0 10 0 15, clip]{Figure3Z.pdf}
+ \caption{Estimates and 95\% confidence intervals for $ Z $ statistics from a logistic regression of intention to go abroad to work for observed and synthetic data.}\label{fig:Z}
+\end{figure}
+
+From both original and synthetic data we conclude that men are more likely to declare intention to work abroad as are those who are young. The fact that the results from synthetic data can have a similar pattern to the results from the real data is encouraging for further developments of synthetic data tools.   
+
+\section{Concluding remarks}
+\label{sec:conclusions}
+
+In this paper we presented the basic functionality of the \proglang{R} package \pkg{synthpop} for generating synthetic versions of microdata containing confidential information so that they are safe to be released to users for exploratory analysis. Interested readers can consult the package documentation for additional features currently implemented which can be used to influence the disclosure risk and the utility of the synthesised data. Note that \pkg{synthpop} is under continual development and future versions will include, among others, appropriate procedures for synthesising multiple event data, conducting stratified synthesis and replacing only selected cases from selected variables. The ultimate aim of \pkg{synthpop} is to provide a comprehensive, flexible and easy to use tool for generating bespoke synthetic data that can be safely released to interested data users. Since there are many different options to synthesise data, developing general guidelines for best practice remains an open issue to be addressed in our future research.
+
+
+\bibliography{synthpop}
+\end{document}

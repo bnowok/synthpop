@@ -1,0 +1,24 @@
+bibentry(bibtype = "Article",
+  title        = "{synthpop}: Bespoke Creation of Synthetic Data in {R}",
+  author       = c(person(given = "Beata",
+                          family = "Nowok",
+                          email = "beata.nowok@ed.ac.uk"),
+                   person(given = c("Gillian", "M."),
+                          family = "Raab"),
+                   person(given = "Chris",
+                          family = "Dibben")),
+  journal      = "Journal of Statistical Software",
+  year         = "2016",
+  volume       = "74",
+  number       = "11",
+  pages        = "1--26",
+  doi          = "10.18637/jss.v074.i11",
+
+  header       = "To cite synthpop in publications use:",
+  textVersion  =
+  paste("Beata Nowok, Gillian M. Raab, Chris Dibben (2016).",
+        "synthpop: Bespoke Creation of Synthetic Data in R.",
+        "Journal of Statistical Software, 74(11), 1-26.",
+        "doi:10.18637/jss.v074.i11")
+)
+

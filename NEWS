@@ -1,0 +1,185 @@
+synthpop 1.4-0
+---------------
+
+NEW FEATURES
+*
+
+CHANGES
+* For consistency reasons tab.utility() changed to utility.tab() and 
+  utility.synds() to utility.gen()
+* Revision of compare.fit.synds() function: new lack-of-fit measures and mean 
+  values for existing analysis-specific utility measures (confidence interval 
+  overlap and absolute standardized difference between coefficient); 
+  `return.result` parameter replaced by `print.coef` with slightly different 
+  functionality - analysis-specific utility measures are always printed but you
+  can choose whether to print or not model estimates.     
+
+BUG FIXES
+* compare.synds() for integer variables without missing values (thanks to bug 
+  report by Joerg Drechsler).
+
+
+synthpop 1.3-1
+---------------
+
+CHANGES
+* Update of the vignette.
+
+BUG FIXES
+* compare.synds() for variables with NA values in observed but not in 
+  synthetic data returns correct value (0) for NA category in synthetic data.
+* Invalid `times` argument corrected (lists of numbers coerced to numbers).
+
+
+synthpop 1.3-0
+---------------
+
+NEW FEATURES
+* Storing results of CART models when `models` set to TRUE.
+* Function syn.strata() for stratified synthesis.
+* Function multi.compare() for multivariate comparison of synthesised and 
+  observed data.
+* Synthesising method "nested" for a variable nested within another variable.
+* Tabular utility function tab.utility() for comparing contingency tables from 
+  observed and synthesized data.
+* Parameter `uniques.exclude` for the sdc() function, which can be used to 
+  remove some variables from the identification of uniques.
+* Function replicated.uniques() returns a number of unique individuals in the 
+  original data set ($no.uniques).
+  
+CHANGES
+* Synthetic values of collinear variables are derived based on the one that 
+  is synthesised first and their method is set to "collinear". They do not 
+  have to be removed prior to synthesis. 
+* Synthesising method for constant variables is set to "constant" and the 
+  variables are not removed from the synthesised data set when 
+  `drop.not.used = TRUE`. 
+* Default synthesising `method` changed to "cart".
+* Default `minnumlevels` changed to -1 (during synthesis numeric variables are 
+  not changed to factors regardless of the number of distinct values). 
+* Coefficient estimates and their confidence intervals are ploted in the same 
+  order as they are presented in a tabular form.   
+* No message on the seed value used (it is stored in the result object).
+* Formula of the model to be fitted using glm.synds() or lm.synds() can be 
+  specified outside the function.
+* Massage for sdc() on number of replicated uniques also when it is equal to 
+  zero.   
+* Maximum number of iterations for a multinomial model used in `polyreg` and 
+  `polr` method increased to 1000 (`maxit` parameter). Message if the limit is 
+  reached.
+* write.syn() saves complete synds object into a file synobject_filename.RData. 
+* Error on exceeding `maxfaclevels` in not generated if `method` for the factor
+  is set to "sample" or "nested".
+* For constant variables method is changed to `constant`. 
+* Year format for variables `ymarr` and `ysepdiv` in SD2011 dataset changed 
+  from `yy` to `yyyy`.     
+
+BUG FIXES
+* Types and placement of special signs that are allowed in `rules` have been 
+  extended and include e.g. initial and closing round bracket.
+* compare.synds() provides output for logical variables.
+* Synthesis of logical variables with missing values.
+* Message about a change of method for a variable without predictors.
+* Check for `filetype` in write.syn() 
+
+
+synthpop 1.2-1
+---------------
+
+BUG FIXES
+* No calling var(x) on a factor x (in checks).
+* No `contrasts` attribute for factors synthesised using parametric method.
+* Misspelled vector name (nlevels) replaced with a correct one (nlevel).
+
+
+synthpop 1.2-0
+---------------
+
+NEW FEATURES
+* A new function utility.synds() for distributional comparison of synthesised 
+  data with the original (observed) data using propensity scores. 
+* New measures for comparing model estimates based on synthesised and observed 
+  data implemented in compare.fit.synds() function: standardized differences 
+  in coefficient values(`coef.diff`) and confidence interval overlap (`ci.overlap`).
+
+CHANGES
+* No dependency on `coefplot` package.  
+* Default for `drop.not.used` changed to FALSE.
+
+
+synthpop 1.1-1
+---------------
+
+CHANGES
+* Both variable names and their column indices can be used in `visit.sequence`.
+* Arguments `rules`, `rvalues`, `cont.na`, `semicont`, `smoothing`, `event`,
+  `denom` are specified as named lists, e.g. rules = list(marital = "age < 18")
+  and do not have to be specified for all variables.
+* Optional arguments can be passed to synthesising functions by specifying 
+  `funname.argname` arguments, e.g. ctree.minbucket = 5; they are 
+  function-specific; `minbucket` removed from arguments.  
+* Smoothing is possible for numeric variables when synthesised with the method 
+  'sample'.
+* compare() is a generic function with two methods (for class `synds` and 
+  `fit.synds`); it replaced two separate functions.   
+* New argument `return.plot` for compare() method for class `fit.synds`.
+* New argument `msel` for compare() method for class `synds`, which 
+  allows comparison for pooled or selected data set(s). Results for multiple
+  synthetic data sets can be plotted on the same graph. 
+* New argument `nrow` for compare() method for class `synds`; `nrow`
+  and `ncol` determine number of plots per screen.
+* Argument `plot.na` for compare() method for class `synds` is no longer 
+  required and missing data categories for numeric variables are ploted 
+  on the same plot as non-missing values. 
+* Argument `object` of lm.synds() and glm.synds() functions changed to `data`. 
+* print() method for class `fit.synds` gives by default combined coefficient 
+  estimates only.
+* summary() method for class `fit.synds` gives combined coefficient 
+  estimates and their standard errors.
+* summary() method for class `synds` with multiple synthetic data sets 
+  provides by default summaries that are calculated by averaging summary 
+  values for all synthetic data copies.
+* Argument `obs.data` of compare.fit.synds() function changed to `data`. 
+* Method `surv.ctree` and `cart.bboot` changed to `survctree` and `cartbboot`.
+
+BUG FIXES
+* `denom` and `event` for variables with missing data.
+* `maxfaclevels` can be increased.
+* Continuous variables with missing data when zero is a non-missing value.
+* Synthesis of a single variable (with or without auxiliary predictors) now 
+  works.
+
+
+synthpop 1.1-0
+---------------
+
+NEW FEATURES
+* Function sdc() for statistical disclosure control of the synthesised data 
+  set(s); function replicated.uniques() to determine which unique units in the 
+  synthesised data set(s) replicates unique units in the original data set.    
+* Function read.obs() to import original data sets form external files.
+* Function write.syn() to export synthetic data sets to external files and 
+  create a text file with information about the synthesis.
+* syn() has new `semicont` parameter that allows to define spike(s) 
+  for semi-continuous variables in order to synthesise them separately.
+* `lognorm`, `sqrtnorm` and `cubertnorm` methods for synthesis by linear 
+  regression after natural logarithm, square root or cube root transformation 
+  of a dependent variable.  
+* `seed` argument for syn() function.
+
+CHANGES
+* Revised output of summary.fit.synds() and compare.fit.synds(); 
+  standard errors of Z scores corrected (se(Z.syn)) 
+  (thanks to Joerg Drechsler).
+* Figures for compare.fit.synds() and compare.synds() functions plotted 
+  using ggplot2 functions.  
+* period.separated or alllowercase naming convention has been adopted and 
+  parameter names `populationInference`, `visitSequence`, `predictorMatrix`,
+  `contNA`, `defaultMethod`, `printFlag` and `nlevelmax` have been changed to
+  `population.inference`, `visit.sequence`, `predictor.matrix`, `cont.na`,
+  `default.method`, `print.flag` and `minnumlevels` respectively.
+* Default for drop.pred.only changed to FALSE.
+
+BUG FIXES
+* Rounding procedure (thanks to bug report by Joerg Drechsler).
+* Warning about extra disregarded argument `family` in compare.fit.synds().

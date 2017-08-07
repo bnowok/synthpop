@@ -7,10 +7,12 @@
   utility measures to compare them with their expectation if the synthesising 
   model is correct.}
 \usage{
-utility.tab(object, data, vars = NULL, ngroups = 5, with.missings = TRUE,
-            digits = 2, print.tables = FALSE, print.zdiff = FALSE, \dots) 
+utility.tab(object, data, vars = NULL, ngroups = 5, 
+            print.tables = FALSE, print.zdiff = FALSE, 
+            digits = 2, \dots) 
        
-\method{print}{utility.tab}(x, digits = x$digits, print.tables = x$print.tables, print.zdiff = x$print.zdiff, \dots)
+\method{print}{utility.tab}(x, print.tables = x$print.tables, 
+  print.zdiff = x$print.zdiff, digits = x$digits, \dots)
 }
 \arguments{
   \item{object}{an object of class \code{synds}, which stands for 'synthesised 
@@ -22,21 +24,18 @@ utility.tab(object, data, vars = NULL, ngroups = 5, with.missings = TRUE,
   \item{vars}{a single string or a vector of strings with the names of 
     variables to be used to form the table.}
   \item{ngroups}{if numerical (non-factor) variables are included they will be 
-    classified into this number of groups to form tables. For data values that 
-    are all unique the groups are formed from the percentiles of the 
-    distribution. But when there are repeated values identical observations are 
-    always in the same group. This may produce a smaller number of groups than 
-    specified with \code{ngroups} in some cases.}
-  \item{with.missings}{a logical value indicating whether the table is to 
-    include rows and columns for missing data for categorical variables.}
-  \item{\dots}{additional parameters.}   
-  \item{x}{an object of class \code{utility.tab}.}
+    classified into this number of groups to form tables. Classification is 
+    performed using \code{classIntervals()} function for \code{n = ngroups} and
+    arguments of \code{classIntervals()} may also be specified in the call to
+    \code{utility.tab()}.}
   \item{digits}{an integer indicating the number of decimal places 
-    for printing statistics and \code{tab.Zscore}.}
+    for printing statistics, \code{tab.zdiff} and mean results for \code{m > 1}.}  
   \item{print.tables}{a logical value that determines if tables of observed, 
     synthesised are to be printed.} 
   \item{print.zdiff}{a logical value that determines if tables of  Z scores for 
-  differences between observed and expected are to be printed.} 
+   differences between observed and expected are to be printed.} 
+  \item{\dots}{additional parameters; can be passed to classIntervals() function.}   
+  \item{x}{an object of class \code{utility.tab}.}
 }
 \details{Forms tables of observed and synthesised values for the variables 
   specified in \code{vars}. Two utility measures are calculated from the cells 
@@ -49,7 +48,7 @@ utility.tab(object, data, vars = NULL, ngroups = 5, with.missings = TRUE,
 }
 \value{An object of class \code{utility.tab} which is a list with the following 
   components: 
-  \item{m}{Number of synthetic data sets in object, i.e. \code{object$m}.}
+  \item{m}{number of synthetic data sets in object, i.e. \code{object$m}.}
   \item{tab.obs}{a table from the observed data.} 
   \item{UtabFT}{a vector with \code{object$m} values for the Freeman Tukey 
     utility measure.} 
@@ -60,22 +59,18 @@ utility.tab(object, data, vars = NULL, ngroups = 5, with.missings = TRUE,
     synthesised counts.} 
   \item{ratioFT}{a vector with ratios of \code{UtabFT} to \code{df}.}
   \item{ratioVW}{a vector with ratios of \code{UtabVW} to \code{df}.} 
-  \item{stdFT}{a vector with standardised \code{UtabFT} in standard deviation 
-    units compared to its null distribution if the synthesising model is correct.}
-  \item{stdVW}{a vector with standardised \code{UtabVW} in standard deviation 
-    units compared to its null distribution if the synthesising model is correct.}
+  \item{pvalFT}{a vector with \code{object$m} p-values for the chi-square 
+    tests for the Freeman Tukey utility measure.}
+  \item{pvalVW}{a vector with \code{object$m} p-values for the chi-square 
+    tests for the Voas Williamson utility measure.}
   \item{nempty}{a vector of length \code{object$m} with number of cells 
     not contributing to the statistics.} 
-  \item{with.missings}{whether missing values were included in the table.}
-  \item{nsyn.missings}{number of missing observations that would contribute to 
-    the tables from each synthetic data sets.}
-  \item{nobs.missings}{number of missing observations that would contribute to 
-    the tables from the observed data.}
   \item{tab.obs}{a table from the observed data.} 
   \item{tab.syn}{a table or a list of \code{m} tables from the synthetic data.}  
   \item{tab.zdiff}{a table or a list of \code{m} tables of Z statistics for 
     differences between observed and synthesised cells of the tables. Large 
     absolute values indicate a large contribution to lack-of-fit.}    
+  \item{n}{number of observation in the original dataset.}
 }
 
 \references{
@@ -102,7 +97,7 @@ s1 <- syn(ods, m = 10)
 utility.tab(s1, ods, vars = c("marital", "sex"))
 
 s2 <- syn(ods, m = 1)
-u2 <- utility.tab(s2, ods, vars = c("marital", "age"), groups = TRUE, 
-                  ngroups = 3, with.missings = FALSE)
-print(u2, print.zdiff = TRUE)
+utility.tab(s2, ods, vars = c("marital", "age"), ngroups = 3, print.tables = TRUE)
+u2 <- utility.tab(s2, ods, vars = c("marital", "age"), style = "pretty")
+print(u2, print.tables = TRUE, print.zdiff = TRUE)
 }

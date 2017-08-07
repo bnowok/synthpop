@@ -1,7 +1,7 @@
 \name{utility.gen}
 \alias{utility.gen}
 \alias{print.utility.gen}
-\title{Distributional comparison of synthesised and observed data}
+\title{[UNDER REVISION] Distributional comparison of synthesised and observed data}
 \description{
  Distributional comparison of synthesised data set with the original (observed) 
  data set using propensity scores.
@@ -13,8 +13,9 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
             print.zscores = FALSE, usethresh = TRUE, zthresh = 1.6, 
             print.variable.importance = FALSE, \dots)
 
-\method{print}{utility.gen}(x, print.zscores = x$print.zscores, digits = x$digits, usethresh = x$usethresh, 
-                            zthresh = x$zthresh, print.variable.importance = x$print.variable.importance, \dots)
+\method{print}{utility.gen}(x, print.zscores = x$print.zscores, digits = x$digits, 
+   usethresh = x$usethresh, zthresh = x$zthresh, 
+   print.variable.importance = x$print.variable.importance, \dots)
 }
 \arguments{
   \item{object}{an object of class \code{synds}, which stands for 'synthesised 
@@ -130,6 +131,7 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
  \code{\link{utility.tab}}
 }
 \examples{
+  \dontrun{
   ods <- SD2011[1:1000, c("age", "bmi", "depress", "alcabuse", "englang")]
   s1 <- syn(ods, m = 5)
   utility.gen(s1, ods)
@@ -139,4 +141,5 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
   print(u2, print.zscores = TRUE)
   u3 <- utility.gen(s1, ods, method = "cart", nperms = 20)
   print(u3, print.variable.importance = TRUE)
+  }
 }

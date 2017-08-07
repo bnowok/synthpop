@@ -70,6 +70,16 @@ not differ from the estimates from the observed data (\code{Beta} and
    increasing \code{m}.}
  \item{coef.diff}{a data frame containing standardized differences in 
    coeffcient estimates and corresponding p values.}  
+ \item{coef.diff}{a data frame containing standardized differences between 
+   the coefficients estimated from the original data and those calculated 
+   from the synthetic data. The difference is standardized by dividing by 
+   the estimated standard error of from the synthetic. If the data have been 
+   synthesised by a model that will not bias the coefficients, then these 
+   standardized differences should have a Normal distribution with mean 0 
+   and standard deviation 1. The corresponding p values are calculated from 
+   such a Normal distribution and represent the probability of achieving 
+   differences as large as those found if the model use for synthesis is 
+   compatible with the model that generated the original data.}  
  \item{ci.overlap}{a data frame containing the percentage of overlap between 
    the estimated synthetic confidence intervals and the original sample 
    confidence intervals for each parameter, calculated as suggested by 
@@ -97,7 +107,7 @@ not differ from the estimates from the observed data (\code{Beta} and
 } 
 
 \references{
-  Karr, A., Kohnen, C.N., Organian, A., Reiter, J.P. and Sanil, A.P. (2006). 
+  Karr, A., Kohnen, C.N., Oganian, A., Reiter, J.P. and Sanil, A.P. (2006). 
   A framework for evaluating the utility of data altered to protect 
   confidentiality. \emph{The American Statistician}, \bold{60}(3), 224-232.
 
@@ -111,17 +121,9 @@ not differ from the estimates from the observed data (\code{Beta} and
 }
 
 \examples{
-### an example with a good fit
 ods <- SD2011[,c("sex","age","edu","smoke")]
-s1 <- syn(ods, m = 5)
+s1 <- syn(ods, m = 3)
 f1 <- glm.synds(smoke ~ sex + age + edu, data = s1, family = "binomial")
 compare(f1, ods) 
-compare(f1, ods, plot = "coef")
-
-### an example with a poor fit
-s2 <- syn(ods, m = 5,method="parametric")
-f2 <- glm.synds(smoke ~ sex + age + edu + age*sex*edu, data = s2, 
-                family = "binomial")
-fit2 <- compare(f2, ods)
-print(fit2, print.coef = TRUE)
+compare(f1, ods, print.coef = TRUE, plot = "coef")
 }

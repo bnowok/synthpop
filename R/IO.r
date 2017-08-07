@@ -13,7 +13,7 @@ replicated.uniques <- function(object, data, exclude = NULL){
   # exclude vars from the original data
   if (!is.null(exclude)) data <- data[,-exclude.cols, drop = FALSE] else data <- data
   # extract uniques from the original data
-  uReal <- data[!(duplicated(data) | duplicated(data,fromLast=TRUE)),]
+  uReal <- data[!(duplicated(data) | duplicated(data,fromLast=TRUE)), , drop = FALSE]
   no.uniques <- nrow(uReal)
 
   if (is.null(no.uniques) || no.uniques == 0) {
@@ -28,11 +28,13 @@ replicated.uniques <- function(object, data, exclude = NULL){
       if (!is.null(exclude)) Syn <- object$syn[,-exclude.cols, drop = FALSE] else Syn <- object$syn
       rm.Syn <- rep(FALSE,nrow(Syn))
       i.unique.Syn <- which(!(duplicated(Syn) | duplicated(Syn,fromLast=TRUE)))
-      uSyn <- Syn[i.unique.Syn,]
-      uAll <- rbind.data.frame(uReal,uSyn)
-      dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
-      rm.Syn[i.unique.Syn] <- dup.of.unique
-      no.duplicates <- sum(dup.of.unique)
+      if (length(i.unique.Syn)!=0) {
+        uSyn <- Syn[i.unique.Syn, , drop = FALSE]
+        uAll <- rbind.data.frame(uReal,uSyn)
+        dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
+        rm.Syn[i.unique.Syn] <- dup.of.unique
+      }
+      no.duplicates <- sum(rm.Syn)
     }
 
     if (object$m > 1){
@@ -40,10 +42,12 @@ replicated.uniques <- function(object, data, exclude = NULL){
       for (i in 1:object$m){
         if (!is.null(exclude)) Syn <- object$syn[[i]][,-exclude.cols,drop = FALSE] else Syn <- object$syn[[i]]
         i.unique.Syn <- which(!(duplicated(Syn) | duplicated(Syn,fromLast=TRUE)))
-        uSyn <- Syn[i.unique.Syn,]
-        uAll <- rbind.data.frame(uReal,uSyn)
-        dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
-        rm.Syn[i.unique.Syn,i] <- dup.of.unique
+        if (length(i.unique.Syn)!=0) {
+          uSyn <- Syn[i.unique.Syn, , drop = FALSE]
+          uAll <- rbind.data.frame(uReal,uSyn)
+          dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
+          rm.Syn[i.unique.Syn,i] <- dup.of.unique
+        }
       }
       no.duplicates <- colSums(rm.Syn)
     }
@@ -61,8 +65,10 @@ replicated.uniques <- function(object, data, exclude = NULL){
 
 sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE, 
  uniques.exclude = NULL, recode.vars = NULL, bottom.top.coding = NULL,
- recode.exclude = NULL){
+ recode.exclude = NULL, smooth.vars = NULL){
 
+ if(!is.null(smooth.vars) & (any(!smooth.vars %in% names(data)) | any(!(is.numeric(smooth.vars) | is.integer(smooth.vars))))) stop("Some of smooth.vars not in the data or not numeric", call. = FALSE)  
+    
  if (!is.null(recode.vars)){
    if (!is.null(bottom.top.coding) && !is.list(bottom.top.coding)) 
        bottom.top.coding <- list(bottom.top.coding)
@@ -97,6 +103,17 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
      cat("no. of replicated uniques: ", du$no.replications, "\n", sep="")
    }
    if (!is.null(label)) object$syn <- cbind.data.frame(flag=label, object$syn)
+   
+   if (!is.null(smooth.vars)){
+     numindx  <- which(names(object$syn) %in% smooth.vars)
+     for (i in numindx){
+       yy <- object$syn[,i][!(object$syn[,i] %in% object$cont.na[[i]])]  
+       yyrank <- rank(yy)
+       yyforsmooth <- sort(yy)
+       yysmoothed  <- smooth.spline(yyforsmooth, all.knots = FALSE)
+       object$syn[,i][!(object$syn[,i] %in% object$cont.na[[i]])] <- yysmoothed$y[yyrank]  
+     }     
+   } 
  }
   
  if (object$m>1){
@@ -126,6 +143,19 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
    }
    if (!is.null(label)) object$syn <- mapply(cbind.data.frame, flag=label,
      object$syn, SIMPLIFY=FALSE, USE.NAMES=FALSE)
+
+   if (!is.null(smooth.vars)){
+     numindx  <- which(names(object$syn[[1]]) %in% smooth.vars)
+     for (k in 1:object$m){
+       for (i in numindx){
+         yy <- object$syn[[k]][,i][!(object$syn[[k]][,i] %in% object$cont.na[[i]])]  
+         yyrank <- rank(yy)
+         yyforsmooth <- sort(yy)
+         yysmoothed <- smooth.spline(yyforsmooth, all.knots = FALSE)
+         object$syn[[k]][,i][!(object$syn[[k]][,i] %in% object$cont.na[[i]])] <- yysmoothed$y[yyrank]  
+       }
+     }
+   }
  }
  return(object) 
 }

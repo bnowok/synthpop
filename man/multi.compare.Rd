@@ -46,17 +46,15 @@ to the R console.
 }
 \examples{
 ### default synthesis of selected variables
-vars <- c("sex","age","edu","placesize","socprof","marital","income","ls","smoke")
+vars <- c("sex", "age", "ls", "marital", "smoke")
 ods  <- SD2011[1:1000, vars]
-s1 <- syn(ods, m = 2)
+s1 <- syn(ods)
 
 ### categorical var
-multi.compare(s1, ods, var = "smoke", by = c("marital","sex"))
-multi.compare(s1, ods, var = "smoke", by = c("sex","edu"), barplot.position = "dodge", msel = 1:2)
+multi.compare(s1, ods, var = "smoke", by = c("sex","ls"))
 
 ### numeric var
-multi.compare(s1, ods, var = "age", by = "marital", binwidth = 10)  
 multi.compare(s1, ods, var = "age", by = c("sex"), y.hist = "density", binwidth = 5)
-multi.compare(s1, ods, var = "age", by = c("sex", "marital"), cont.type = "boxplot", msel = 2)
+multi.compare(s1, ods, var = "age", by = c("sex", "marital"), cont.type = "boxplot")
 }
 

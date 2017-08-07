@@ -1,18 +1,32 @@
-synthpop 1.4-0
+synthpop 1.3-3
 ---------------
 
-NEW FEATURES
-*
+CHANGES
+* utility.tab() returns p-values for utility measures rather than standardised 
+  versions of the measures.
+* `smooth.vars` parameter added to sdc() function which allows smoothing of
+  numeric variables in the synthesised dataset.
+
+BUG FIXES
+* replicated.uniques() for a single variable.
+
+
+synthpop 1.3-2
+---------------
 
 CHANGES
 * For consistency reasons tab.utility() changed to utility.tab() and 
-  utility.synds() to utility.gen()
+  utility.synds() to utility.gen().
+* utility.gen() under major revision and temporarily unavailable.  
+* Revision of utility.tab() function: a measure of fit proposed by Voas and 
+  Williams and one proposed by Freeman and Tukey are calculated; 
+  continous variables are categorised using classIntervals() function.
 * Revision of compare.fit.synds() function: new lack-of-fit measures and mean 
   values for existing analysis-specific utility measures (confidence interval 
   overlap and absolute standardized difference between coefficient); 
   `return.result` parameter replaced by `print.coef` with slightly different 
   functionality - analysis-specific utility measures are always printed but you
-  can choose whether to print or not model estimates.     
+  can choose whether to print or not model estimates. 
 
 BUG FIXES
 * compare.synds() for integer variables without missing values (thanks to bug 

@@ -229,183 +229,146 @@ utility.gen<-function (object, data, method="logit",tree.method="rpart",maxorder
 
 ###-----utility.tab--------------------------------------------------------
 
-utility.tab <- function (object, data, vars = NULL, ngroups = 5, 
-                         with.missings = TRUE, digits = 2, 
-                         print.tables = FALSE, print.zdiff = FALSE, ...) 
+utility.tab <- function(object, data, vars = NULL, ngroups = 5, 
+                        print.tables = FALSE, print.zdiff = FALSE, 
+                        digits = 2, ...) 
 {
-  # CHECKS #
-  #---
-  if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n", call. = FALSE)
-  if (!class(data) == "data.frame") stop("Data must have class 'data.frame'.\n", call. = FALSE)
-  if (!class(object) == "synds") stop("Object must have class 'synds'.\n", call. = FALSE)
-  
+  # CHECKS 
+  #---------
+  if (is.null(data)) 
+    stop("Requires parameter 'data' to give name of the real data.\n", 
+         call. = FALSE)
+  if (!class(data) == "data.frame") 
+    stop("Data must have class 'data.frame'.\n", call. = FALSE)
+  if (!class(object) == "synds") 
+    stop("Object must have class 'synds'.\n", call. = FALSE)
+  if (is.null(vars)) stop("Need to set variables with vars parameter.\n", call. = FALSE) else if 
+    (!(all(vars %in% names(data)))) stop("Unrecognized variable(s) in vars parameter: ", 
+     paste(vars[!(vars %in% names(data))], collapse=", "), call. = FALSE)
+  #---------
+
+  my_cont.na <- object$cont.na[match(vars,names(data))]
+  data  <- data[, vars, drop = FALSE]
+  nvars <- ncol(data)  
+  data.orig <- data
+
   m <- object$m
-  if (m==1) syndata <- object$syn
-  else syndata <- object$syn[[1]]
+  if (m==1) syndata <- list(object$syn) else syndata <- object$syn   
+  syndata <- lapply(syndata,'[',vars)
   
-  if (dim(data)[1] != dim(syndata)[1]) stop("\nThis function is not for case when sizes of original and synthetic data differ.\n", call.=FALSE)
-  if (is.null(vars)) stop("Need to set variables with vars parameter.\n", call. = FALSE)
-  else if (!(all(vars %in% names(data)))) stop("Unrecognized variable(s) in vars parameter: ",
-    paste(vars[!vars %in% names(data)], collapse = ", "),"\n", call. = FALSE)
-  #---
-  
-  data<-data[,vars]
-  nvars<-ncol(data)
-   data<-data[,vars]
-  if (m==1){
-    # make all into factors
-    syndata<-syndata[,vars]
-    for (i in 1:nvars) {
-      if (is.numeric(data[,i])){
-        grpd<-group_num(data[,i],syndata[,i],ngroups)
-        data[,i]<-grpd[[1]];syndata[,i]<-grpd[[2]]
-      }
-      else if(is.character(data[,i])){
-        data[,i]<-factor(data[,i])
-        syndata[,i]<-factor(syndata[,i],levels<-levels(data[,i]))
-      }
-      if (with.missings==TRUE){
-        nobs.missings<-sum(apply(is.na(data),1,sum)>0)
-        nsyn.missings<-sum(apply(is.na(syndata),1,sum)>0)
-        if (any(is.na(data[,i])))  syndata[,i]<-addNA(syndata[,i]) ### makes missings into part of factors
-        if (any(is.na(data[,i]))) data[,i]<-addNA(data[,i]) ### makes missings into part of factors 
+  #if (nrow(data) != nrow(syndata[[1]])) 
+  #  stop("\nThis function is not for case when sizes of original and synthetic data differ.\n", call.=FALSE)
 
+  df <- ratioFT <- ratioVW <- pvalVW <- pvalFT <- 
+    UtabFT <- UtabVW <- nempty <- vector("numeric", m)
+  tab.syn <- tab.zdiff <- tabd <- vector("list", m) 
+  
+  # nobs.missings <- sum(apply(is.na(data),1,sum)>0) 
+  # nsyn.missings <- vector("numeric", m)
+
+  for (i in 1:m) {
+    data <- data.orig
+    # nsyn.missings[i] <- sum(apply(is.na(syndata[[i]]),1,sum)>0) 
+    # make all variables into factors
+    for (j in 1:nvars) {
+      if (is.numeric(data[,j])){
+        grpd <- group_num(data[,j], syndata[[i]][,j], 
+          n = ngroups, cont.na = my_cont.na[[j]], ...)
+        data[,j] <- grpd[[1]]; syndata[[i]][,j] <- grpd[[2]]
+      } else if (is.character(data[,j])) {
+        data[,j] <- factor(data[,j])
+        syndata[[i]][,j] <- factor(syndata[[i]][,j], 
+                                   levels = levels(data[,j]))
+      }
+      if (any(is.na(data[,j]))){
+        # makes missings into part of factors if present 
+        data[,j] <- addNA(data[,j]) 
+        syndata[[i]][,j] <- addNA(syndata[[i]][,j]) 
       }
     }
-    nobs.missings<-sum(apply(is.na(data),1,sum)>0)
-    nsyn.missings<-sum(apply(is.na(syndata),1,sum)>0)
-    tab.syn<-table(syndata)
-    tabd<-table(data)
-    totcells<-length(tabd)
-    df<-totcells - sum(tabd+tab.syn==0)-1
-    diff<-(tab.syn-tabd)
-    expect<-(tab.syn+tabd)/2
-    UtabFT<-4*sum((tab.syn^(0.5)-tabd^(0.5))^2)
-    tabsq<-diff^2/expect
-    tabsq[expect==0]<-0
-    UtabVW<-sum(tabsq)
-    ratioFT=UtabFT/df
-    stdFT=(UtabFT-df)/sqrt(2*df)
-    ratioVW=UtabVW/df
-    stdVW=(UtabVW-df)/sqrt(2*df)
-    tab.zdiff<-diff/sqrt(expect)
-    nempty= sum(tabd+tab.syn==0)
+    
+    # * Adjustment for synthetic data that have different size than original data
+    tabd[[i]]       <- table(data) * nrow(syndata[[i]])/nrow(data)
+    
+    totcells        <- length(tabd[[i]])
+    tab.syn[[i]]    <- table(syndata[[i]])
+    nempty[i]       <- sum(tabd[[i]] + tab.syn[[i]] == 0)  
+    df[i]           <- totcells - nempty[i] - 1
+    diff            <-(tab.syn[[i]] - tabd[[i]])
+    expect          <-(tab.syn[[i]] + tabd[[i]])/2
+    UtabFT[i]       <- 4*sum((tab.syn[[i]]^(0.5) - tabd[[i]]^(0.5))^2)
+    tabsq           <- diff^2/expect
+    tabsq[expect==0]<- 0
+    UtabVW[i]       <- sum(tabsq)
+    ratioFT[i]      <- UtabFT[i] / df[i]
+    pvalFT[i]       <- 1 - pchisq(UtabFT[i], df[i])
+    # stdFT[i] <-(UtabFT[i] - df[i]) / sqrt(2*df[i])
+    ratioVW[i]      <- UtabVW[i] / df[i]
+    pvalVW[i]       <- 1 - pchisq(UtabVW[i], df[i])
+    # stdVW[i] <-(UtabVW[i] - df[i]) / sqrt(2*df[i])
+    tab.zdiff[[i]]  <- diff/sqrt(expect)
+
   }
-  else{############################################# now for m>1
-    df<-ratioFT<-ratioVW<-stdVW<-stdFT<-UtabFT<-UtabVW<-nempty<-nsyn.missings<-rep(NA,m)
-    tab.syn<-tab.zdiff<-as.list(1:m)
-    data0<-data
-    nobs.missings<-sum(apply(is.na(data),1,sum)>0)
-    for (ii in 1:m){
-      #
-      # make all into factors
-      #
-      syndata<-object$syn[[ii]][,vars]
-      nsyn.missings[ii]<-sum(apply(is.na(syndata),1,sum)>0)
-      for (i in 1:nvars) {
-        if (is.numeric(syndata[,i])){
-          grpd<-group_num(data0[,i],syndata[,i],ngroups)
-          data[,i]<-grpd[[1]];syndata[,i]<-grpd[[2]]
-        }
-        else if(is.character(data[,i])){
-          data[,i]<-factor(data[,i])
-          syndata[,i]<-factor(syndata[,i],levels<-levels(data[,i]))
-        }
-        if (with.missings==TRUE){
-          if (any(is.na(data0[,i]))){syndata[,i]<-addNA(syndata[,i])} ### makes missings into part of factors
-          if (any(is.na(data0[,i]))) {data[,i]<-addNA(data[,i])}
-        }
-      }
-      tab.syn[[ii]]<-table(syndata)
-      tabd<-table(data)
 
-      totcells<-length(tabd)
-      df[[ii]]<-totcells - sum(tabd+tab.syn[[ii]]==0)-1
-      diff<-(tab.syn[[ii]]-tabd)
-      expect<-(tab.syn[[ii]]+tabd)/2
-      UtabFT[[ii]]<-4*sum((tab.syn[[ii]]^(0.5)-tabd^(0.5))^2)
-      tabsq<-diff^2/expect
-      tabsq[expect==0]<-0
-      UtabVW[[ii]]<-sum(tabsq)
-      ratioFT[[ii]]=UtabFT[[ii]]/df[[ii]]
-      stdFT[[ii]]=(UtabFT[[ii]]-df[[ii]])/sqrt(2*df[[ii]])
-      ratioVW[[ii]]=UtabVW[[ii]]/df[[ii]]
-      stdVW[[ii]]=(UtabVW[[ii]]-df[[ii]])/sqrt(2*df[[ii]])
-      tab.zdiff[[ii]]<-diff/sqrt(expect)
-      nempty[[ii]]= sum(tabd+tab.syn[[ii]]==0)
-    }
-  }    
-  res <- list(m = m, UtabFT = unlist(UtabFT), UtabVW = unlist(UtabVW), 
-              df = unlist(df), ratioFT = unlist(ratioFT), stdFT = unlist(stdFT),
-              ratioVW = unlist(ratioVW), stdVW = unlist(stdVW),
-              nempty = unlist(nempty), 
-              with.missings = with.missings,
-              nobs.missings = nobs.missings,
-              nsyn.missings = nsyn.missings,
-              tab.obs = tabd, tab.syn = tab.syn, tab.zdiff = tab.zdiff,
-              digits = digits, print.zdiff = print.zdiff, print.tables = print.tables)
+  if (m==1) {
+    tab.syn   <- tab.syn[[1]]
+    tab.zdiff <- tab.zdiff[[1]]
+    tabd      <- tabd[[1]]  
+  } 
+  
+  # If all frequency tables for original data are the same, keep only one 
+  if (m > 1 && all(sapply(object$syn, nrow) == object$n)) tabd <- tabd[[1]]
+
+  res <- list(m = m, 
+              UtabFT  = UtabFT, 
+              UtabVW  = UtabVW, 
+              df      = df, 
+              ratioFT = ratioFT, 
+              pvalFT  = pvalFT,
+              ratioVW = ratioVW, 
+              pvalVW  = pvalVW,
+              nempty  = unlist(nempty), 
+              # nobs.missings = nobs.missings,
+              # nsyn.missings = nsyn.missings,
+              tab.obs = tabd, 
+              tab.syn = tab.syn, 
+              tab.zdiff = tab.zdiff,
+              digits    = digits, 
+              print.zdiff  = print.zdiff, 
+              print.tables = print.tables, 
+              n = object$n)
   
   class(res) <- "utility.tab"
   return(res)
 }
 
 
-#-------------------------------group_num---------------------------
-#
-# function to make groups of any continuous variables
-#
-group_num<-function(x1,x2,n=5,cont.na=NULL){
-  #
-  # makes 2 cont variable into a factor of n groups with same groupings
-  # determined by first one
-  # groups will often be of uneven size because of missing values
-  # there may even be fewer than n groups if there are big sets of repeats
-  #
-  #
-  if (!is.numeric(x1)) stop ("x must be numeric \n")
-  xn<-x1[!(x1 %in% cont.na | is.na(x1))  ]
-  xr<-rank(xn)
-  ptiles=round(c(length(xr)*(1:(n-1))/n,max(xr)))
-  #ptiles
-  ptiles<-xn[order(xn)][ptiles]
-  #ptiles
-  ptiles<-ptiles[!duplicated(ptiles)]##  to allow for repeated values
-  xnew=rep(1,length(xn))
-  for (i in 2:length(ptiles)) xnew[xn>ptiles[i-1] & xn<=ptiles[i]]<-i
-  #xnew<-factor(xnew)
-  res1<-x1
-  res1[!(x1 %in% cont.na | is.na(x1))]<-xnew
-  #
-  # now next one
-  #
-  xn<-x2[!(x2 %in% cont.na | is.na(x2))  ]
-  xnew=rep(1,length(xn))
-  for (i in 2:length(ptiles)) xnew[xn>ptiles[i-1] & xn<=ptiles[i]]<-i
-  #xnew<-factor(xnew)
-  res2<-x2
-  res2[!(x2 %in% cont.na | is.na(x2))]<-xnew
-  #
-  # now make into factors including missing and cont.na data
-  #
-  nlev<-length(table(c(res1[!(x1 %in% cont.na | is.na(x1))],res2[!(x2 %in% cont.na | is.na(x2))])))
-  labels=paste("Gp",1:nlev)
-  if (any(is.na(c(res1,res2)))) {
-    res1[is.na(res1)]<-nlev+1
-    res2[is.na(res2)]<-nlev+1
-    labels<-c(labels,"missing")
-  }
-  nlev<-length(labels)
-  if (!is.null(cont.na)) {
-    exlevs<-as.numeric(cont.na[!is.na(cont.na)])
-    for ( i in 1:length(exlevs)){
-      res1[x1==exlevs[i]]<-nlev+i
-      res2[x2==exlevs[i]]<-nlev+i
-    }
-    labels<-c(labels,paste("cont.na",as.character(exlevs)))
-    #print(table(res1))
-  }
-  res1<-factor(res1,labels=labels)
-  res2<-factor(res2,labels=labels)
-  list(res1,res2)
-}          
+###-----group_num----------------------------------------------------------
+# function to categorise continuous variables
+
+group_num <- function(x1, x2, n = 5, cont.na = NA, ...) {
+  
+  # Categorise 2 continous variables into factors of n groups 
+  # with same groupings determined by the first one
+  
+  if (!is.numeric(x1) | !is.numeric(x2)) stop ("x1 and x2 must be numeric.\n", call. = FALSE)
+  
+  # Select non-missing(nm) values 
+  x1nm <- x1[!(x1 %in% cont.na)]
+  x2nm <- x2[!(x2 %in% cont.na)]
+  # Derive breaks
+  my_breaks <- classIntervals(x1nm, n = n, ...)$brks
+  my_levels <- c(levels(cut(x1nm, breaks = my_breaks, 
+                            dig.lab = 8, right = FALSE, include.lowest = TRUE)),
+                 cont.na[!is.na(cont.na)])
+  # Apply groupings to non-missing data
+  x1[!(x1 %in% cont.na)] <- as.character(cut(x1nm, breaks = my_breaks, 
+    dig.lab = 8, right = FALSE, include.lowest = TRUE))
+  x2[!(x2 %in% cont.na)] <- as.character(cut(x2nm, breaks = my_breaks, 
+    dig.lab = 8, right = FALSE, include.lowest = TRUE))
+  x1 <- factor(x1, levels = my_levels)
+  x2 <- factor(x2, levels = my_levels)
+  return(list(x1,x2))  
+  
+}  
 

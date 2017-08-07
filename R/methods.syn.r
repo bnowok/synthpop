@@ -449,80 +449,82 @@ print.utility.gen <- function(x,print.zscores =x$print.zscores,digits= x$digits,
 
 ###-----print.utility.tab--------------------------------------------------
 
-print.utility.tab <- function(x, digits = x$digits, 
-  print.tables = x$print.tables, print.zdiff = x$print.zdiff, ...){
+print.utility.tab <- function(x, print.tables = x$print.tables,  
+  print.zdiff = x$print.zdiff, digits = x$digits,...){
 
-  if(print.tables==TRUE) {
-    cat("\nObserved \n($tab.obs)\n")
-	  print(x$tab.obs)
+  if(print.tables == TRUE) {
+    if (is.table(x$tab.obs)) {
+      if (sum(x$tab.obs)!= x$n) {
+        cat("\nObserved adjusted to match the size of the synthetic data: \n($tab.obs)\n")
+        print(round(x$tab.obs, digits))
+      } else {
+        cat("\nObserved: \n($tab.obs)\n")
+        print(x$tab.obs)
+      }  
+    } else {
+      #if (sum(x$tabd)/length(x$tabd)!= x$n) 
+      cat("\nMean of ",x$m," observed tables ($tab.obs) adjusted to match the size of synthetic data:\n", sep = "")
+      meantabd <- apply(simplify2array(x$tab.obs), c(1,2), mean)
+      print(round(meantabd, digits))
+    } 
+
     if (x$m==1) {
-      cat("\nSynthesised \n($tab.syn)\n")
+      cat("\nSynthesised: \n($tab.syn)\n")
 	    print(x$tab.syn) 
     } else {
-      meantab <- x$tab.syn[[1]]
-		  for (i in 2:x$m) {
-			  meantab <- (i-1)/i*meantab + x$tab.syn[[i]]/i
-		  }
-      cat("\nMean of ",x$m," synthetic tables:\n", sep="")
+      meantab <- apply(simplify2array(x$tab.syn), c(1,2), mean)
+      cat("\nMean of ",x$m," synthetic tables ($tab.syn):\n", sep="")
       print(round(meantab, digits))
     }
   }
   
-  if(print.zdiff==TRUE) {
-    cat("\nTable of Z scores for differences \n($tab.zdiff)\n")
+  if(print.zdiff == TRUE) {
+    cat("\nTable of Z scores for differences: \n($tab.zdiff)\n")
     if (x$m==1) {
-      print(round(x$tab.zdiff,digits)) 
+      print(round(x$tab.zdiff, digits)) 
     } else {
-      meanzdiff <- x$tab.zdiff[[1]]
-      for (i in 2:x$m) {
-        meanzdiff <- (i-1)/i*meanzdiff + x$tab.zdiff[[i]]/i
-      }
-      cat("\nZ score for mean of ",x$m," tables:\n", sep="")
-      print(round(meanzdiff, digits))
+      meanzdiff <- apply(simplify2array(x$tab.zdiff), c(1,2), mean)
+      cat("\nMean of ",x$m," Z score tables:\n", sep="")
+      print(round(as.table(meanzdiff), digits))
     }
   }
   
   if (x$m==1){
-    cat("\nNumber of cells in each table: ", x$df[1] + x$nempty[1] + 1,
-        "; Number of cells contributing to utility measures: ", x$df + 1,"\n", sep="")
+    cat("\nNumber of cells in each table: ", 
+        x$df[1] + x$nempty[1] + 1,
+        "; Number of cells contributing to utility measures: ", 
+        x$df + 1,"\n", sep="")
     cat("\nUtility score results\n")
-    cat("Freeman Tukey (FT): ",round(x$UtabFT,digits),";",
-        " Ratio to expected: ",round(x$ratioFT,digits),";",
-        " Standardised: ",round(x$stdFT,digits),"\n", sep="")
-    cat("Voas Williamson (VW): ",round(x$UtabVW,digits),";",
-        " Ratio to expected: ",round(x$ratioVW,digits),";",
-        " Standardised: ",round(x$stdVW,digits),"\n", sep="")
-  }
-  else if (x$m>1){
+    cat("Freeman Tukey (FT): ", round(x$UtabFT,digits), ";",
+        " Ratio to degrees of freedom (df): ", round(x$ratioFT,digits), ";",
+        " p-value: ", x$pvalFT, "\n", sep="")
+    cat("Voas Williamson (VW): ", round(x$UtabVW,digits), ";",
+        " Ratio to degrees of freedom (df): ", round(x$ratioVW,digits), ";",
+        " p-value: ", x$pvalVW, "\n", sep="")
+  } else if (x$m>1){
     cat("\nAverage results for ", x$m, " syntheses\n", sep="")
-    cat("\nNumber of cells contributing to utility measures: ", 
+    cat("\nNumber of cells in each table: ", 
         round(mean(x$df[1] + x$nempty[1] + 1),digits),
-        "; Non-empty cells: ", round(mean(x$df + 1),digits),"\n", sep="")
+        "; Number of cells contributing to utility measures: ", 
+        round(mean(x$df + 1),digits),"\n", sep="")
     cat("\nUtility score results\n")
-    cat("Freeman Tukey (FT): ",round(mean(x$UtabFT),digits),";",
-        " Ratio to expected: ",round(mean(x$ratioFT),digits),";",
-        " Standardised: ",round(mean(x$stdFT),digits),"\n", sep="")
-    cat("Voas Williamson (VW): ",round(mean(x$UtabVW),digits),";",
-        " Ratio to expected: ", round(mean(x$ratioVW),digits),";",
-        " Standardised: ",round(mean(x$stdVW),digits),"\n", sep="")
-    cat("\nResults from individual syntheses\n")
+    cat("Freeman Tukey (FT): ", round(mean(x$UtabFT),digits), ";",
+        " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT),digits),"\n", sep="")
+    cat("Voas Williamson (VW): ", round(mean(x$UtabVW), digits), ";",
+        " Ratio to degrees of freedom (df): ",  round(mean(x$ratioVW), digits),"\n", sep="")
     
-    tab.res <- cbind.data.frame(1:x$m, x$df,
-      round(x$UtabFT,digits),round(x$ratioFT,digits),round(x$stdFT,digits),
-      round(x$UtabVW,digits),round(x$ratioVW,digits),round(x$stdVW,digits))
-    colnames(tab.res) <- c("Synthesis","Expected",
-      "FT Utility","FT Ratio","FT Std.",
-      "VW Utility","VW Ratio","VW Std.")
+    cat("\nResults from individual syntheses\n")
+    tab.res <- cbind.data.frame(x$df,
+    round(x$UtabFT,digits), round(x$pvalFT,digits),
+    round(x$UtabVW,digits), round(x$pvalVW,digits))
+    colnames(tab.res) <- c("df", 
+                           "FT Utility","FT p-value",
+                           "VW Utility","VW p-value")
     print(tab.res)
   }
-  if (x$with.missings==FALSE & x$nobs.missings > 0){
-    cat("\n\nCalculations ignore ",x$nobs.missings," observations with missing values from ",
-        sum(x$tab.obs) + x$nobs.missings,"in the observed data\n replaced by ",
-        x$nsyn.missings," in the syntheses.\n", sep="")
-  }
+
  	invisible(x)
 }
-  
 
 
 ###-----summary.out--------------------------------------------------------

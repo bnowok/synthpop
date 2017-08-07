@@ -25,7 +25,8 @@ export(compare, compare.synds, compare.fit.synds, multi.compare,
        summary.synds, print.summary.synds,
        summary.fit.synds, print.summary.fit.synds,
        replicated.uniques, sdc, read.obs, write.syn,
-       utility.gen, utility.tab)
+       #utility.gen, 
+       utility.tab)
 
 S3method(compare, default)
 S3method(compare, synds)
@@ -38,7 +39,7 @@ S3method(summary, fit.synds)
 S3method(print, summary.fit.synds)
 S3method(print, compare.fit.synds)
 S3method(print, compare.synds)
-S3method(print, utility.gen)
+#S3method(print, utility.gen)
 S3method(print, utility.tab)
 
 #exportClasses(synds)
@@ -62,12 +63,13 @@ importFrom(rpart, rpart.control)
 importFrom(stats, glm)
 importFrom(stats, lm)
 importFrom(polspline, polymars, predict.polymars, polyclass, ppolyclass)
-importFrom(randomForest, randomForest) 
+importFrom(randomForest, randomForest)
+importFrom(classInt, classIntervals)
 #importFrom(glmnet, glmnet, predict.glmnet) not used at the moment
 
 importFrom("graphics", "hist")
 importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment", 
            "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
            "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
-           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq")
+           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", "smooth.spline")
 importFrom("utils", "head", "read.csv", "read.table", "tail", "write.csv", "write.table")

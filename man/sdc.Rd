@@ -5,7 +5,7 @@
 \usage{
 sdc(object, data, label = NULL, rm.replicated.uniques = FALSE, 
  uniques.exclude = NULL, recode.vars = NULL, bottom.top.coding = NULL, 
- recode.exclude = NULL)
+ recode.exclude = NULL, smooth.vars = NULL)
 }
 \arguments{
   \item{object}{an object of class \code{synds}, which stands
@@ -31,7 +31,9 @@ sdc(object, data, label = NULL, rm.replicated.uniques = FALSE,
     \code{recode.vars} values to be excluded from recoding, e.g. missing data 
     codes. If all values should be considered for recoding \code{NA} should be 
     used. If only one variable is to be recoded, code(s) can be given as 
-    a single number or a vector.}  
+    a single number or a vector.}
+  \item{smooth.vars}{a single string or a vector of strings with name(s) 
+    of numeric variable(s) to be smoothed (\code{\link{smooth.spline}} function is used).}
 }
 \value{
   An \code{object} provided as an argument adjusted in accordance with the 

@@ -17,7 +17,8 @@ export(syn,
        syn.cubertnorm,
        syn.rf,
        syn.bag,
-       syn.nested)
+       syn.nested,
+       syn.satcat)
 
 export(compare, compare.synds, compare.fit.synds, multi.compare, 
        print.compare.fit.synds,	lm.synds, glm.synds, 
@@ -71,5 +72,6 @@ importFrom("graphics", "hist")
 importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment", 
            "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
            "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
-           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", "smooth.spline")
+           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", 
+           "smooth.spline", "pf", "printCoefmat")
 importFrom("utils", "head", "read.csv", "read.table", "tail", "write.csv", "write.table")

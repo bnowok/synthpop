@@ -1,4 +1,4 @@
-# Functions for synthesising data adapted, with some exceptions, 
+# Functions for synthesising data, some of which are adapted
 # from mice package by S. van Buuren and K. Groothuis-Oudshoorn,
 # TNO Quality of Life
 
@@ -376,7 +376,7 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
     p <- 1/(1 + exp(-(xp %*% beta)))  
     vec <- rbinom(nrow(p),denomp, p) 
   }
-  return(list(res = vec, fit = "logreg"))
+  return(list(res = vec, fit = fit$coefficients))  # fit = "logreg"
 }
 
 
@@ -402,7 +402,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   
   if (proper==TRUE){ # bootstrap to make proper
     s   <- sample(length(y), replace=TRUE)
-    x   <- x[s,]
+    x   <- x[s, , drop = FALSE]
     y   <- y[s]  
     y   <- factor(y)
   }
@@ -426,7 +426,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   idx   <- 1 + apply(draws,2,sum)
    
   res <- levels(yf)[idx]
-  return(list(res = res, fit = "polyreg"))
+  return(list(res = res, fit = fit$coefficients))   # fit = "polyreg"
 }
 
 
@@ -474,7 +474,7 @@ syn.polr <- function(y, x, xp, proper = FALSE, maxit = 1000,
 
   res <- levels(yf)[idx]
 
-  return(list(res = res, fit = "polr"))
+  return(list(res = res, fit = fit$coefficients))  # fit = "polr" 
 }
 
 
@@ -521,9 +521,8 @@ syn.cart <- function(y, x, xp, smoothing, proper = FALSE,
   #    attributes(xp[,j])$contrasts <- NULL
   #  }
   #}
-  
   minbucket <- max(1, minbucket)  # safety
-  if (!is.factor(y)) {
+  if (!is.factor(y) & !is.logical(y)) {
     fit <- rpart(y ~ ., data = as.data.frame(cbind(y, x)), method = "anova",
                  minbucket = minbucket, cp = cp, ...)
     # get leaf number for observed data
@@ -547,7 +546,11 @@ syn.cart <- function(y, x, xp, smoothing, proper = FALSE,
                    minbucket = minbucket, cp = cp, ...)
     nodes <- predict(object = fit, newdata = xp)
     new   <- apply(nodes, MARGIN=1, FUN=function(s) resample(colnames(nodes),size=1,prob=s))
-    new   <- factor(new,levels=levels(y))                                        
+    if (is.logical(y)) {
+      new   <- as.logical(new)
+    } else {
+      new   <- factor(new,levels=levels(y)) 
+    }
   }
   
   return(list(res = new, fit = fit))
@@ -755,8 +758,8 @@ syn.cartbboot <- function(y, x, xp, proper = FALSE,
 
 syn.nested <- function (y, x, xp, ...)
 {
-  xr   <- apply(x, 1, function(x) paste(x,collapse="-"))
-  xpr  <- apply(xp, 1, function(x) paste(x,collapse="-"))
+  xr   <- apply(x, 1, function(x) paste(x, collapse = "-"))
+  xpr  <- apply(xp, 1, function(x) paste(x, collapse = "-"))
   uxpr <- sort(unique(xpr))
   
   index  <- 1:length(y)
@@ -767,6 +770,37 @@ syn.nested <- function (y, x, xp, ...)
   yp <- y[indexp]
  
   return(list(res = yp, fit = "nested"))
+}
+
+
+###-----syn.satcat---------------------------------------------------------
+
+syn.satcat <- function (y, x, xp, proper = FALSE, ...)
+{
+  # fits a saturated model to combinations of variables
+  # method fails if the predictor variables generate 
+  # a combination of variables not found in the original data
+  
+  xr  <- apply(x, 1, function(x) paste(x, collapse = "-"))
+  syn.categories <- apply(xp, 1, function(x) paste(x, collapse = "-"))
+  
+  if (!all(names(table(syn.categories)) %in% names(table(xr)))) { 
+    cat("\n\n")
+    print(table(syn.categories)[!names(table(syn.categories)) %in% names(table(xr))])
+    stop('The combined groups above for "satcat" have no records in original data.\n', call. = FALSE)
+  }
+  
+  uxpr <- sort(unique(syn.categories))
+  
+  index  <- 1:length(y)
+  indexp <- rep(0, nrow(xp))
+  for (i in uxpr) {
+    indexp[syn.categories == i] <- sample(index[xr == i], sum(syn.categories == i), TRUE)
+    if (proper==TRUE) indexp[syn.categories == i] <- sample(indexp[syn.categories == i], sum(syn.categories == i), TRUE)
+  }
+  yp <- y[indexp]
+  fit <- table(xr)
+  return(list(res = yp, fit = fit))
 }
 
 

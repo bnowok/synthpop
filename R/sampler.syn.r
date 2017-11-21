@@ -105,7 +105,7 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
             x   <- length(ya)
             nam <- vname
             f   <- paste("syn", theMethod, sep = ".")
-            synfun <- do.call(f, args = list(y=y,xp=xp,
+            synfun <- do.call(f, args = list(y=y,xp=xp,                         # getFromNamespace(f,"synthpop")
               smoothing=p$smoothing[j],cont.na=p$cont.na[[j]],proper=proper, ...)) 
             p$syn[ypa, j]  <- synfun$res
             if (models) fits[[i]][[j]] <- synfun$fit

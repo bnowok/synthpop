@@ -122,7 +122,7 @@ syn.strata(data, strata = NULL,
      and ordered factors with more than two levels respectively. 
      They are used when \code{method} is set to \code{"parametric"} or 
      when there is an inconsistency between variable type and provided method.}
-  \item{models}{if \code{TRUE} estimates of models fitted to the original data 
+  \item{models}{if \code{TRUE} parameters of models fitted to the original data 
      and used to generate the synthetic values are stored.}
   \item{print.flag}{if \code{TRUE} (default) synthesising history and 
      information messages will be printed at the console. For silent 
@@ -171,24 +171,33 @@ syn.strata(data, strata = NULL,
 
  The built-in elementary synthesising methods include:
  \describe{
-   \item{ctree, cart}{classification and regression trees (CART)}
+   \item{ctree, cart}{classification and regression trees (CART), 
+     see \code{\link{syn.cart}}}
    \item{survctree}{classification and regression trees (CART)
-      for duration time data (parametric methods for survival data are 
-      not implemented yet)}
-   \item{norm}{normal linear regression}
-   \item{normrank}{normal linear regression preserving the marginal distribution}
+     for duration time data (parametric methods for survival data are 
+     not implemented yet),  see \code{\link{syn.survctree}}}
+   \item{norm}{normal linear regression, see \code{\link{syn.norm}}}
+   \item{normrank}{normal linear regression preserving the marginal 
+     distribution, see \code{\link{syn.normrank}}}
    \item{lognorm, sqrtnorm, cubertnorm}{normal linear regression after 
-      natural logarithmic, square root and cube root transformation of 
-      a dependent variable respectively} 
-   \item{logreg}{logistic regression}
-   \item{polyreg}{unordered polytomous regression}
-   \item{polr}{ordered polytomous regression}
-   \item{pmm}{predictive mean matching}
-   \item{sample}{random sample from the observed data}
-   \item{passive}{function of other synthesised data}
-   \item{nested}{bootstrap sample within each category of the original grouping 
-     variable)}
+     natural logarithmic, square root and cube root transformation of 
+     a dependent variable respectively, see \code{\link{syn.lognorm}}} 
+   \item{logreg}{logistic regression, see  \code{\link{syn.logreg}}}
+   \item{polyreg}{unordered polytomous regression, see 
+     \code{\link{syn.polyreg}}}
+   \item{polr}{ordered polytomous regression, see \code{\link{syn.polr}}}
+   \item{pmm}{predictive mean matching, see \code{\link{syn.pmm}}}
+   \item{sample}{random sample from the observed data, 
+     see \code{\link{syn.sample}}}
+   \item{passive}{function of other synthesised data,  
+     see \code{\link{syn.passive}}}
+   \item{nested}{bootstrap sample within each category of the original 
+     grouping variable, see \code{\link{syn.nested}}}
+   \item{satcat}{bootstrap sample within each category of the 
+     crosstabulation of all the predictor variables, 
+     see \code{\link{syn.satcat}}}
   }
+ 
  The functions corresponding to these methods are called \code{syn.method}, 
  where \code{method} is a string with the name of a synthesising method. 
  For instance a function corresponding to \code{ctree} function is called

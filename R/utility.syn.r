@@ -317,7 +317,7 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
   } 
   
   # If all frequency tables for original data are the same, keep only one 
-  if (m > 1 && all(sapply(object$syn, nrow) == object$n)) tabd <- tabd[[1]]
+  if (m > 1 && (all(sapply(object$syn, nrow) == sum(object$n)) || all(sapply(object$syn, nrow) == object$n))) tabd <- tabd[[1]]
 
   res <- list(m = m, 
               UtabFT  = UtabFT, 

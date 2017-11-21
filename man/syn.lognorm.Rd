@@ -11,6 +11,8 @@
 }
 \usage{
 syn.lognorm(y, x, xp, proper = FALSE, ...) 
+syn.sqrtnorm(y, x, xp, proper = FALSE, ...)
+syn.cubertnorm(y, x, xp, proper = FALSE, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}

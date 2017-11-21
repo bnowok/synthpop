@@ -6,33 +6,48 @@
   synthetic data sets.}
 \usage{
 \method{summary}{fit.synds}(object, population.inference = FALSE, msel = NULL,
-partly = FALSE, \dots)
+  incomplete = FALSE, real.varcov = NULL, \dots)
 
 \method{print}{summary.fit.synds}(x, \dots)
 }
 
 \arguments{
-  \item{object}{an object of class \code{fit.synds} created by fitting a model to 
+ \item{object}{an object of class \code{fit.synds} created by fitting a model to 
    synthesised data set using function \code{\link{glm.synds}} or
    \code{\link{lm.synds}}.}
-  \item{population.inference}{a logical value indicating whether inference 
+ \item{population.inference}{a logical value indicating whether inference 
    should be made to population quantities. If \code{FALSE} inference is made
-   to original data quantities.}
-  \item{msel}{index or indices of synthetic data copies for which summaries 
-    of fitted models are to be produced. If \code{NULL} (default) a summary 
-    of combined estimates is produced.}
-  \item{partly}{a logical value indicating whether data are partly synthesised.}
-  \item{\dots}{additional parameters.}
-  \item{x}{an object of class \code{summary.fit.synds}.}
+   to the results that would be expected from an analysis of the original data. 
+   This option should be selected if the synthetic data are being used for 
+   exploratory analysis, but the final published results will be obtained by 
+   running code on the original confidential data. If \code{population.inference = TRUE} 
+   results would allow population inference to be made from the synthetic data. 
+   In both cases the inference will depend on the synthesising model being correct,
+   but this can be checked by running the same analysis on the real data,
+   see \code{\link{compare.fit.synds}}.}
+ \item{msel}{index or indices of the synthetic datasets (\code{1},\code{...}, \code{m}), 
+   for which summaries of fitted models are to be produced. If \code{NULL} (default) 
+   only the summary of combined estimates is produced.} 
+ \item{incomplete}{a logical value indicating whether inference is to use the 
+   method proposed by Reiter (2003) for what he terms partially synthetic data. 
+   This method is valid for any synthesis, but requires multiple syntheses. 
+   It is only necessary, when the dependent variable in a model is not completely 
+   synthesised and it only makes any difference to the results when 
+   \code{population.inference = TRUE}.}
+ \item{real.varcov}{the estimated variance-covariance matrix of the fit of the model 
+   to the original data. This parameter is used in the function \code{compare.fit.synds} 
+   which has the original data as one of its parameters.}
+ \item{\dots}{additional parameters.}
+ \item{x}{an object of class \code{summary.fit.synds}.}
 }
 \details{The mean of the estimates from each of the m synthetic data sets 
 yields asymptotically unbiased estimates of the coefficients if the observed 
 data conform to the distribution used for synthesis. The standard errors are 
 estimated differently depending whether inference is made for the results that 
-would be obtained from the observed data or for the parameters of the population 
-that we assume the observed data are sampled from. The standard errors also differ 
-according to whether synthetic data were produced using simple or proper 
-synthesis (for details see Raab et al. (submitted 2014)).}
+we would expect to obtain from the observed data or for the parameters of the 
+population that we assume the observed data are sampled from. The standard 
+errors also differ according to whether synthetic data were produced using 
+simple or proper synthesis (for details see Raab et al. (2017)).}
 
 \value{
   An object of class \code{summary.fit.synds} which is a list with the following 
@@ -40,23 +55,31 @@ synthesis (for details see Raab et al. (submitted 2014)).}
   \item{call}{the original call to \code{glm.synds} or \code{lm.synds}.}
   \item{proper}{a logical value indicating whether synthetic data were 
     generated using proper synthesis.}
-  \item{population.inference}{a logical value indicating whether inference to 
-    population coefficients or to coefficients of the actual (observed) data is made.} 
+  \item{population.inference}{a logical value indicating whether inference 
+    is made to population coefficients or to the results that would be expected 
+    from an analysis of the original data (see above).} 
+  \item{incomplete}{a logical value indicating whether inference is to use 
+    the method proposed by Reiter (2003) for what he terms partially synthetic data.} 
   \item{fitting.function}{function used to fit the model.} 
   \item{m}{the number of synthetic versions of the original (observed) data.} 
-  \item{coefficients}{a matrix with combined estimates. It includes point 
-   estimates of coefficients (\code{B.syn}), their standard errors 
-   (\code{se(B.syn)}) and Z scores (\code{Z.syn}) for population 
-   and observed data quantities respectively. For inference to original data 
-   quantities it contains in addition estimates of the actual standard errors 
-   based on synthetic data (\code{se(Beta).syn}) and standard errors of 
-   Z scores (\code{se(Z.syn)}).} 
+  \item{coefficients}{a matrix with combined estimates. If inference is required
+    to the results that would be obtained from an analysis of the original data, 
+    (\code{population.inference = FALSE}) the coefficients are given by 
+    \code{xpct(Beta)}, the standard errors by \code{xpct(se.Beta)} and the 
+    corresponding Z-statistic by \code{xpct(Z)}. If the synthetic data are to 
+    be used to make inferences to population quantities 
+    (\code{population.inference = TRUE}), the coefficients are given by 
+    \code{Beta.syn}, their standard errors by \code{se.Beta.syn} and the 
+    Z-statistic by  \code{Z.syn} (see vignette on inference for more details).}
   \item{n}{a number of cases in the original data.} 
-  \item{k}{a number of cases in the synthesised data.}
+  \item{k}{the number of cases in the synthesised data. Note that if \code{k} 
+    and \code{n} are not equal and \code{population.inference = FALSE} (the default), 
+    then the standard errors produced will estimate what would be expected by 
+    an analysis of the original data set of size \code{n}.}
   \item{analyses}{\code{summary.glm} or \code{summary.lm} object respectively
     or a list of \code{m} such objects.} 
   \item{msel}{index or indices of synthetic data copies for which summaries 
-    of fitted models are produced. If \code{NULL} a summary of combined 
+    of fitted models are produced. If \code{NULL} only a summary of combined 
     estimates is produced.}
 }
 
@@ -65,11 +88,15 @@ synthesis (for details see Raab et al. (submitted 2014)).}
   creation of synthetic data in R. \emph{Journal of Statistical Software},
   \bold{74}(11), 1-26. \doi{10.18637/jss.v074.i11}.
 
-  Raab, G.M., Nowok, B. and Dibben, C. (resubmitted 2016). 
-  Practical data synthesis for large samples. \url{https://arxiv.org/pdf/1409.0217v7}
+  Raab, G.M., Nowok, B. and Dibben, C. (2017). Practical data synthesis for 
+  large samples. \emph{Journal of Privacy and Confidentiality}, \bold{7}(3), 
+  67-97. Available at: \url{http://repository.cmu.edu/jpc/vol7/iss3/4}
+
+  Reiter, J.P. (2003) Inference for partially synthetic, public use microdata 
+  sets. \emph{Survey Methodology}, \bold{29}, 181-188.
 }
 \seealso{
-\code{\link{summary}},\code{\link{print}}
+\code{\link{compare.fit.synds}}, \code{\link{summary}}, \code{\link{print}} 
 }
 \examples{
 ods <- SD2011[1:2000,c("sex","age","edu","ls","smoke")]

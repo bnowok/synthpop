@@ -39,14 +39,16 @@ lm.synds(formula, data, ...)
   \item{call}{the original call to \code{glm.synds} or \code{lm.synds}.}
   \item{mcoefavg}{combined (average) coefficient estimates.}
   \item{mvaravg}{combined (average) variance estimates of \code{mcoef}.}
+  \item{analyses}{\code{summary.glm} or \code{summary.lm} object respectively
+    or a list of \code{m} such objects.}
+  \item{fitting.function}{function used to fit the model.}    
+  \item{n}{a number of cases in the original data.}  
+  \item{k}{a number of cases in the synthesised data.}  
   \item{proper}{a logical value indicating whether synthetic data were 
     generated using proper synthesis.}
   \item{m}{the number of synthetic versions of the observed data.}
-  \item{analyses}{\code{summary.glm} or \code{summary.lm} object respectively
-    or a list of \code{m} such objects.}
-  \item{fitting.function}{function used to fit the model.}
-  \item{n}{a number of cases in the original data.}  
-  \item{k}{a number of cases in the synthesised data.}
+  \item{method}{a vector of synthesising methods applied to each variable
+    in the saved synthesised data.}
   \item{mcoef}{a matrix of coefficients estimates from all \code{m} syntheses.}
   \item{mvar}{a matrix of variance estimates from all \code{m} syntheses.}
 }

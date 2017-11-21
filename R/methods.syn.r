@@ -117,6 +117,14 @@ mcoefvar <- function(analyses, ...) {
 lm.synds <- function(formula, data, ...)
 {
  if (!class(data)=="synds") stop("Data must have class synds\n")
+ if (is.matrix(data$method)) data$method <- data$method[1,]
+ if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
+ if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
+ if (data$method[names(data$method)==as.character(formula[[2]])]=="" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ 
+ # Check validity of inference from vars not in visit sequence or with method ""
+ checkinf(vars, formula, data$visit.sequence, data$method)  
+
  call <- match.call()
  fitting.function <- "lm"
  analyses <- as.list(1:data$m)
@@ -132,11 +140,12 @@ lm.synds <- function(formula, data, ...)
  allcoefvar <- mcoefvar(analyses = analyses)
       
  # return the complete data analyses as a list of length m
- object <- list(call=call, mcoefavg = allcoefvar$mcoefavg, 
-             mvaravg = allcoefvar$mvaravg, proper = data$proper, m = data$m, 
-             analyses = analyses, fitting.function = fitting.function,
-             n = data$n, k=data$k, mcoef = allcoefvar$mcoef,
-             mvar = allcoefvar$mvar)
+ object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
+             mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+             fitting.function = fitting.function,
+             n = data$n, k = data$k, proper = data$proper, 
+             m = data$m, method = data$method, 
+             mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
  class(object) <- "fit.synds"
  return(object)
 }
@@ -147,6 +156,14 @@ lm.synds <- function(formula, data, ...)
 glm.synds <- function(formula, family="binomial", data, ...)
 {
  if (!class(data)=="synds") stop("Data must have class synds\n")
+ if (is.matrix(data$method)) data$method <- data$method[1,]
+ if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
+ if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
+ if (data$method[names(data$method)==as.character(formula[[2]])]=="" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ 
+ # Check validity of inference from vars not in visit sequence or with method ""
+ checkinf(vars, formula, data$visit.sequence, data$method)  
+
  call <- match.call()
  fitting.function <- "glm"
  analyses <- as.list(1:data$m)
@@ -162,13 +179,43 @@ glm.synds <- function(formula, family="binomial", data, ...)
  allcoefvar <- mcoefvar(analyses = analyses)
  
  # return the complete data analyses as a list of length m
- object <- list(call=call, mcoefavg = allcoefvar$mcoefavg, 
-             mvaravg = allcoefvar$mvaravg, proper = data$proper, m = data$m,
-             analyses = analyses, fitting.function = fitting.function,
-             n = data$n, k = data$k, mcoef = allcoefvar$mcoef,
-             mvar = allcoefvar$mvar)
+ object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
+             mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+             fitting.function = fitting.function,
+             n = data$n, k = data$k, proper = data$proper, 
+             m = data$m, method = data$method, 
+             mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
  class(object) <- "fit.synds"
  return(object)
+}
+
+
+###-----checkinf-----------------------------------------------------------
+# used in glm.synds and lm.synds 
+
+checkinf <- function(vars, formula, vs, method){
+  inform <- all.vars(formula) # get variables in formula
+  if("." %in% inform) inform <- vars
+  if (any(!inform %in% vars)) stop("Variable(s) in formula are not in synthetic data: ",
+    paste(inform[!inform %in% vars], collapse = ", "), call. = FALSE)
+  if (any(!inform %in% names(vs))) cat("\nSTERN WARNING: Variable(s) in formula are\nnot in visit sequence:",
+    paste(inform[!inform %in% names(vs)], collapse = ", "),
+"\n******************************************
+This inference will be wrong because these\nvariables will not match synthesised data
+******************************************\n\n")
+  inform <- inform[inform %in% names(vs)]
+  vsin <- vs[names(vs) %in% inform]
+  methin <- method[names(method) %in% inform]
+  methin <- methin[match(names(vsin), names(methin))] 
+  blankmeths <-(1:length(methin))[methin == ""]
+  if (!all(blankmeths==(1:length(blankmeths)))) { 
+    cat("\nSTERN WARNING: Variables in formula with\nblank methods are not at start of visit sequence",
+"\n******************************************
+This inference will be wrong because these\nvariables will not match synthesised data
+******************************************\nMethods in synthesis order:\n")
+  print(methin)
+  cat("\n")
+  }
 }
 
 
@@ -176,14 +223,18 @@ glm.synds <- function(formula, family="binomial", data, ...)
 
 print.fit.synds <- function(x, msel = NULL, ...)
 {
-  if (!is.null(msel) & !all(msel %in% (1:x$m))) stop("Invalid synthesis number(s)", call. = FALSE)
+  if (!is.null(msel) & !all(msel %in% (1:x$m))) stop("Invalid synthesis number(s).", call. = FALSE)
+  n <- sum(x$n); if (is.list(x$k)) k <- sum(x$k[[1]]) else k <- sum(x$k)
+
+  if (n != k | x$m>1) cat("Note: To get a summary of results you would expect from the original data, or for population inference use the summary function on your fit.\n") 
+  
   cat("\nCall:\n")
   print(x$call)
   if (is.null(msel)){
     cat("\nCombined coefficient estimates:\n")
     print(x$mcoefavg)
   } else {
-    cat("\nCoefficient estimates for selected syntheses:\n")
+    cat("\nCoefficient estimates for selected synthetic data set(s):\n")
     print(x$mcoef[msel,,drop=FALSE])
   }
   invisible(x)
@@ -192,121 +243,124 @@ print.fit.synds <- function(x, msel = NULL, ...)
 
 ###-----summary.fit.synds--------------------------------------------------
 
-summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL, partly = FALSE, ...)
-{ # df.residual changed to df[2] because didn't work for lm - check if that's ok
+summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL, 
+                              incomplete = FALSE, real.varcov = NULL, ...)
+{ # df.residual changed to df[2] because didn't work for lm 
   if (!class(object) == "fit.synds") stop("Object must have class fit.synds\n")
   m <- object$m
-  n <- sum(object$n)                                                     #!BN-15/08/2016, strata
-  if (is.list(object$k)) k <- sum(object$k[[1]]) else k <- sum(object$k) #!BN-15/08/2016, strata 
+  n <- sum(object$n)                                                     
+  if (is.list(object$k)) k <- sum(object$k[[1]]) else k <- sum(object$k)  
     
-  coefficients <- object$mcoefavg     # mean of coefficients (over m syntheses)
-  vars <- object$mvaravg              # mean of variances (over m syntheses)
+  coefficients <- object$mcoefavg  # mean of coefficients (over m syntheses)
+  if (!is.null(real.varcov))  vars <- diag(real.varcov)
+  else  vars <- object$mvaravg * k/n  # mean of variances (over m syntheses) * adjustment
 
-  if (population.inference == F){ ## inf to Q hat
+## Checks and warnings for incomplete method
+#---
+ if (incomplete == TRUE) {
+   if (population.inference == TRUE & m == 1) {
+     stop("You have selected population inference using a method for incompletely synthesised data with\n m = 1 - standard errors cannot be calculated.\n", call. = FALSE)
+   } else if (population.inference == TRUE & m < 5) {
+     cat("Note: You have selected population inference using a method for incompletely synthesised data with m = ", m, ",\nwhich is smaller than the minimum of 5 recommended. The estimated standard errors of\nyour coefficients may be inaccurate.\n", sep = "")
+   }
+ }
+#--- 
 
-    if(partly == TRUE){
-      bm = c(0)
-      for(i in 1:m){
-        bm = bm + ((object$mcoef[i,] - object$mcoefavg)^2 / (m - 1))
-      }
-      result <- cbind(coefficients,
-                      sqrt(bm/m),
-                      sqrt(vars*k/n),
-                      coefficients/sqrt(vars*k/n),
-                      #sqrt((1 + coefficients^2/vars/2/object$analyses[[1]]$df[2])*n/k/m)
-                      sqrt(1 + coefficients^2/vars/4/object$analyses[[1]]$df[2] * n/k/m))  #!?????
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","se(Beta).syn","Z.syn","se(Z.syn)")
-    }
-    else if (object$proper == F){
-      ## simple synthesis
-      result <- cbind(coefficients,
-                      sqrt(vars/m),
-                      sqrt(vars*k/n),
-                      coefficients/sqrt(vars*k/n),
-                      #sqrt((1 + coefficients^2/vars/2/object$analyses[[1]]$df[2])*n/k/m)
-                      sqrt(1 + coefficients^2/vars/4/object$analyses[[1]]$df[2] * n/k/m))  #!?????
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","se(Beta).syn","Z.syn","se(Z.syn)")
+## Inference to Q hat
+#---
+ if (population.inference == FALSE){ 
+   result <- cbind(coefficients,
+                   sqrt(vars),
+                   coefficients/sqrt(vars),2*pnorm(-abs(coefficients/sqrt(vars))))
+   colnames(result) <- c("xpct(Beta)", "xpct(se.Beta)", "xpct(z)", "Pr(>|xpct(z)|)")
+#--- 
+
+## Population inference to Q
+#---   
+ } else { 
+  
+  ## check that y variable is synthesised not needed
+  # if (!is.matrix(object$method)) {if ( object$method[names(object$method) == as.character(formula(object)[[2]])] == "" ) cat("\nWarning: If your response variable is not synthesised, the standard errors here are probably too large.\n")}
+  # else if ( object$method[1,][dimnames(object$method)[[2]] == as.character(formula(object)[[2]])] == "" ) cat("\nWarning: If your response variable is not synthesised, the standard errors here are probably too large.\n")
+    
+  ## incomplete method  
+   if(incomplete == TRUE){
+     bm <- apply(object$mcoef, 2, var)
+     result <- cbind(coefficients,
+                     sqrt(bm/m + vars),
+                     coefficients/sqrt(bm/m + vars),
+                     2*pnorm(-abs(coefficients/sqrt(bm/m + vars))))
+
+  ## simple synthesis   
     } else {
-      ## proper synthesis
-      result <- cbind(coefficients,
-                      sqrt(vars*(1+k/n)/m), 
-                      sqrt(vars*k/n),
-                      coefficients/sqrt(vars*k/n),
-                      #sqrt((1 + k/n + coefficients^2/vars/2/object$analyses[[1]]$df[2])*n/k/m)
-                      sqrt(1 + coefficients^2/vars/4/object$analyses[[1]]$df[2]*n/k/m))    #!?????
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","se(Beta).syn","Z.syn","se(Z.syn)")
+      if (object$proper == FALSE) Tf <- vars*(1+n/k/m) else Tf <- vars*(1+(n/k+1)/m)
+      result <- cbind(coefficients, 
+                      sqrt(Tf), 
+                      coefficients/sqrt(Tf),
+                      2*pnorm(-abs(coefficients/sqrt(Tf)))) 
     }
-
-  } else { ## pop inference to Q
-
-  	if(partly == TRUE){
-      bm = c(0)
-      for(i in 1:m){
-        bm = bm + ((object$mcoef[i,] - object$mcoefavg)^2 / (m - 1))
-      }
-      result <- cbind(coefficients,
-                      sqrt(bm/m + vars),
-                      coefficients/sqrt(bm/m + vars))
-                      #sqrt((1 + coefficients^2/vars/2/object$analyses[[1]]$df[2])*n/k/m)
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","Z.syn")
-    }
-    else if (object$proper == F){
-      ## simple synthesis
-      Tf <- vars*(k/n+1/m)
-      result <- cbind(coefficients,sqrt(Tf),coefficients/sqrt(Tf))
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","Z.syn")
-    }
-    else {
-      ## proper synthesis
-      Tf <- vars*(k/n+(1+k/n)/m)
-      result <- cbind(coefficients,sqrt(Tf),coefficients/sqrt(Tf))
-      dimnames(result)[[2]] <- c("B.syn","se(B.syn)","Z.syn")
-    }
+    colnames(result) <- c("Beta.syn","se.Beta.syn","z.syn","Pr(>|z.syn|)")
   }
-  res <- list(call = object$call, proper = object$proper,
-              population.inference = population.inference,
-              fitting.function = object$fitting.function,
-              m = m, coefficients = result, n = n, k = k, 
-              analyses = object$analyses, msel = msel)
-  class(res) <- "summary.fit.synds"
-  return(res)
+#---
+  
+ res <- list(call = object$call, proper = object$proper,
+             population.inference = population.inference,
+             incomplete = incomplete, 
+             fitting.function = object$fitting.function,
+             m = m, coefficients = result, n = n, k = k, 
+             analyses = object$analyses, msel = msel)
+ class(res) <- "summary.fit.synds"
+ return(res)
 }
 
 
 ###-----print.summary.fit.synds--------------------------------------------
 
 print.summary.fit.synds <- function(x, ...) {
-  if (!is.null(x$msel) & !all(x$msel %in% (1:x$m))) stop("Invalid synthesis number(s)", call. = FALSE)
-  
-  if (is.null(x$msel)){
-    if (x$m==1) {
-      cat("\nFit to synthetic data set with a single synthesis.\n")
-    } else {
-      cat("\nFit to synthetic data set with ",x$m," syntheses.\n",sep="")
-    }
-    if (x$population.inference) {
-      cat("Inference to population coefficients.\n")
-    } else {
-      cat("Inference to coefficients and standard errors\nthat would be obtained from the observed data.\n")
-    }
-    cat("\nCall:\n")
-    print(x$call)
-    cat("\nCombined estimates:\n")
-    if (x$population.inference){
-      print(x$coefficients[,c("B.syn","se(B.syn)","Z.syn")])
-    } else {
-      print(x$coefficients[,c("B.syn","se(Beta).syn","Z.syn")])
-    }
-  } else {
-    cat("\nCall:\n")
-    print(x$call)
-    cat("\nCoefficient estimates for selected syntheses:\n")
-    for(i in x$msel) {          
-      cat("\nsyn=",i,"\n",sep="")
-      print(x$analyses[[i]]$coefficients)
-    }
-  }      
-  invisible(x)
+ if (!is.null(x$msel) & !all(x$msel %in% (1:x$m))) stop("Invalid synthesis number(s)", call. = FALSE)
+ cat("Warning: Note that all these results depend on the synthesis model being correct.\n")  
+
+ if (x$m==1) {
+   cat("\nFit to synthetic data set with a single synthesis.\n")
+ } else {
+   cat("\nFit to synthetic data set with ",x$m," syntheses.\n",sep="")
+ }
+
+ if (x$population.inference) {
+   cat("Inference to population coefficients.\n")
+ } else {
+   cat("Inference to coefficients and standard errors that\nwould be obtained from the observed data.\n")
+ }
+   
+ cat("\nCall:\n")
+ print(x$call)
+ cat("\nCombined estimates:\n")
+ printCoefmat(x$coefficients)
+
+ if (!is.null(x$msel)) {
+   allcoef <- lapply(lapply(x$analyses[x$msel], "[[", "coefficients"), as.data.frame)
+   
+   estimates <- lapply(allcoef, "[", "Estimate")
+   allestimates <- do.call(cbind, estimates)
+   
+   zvalues <- lapply(allcoef, "[", "z value")
+   allzvalues <- do.call(cbind, zvalues)
+   
+   colnames(allestimates) <- colnames(allzvalues) <- paste0("syn=",x$msel)
+   
+   cat("\nEstimates for selected syntheses contributing to the combined estimates:\n")
+   
+   cat("\nCoefficients:\n")
+   print(allestimates)
+   cat("\nz values:\n")
+   print(allzvalues)
+   
+   # for(i in x$msel) {          
+   #   cat("\nsyn=",i,"\n",sep="")
+   #   print(x$analyses[[i]]$coefficients)
+   # }
+ }      
+ invisible(x)
 }
 
 
@@ -320,7 +374,7 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
     cat("\nEstimates for the observed data set:\n")
     print(x$coef.obs)
     cat("\nCombined estimates for the synthetised data set(s):\n")
-    print(x$coef.syn[,c("B.syn","se(Beta).syn","se(B.syn)","Z.syn")])
+    print(x$coef.syn)
   }  
     
   cat("\nDifferences between results based on synthetic and observed data:\n")
@@ -332,9 +386,9 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
   }   
   cat("\nMean confidence interval overlap: ", x$mean.ci.overlap)
   cat("\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
-  cat("\nMean lack-of-fit: ", x$mean.lof )
-  cat("\nMean lack-of-fit ratio to expected: ", x$mean.lof.exp)
-  cat("\nStandardised lack-of-fit: ", x$std.lof ,"\n")
+  cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval,3), " for test that synthesis model is compatible ", sep="")
+  if (x$incomplete==FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep="")
+  else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep="") 
 
   if (!is.null(x$ci.plot)){
     cat("\nConfidence interval plot:\n")
@@ -591,4 +645,3 @@ summary.out <- function (z, digits = max(3L, getOption("digits") - 3L), ...)
     attr(z, "class") <- c("table")
     z
 }
-

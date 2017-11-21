@@ -296,20 +296,25 @@ dfNA <- function(data, na){
 compare.fit.synds <- function(object, data, plot = "Z",
   print.coef = FALSE, return.plot = TRUE, plot.intercept = FALSE, 
   lwd = 1, lty = 1, lcol = c("#1A3C5A","#4187BF"),
-  dodge.height = .5, point.size = 2.5, partly = FALSE, ...) {   # c("#132B43", "#56B1F7")
+  dodge.height = .5, point.size = 2.5, incomplete = FALSE, 
+  population.inference = FALSE, ci.level = 0.95, ...) {   # c("#132B43", "#56B1F7")
 
- # compares and plots fits to synthetic and real data
+ # compares and plots fits to synthetic and original data
  # first parameter must be a fit to synthetic data from glm.synds()
  # or lm.synds()
  value <- "Value"
  coefficient <- c("Coefficient", "Model")
-
+ m <- object$m
+ n <- sum(object$n)
+ if (is.list(object$k)) k <- sum(object$k[[1]]) else k <- sum(object$k)
+ fitting.function <- object$fitting.function
+ syn.coef    <- object$mcoefavg
+ 
  call <- match.call()
  # if (!class(object)=="fit.synds") stop("Object must have class fit.synds\n")
  if (!is.data.frame(data)) stop("Data must be a data frame\n")  # theoretically can be a matrix (?)
-
- syn.fit          <- summary.fit.synds(object, partly = partly)
- fitting.function <- object$fitting.function
+ if (ci.level <= 0 | ci.level > 1) stop("ci.level must be beteen 0 and 1.\n")
+ if (incomplete == TRUE & m < length(syn.coef) + 1) stop("\nYou have selected incompletely synthesised data with m less than number of coefficients.\nLack-of-fit test cannot be calculated unless m > ", length(syn.coef),".\n", call. = FALSE)
 
  # get fit to real data
  if (fitting.function=="lm") {
@@ -321,32 +326,66 @@ compare.fit.synds <- function(object, data, plot = "Z",
                      family=object$call$family,data=call$data)))
  }
  
- real.varcov <- real.fit$cov.unscaled                     #! GR-16/12/16 begin
+ real.varcov <- real.fit$cov.unscaled                  
  real.coef   <- real.fit$coefficients[,1] 
- lack.of.fit <- rep(NA,object$m)
- for (i in 1:summary(object)$m) {
-   diff <- real.coef - summary(object)$analyses[[i]]$coefficients[,1]
-   lack.of.fit[i] <- t(diff) %*% solve(real.varcov) %*% (diff)
- }                                                        #! GR-16/12/16 end 
+ real.se     <- real.fit$coefficients[,2]  
+
+
+ if (population.inference==FALSE) { syn.fit  <- summary.fit.synds(object,real.varcov=real.varcov,incomplete=incomplete)}
+ else syn.fit  <- summary.fit.synds(object,incomplete=incomplete,population.inference=TRUE,real.varcov=real.varcov)
  
  if (return.plot == TRUE){
    yvar <- as.character(formula(object)[[2]])
 
+   # # prepare data for plotting confidence intervals (one data frame)
+   # if (plot=="Z"){
+   #   BetaCI <- dfCI(real.fit, Z = TRUE, ci.level = ci.level)
+   #   BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn",
+   #               model.name = "synthetic", ci.level = ci.level)
+   #   xlab = "Z value"
+   #   title = paste0("Z values for fit to ",yvar)
+   # } else {
+   #   BetaCI <- dfCI(real.fit)
+   #   if (population.inference == FALSE) {
+   #     BsynCI <- dfCI(syn.fit, names.est.se = c("B.syn","se(B).syn"),
+   #                    model.name = "synthetic", ci.level = ci.level)  
+   #   } else {
+   #     BsynCI <- dfCI(syn.fit, names.est.se = c("B.syn","se(B.syn)"),
+   #                    model.name = "synthetic", ci.level = ci.level)
+   #   }
+   #   xlab = "Value"
+   #   title = paste0("Coefficients for fit to ",yvar)
+   # }
+   
    # prepare data for plotting confidence intervals (one data frame)
    if (plot=="Z"){
-     BetaCI <- dfCI(real.fit, Z = TRUE)
-     BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn",
-                 model.name = "synthetic")
+     BetaCI <- dfCI(real.fit, Z = TRUE, ci.level = ci.level)
+     
+     if (population.inference == FALSE) {  ## get interval from real var
+       BsynCI <- BetaCI
+       for (i in c(1,3,4)) BsynCI[,i] <- BsynCI[,i] + (syn.coef - real.coef)/real.se    #!GR ci by shifting
+       BsynCI[,5] <- "synthetic"
+     } else {
+       BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn", model.name = "synthetic", ci.level = ci.level)
+     }
      xlab = "Z value"
      title = paste0("Z values for fit to ",yvar)
+   
    } else {
-     BetaCI <- dfCI(real.fit)
-     BsynCI <- dfCI(syn.fit, names.est.se = c("B.syn","se(Beta).syn"),
-                 model.name = "synthetic")
+     BetaCI <- dfCI(real.fit, Z = FALSE, ci.level = ci.level)  #!GR 9/17  next line name.Z changed
+     
+     if (population.inference==FALSE) {  ## get interval from real var
+       BsynCI <- BetaCI
+       for (i in c(1,3,4)) BsynCI[,i] <- BsynCI[,i] + (syn.coef - real.coef)    #!GR ci by shifting
+       BsynCI[,5] <- "synthetic"
+     } else {
+       BsynCI <- dfCI(syn.fit, Z = FALSE, name.Z = "syn.coef", model.name = "synthetic", ci.level = ci.level)
+     }
+
      xlab = "Value"
      title = paste0("Coefficients for fit to ",yvar)
    }
-
+   
    modelCI <- rbind.data.frame(BetaCI, BsynCI)
    rownames(modelCI) <- 1:nrow(modelCI)
 
@@ -372,27 +411,53 @@ compare.fit.synds <- function(object, data, plot = "Z",
    p
  } else p <- NULL
 
-  # detailed results
-  res.obs <- real.fit$coefficients[,-4]
-  colnames(res.obs) <- c("Beta","se(Beta)","Z")
-  res.syn <- syn.fit$coefficients[,c("B.syn","se(Beta).syn","se(B.syn)","Z.syn","se(Z.syn)")]
-  res.syn <- res.syn[order(match(rownames(res.syn), rownames(res.obs))), ]
-  res.overlap <- compare.CI(res.syn, res.obs, intercept = TRUE)
-  res.diff    <- compute.diff(res.syn, res.obs, intercept = TRUE)
+ # detailed results
+ res.obs <- real.fit$coefficients[,-4]
+ colnames(res.obs) <- c("Beta","se(Beta)","Z")
+ # res.syn  <- syn.fit$coefficients
+ res.syn  <- syn.fit$coefficients[,-4] 
+ res.syn  <- res.syn[order(match(rownames(res.syn), rownames(res.obs))), ]
+ res.overlap <- compare.CI(res.syn, res.obs, ci.level = ci.level, intercept = TRUE)
+ ncoef <- nrow(res.obs) 
+ 
+ diff <- syn.coef - real.coef
+ if(incomplete == TRUE){   ####  var cov for incomplete
+   QB <- matrix(NA, m, length(object$mcoefavg))
+     for(i in 1:m){
+       QB[i,] <- object$mcoef[i,] - object$mcoefavg
+     }
+     lof.varcov <- t(QB) %*% QB/(m-1)/m
+ }
+ else if (object$proper == TRUE) lof.varcov <- real.varcov * (1+n/k)/m
+ else lof.varcov <- real.varcov*n/k/m
 
-  # calculate summary measures
-  ncoef <- nrow(res.obs) 
-  mean.ci.overlap   <-  mean(res.overlap[,1])
-  mean.abs.std.diff <-  mean(abs(res.diff[,1]))
-  mean.lof          <-  mean(lack.of.fit)
-  mean.lof.exp      <-  mean(lack.of.fit)/ncoef
-  std.lof           <- (mean(lack.of.fit) - ncoef)/sqrt(2*ncoef)
+ lack.of.fit <- t(diff) %*% solve(lof.varcov) %*% diff  #!GR multiply by m for combined test
+ if (incomplete == FALSE) lof.pvalue  <- 1 - pchisq(lack.of.fit,ncoef)
+ else {
+   lack.of.fit <- lack.of.fit * (object$m-ncoef)/ncoef/(object$m-1) #!GR18/10/17 Hotellings T square
+   lof.pvalue  <- 1 - pf(lack.of.fit, ncoef, object$m - ncoef)      #!GR18/10/17 changed degrees of freedom for denom
+ }
+ 
+ # res.diff <- compute.diff(res.syn, res.obs, intercept = TRUE, m = m, n = n, k = k)
+ # res.diff <- compute.diff(syn.coef, res.obs, intercept = TRUE,m=object$m,k=k,n=dim(data)[1]) #gr
+ res.diff <- compute.diff(syn.coef, res.obs, intercept = TRUE, lof.varcov = lof.varcov)
+ 
+ # calculate summary measures
+ mean.ci.overlap   <-  mean(res.overlap[,1])
+ mean.abs.std.diff <-  mean(abs(res.diff[,1]))
+ 
+  #mean.lof          <-  mean(lack.of.fit)
+  #mean.lof.exp      <-  mean(lack.of.fit)/ncoef
+  #std.lof           <- (mean(lack.of.fit) - ncoef)/sqrt(2*ncoef)
 
  res <- list(call = object$call, coef.obs = res.obs, coef.syn = res.syn, 
-   coef.diff = res.diff, ci.overlap = res.overlap, lack.of.fit = lack.of.fit,
-   mean.ci.overlap =  mean.ci.overlap, mean.abs.std.diff = mean.abs.std.diff,
-   mean.lof = mean.lof, mean.lof.exp = mean.lof.exp, std.lof = std.lof,      
-   ci.plot = p, print.coef = print.coef, m = object$m, ncoef = ncoef)  
+   coef.diff = res.diff, mean.abs.std.diff = mean.abs.std.diff,
+   ci.overlap = res.overlap, mean.ci.overlap =  mean.ci.overlap, 
+   lack.of.fit = lack.of.fit, lof.pvalue = lof.pvalue, 
+   ci.plot = p, print.coef = print.coef,       
+   m = object$m, ncoef = ncoef,
+   incomplete = incomplete, 
+   population.inference = population.inference)  
 
  class(res) <- "compare.fit.synds"
  return(res)
@@ -402,14 +467,17 @@ compare.fit.synds <- function(object, data, plot = "Z",
 ###-----dfCI---------------------------------------------------------------
 # extract info for plotting confidence intervals
 dfCI <- function(modelsummary, names.est.se = c("Estimate","Std. Error"),
-          model.name = "observed", CI = 1.96, Z = FALSE, 
+          model.name = "observed",  ci.level = 0.95, Z = FALSE, 
           name.Z = colnames(modelsummary$coefficients)[3]){
   
+  CI <- qnorm(1- (1 - ci.level)/2)
   if (!Z) {
-    msCI <- as.data.frame(modelsummary$coefficients[,names.est.se])
+    #msCI <- as.data.frame(modelsummary$coefficients[,names.est.se])
+    msCI <- as.data.frame(modelsummary$coefficients[,1:2]) 
     names(msCI) <- c("Value", "SE")
   } else {
-    msCI <- as.data.frame(modelsummary$coefficients[,name.Z])
+    # msCI <- as.data.frame(modelsummary$coefficients[,name.Z])
+    msCI <- as.data.frame(modelsummary$coefficients[,3]) 
     names(msCI) <- c("Value")
     msCI$SE <- 1
   }  
@@ -426,8 +494,8 @@ dfCI <- function(modelsummary, names.est.se = c("Estimate","Std. Error"),
 
 
 ###-----compare.CI---------------------------------------------------------
-compare.CI <- function(synthetic, observed, intercept, ...){
-
+compare.CI <- function(synthetic, observed, ci.level, intercept, ...){
+CI <- qnorm(1- (1 - ci.level)/2)
 ##Initiate
  if(nrow(observed) > nrow(synthetic)){
    numVar <- nrow(synthetic); rNames <- rownames(synthetic)
@@ -441,10 +509,10 @@ compare.CI <- function(synthetic, observed, intercept, ...){
  for(i in 1:numVar) {
 
 ##Store CIs
- syn.upper <- synthetic[i, 1] + (1.96 * synthetic[i, 2])
- syn.lower <- synthetic[i, 1] - (1.96 * synthetic[i, 2])
- obs.upper <- observed[i, 1] + (1.96 * observed[i, 2])
- obs.lower <- observed[i, 1] - (1.96 * observed[i, 2])
+ syn.upper <- synthetic[i, 1] + (CI * synthetic[i, 2])
+ syn.lower <- synthetic[i, 1] - (CI * synthetic[i, 2])
+ obs.upper <- observed[i, 1] + (CI * observed[i, 2])
+ obs.lower <- observed[i, 1] - (CI * observed[i, 2])
 	  
 ## CI overlap
  overlap.lower <- max(obs.lower, syn.lower)       
@@ -472,17 +540,18 @@ compare.CI <- function(synthetic, observed, intercept, ...){
 
 
 ###-----compute.diff-------------------------------------------------------
-compute.diff <- function(synthetic, observed, intercept, ...){
- tempStdDiff <- cbind((synthetic[,"B.syn"] - observed[,"Beta"]) / synthetic[,"se(Beta).syn"], 
-   (synthetic[,"Z.syn"] - observed[,"Z"]) / synthetic[,"se(Z.syn)"])
- 
- pval <- round(2 * (1 - pnorm(abs(tempStdDiff))), 3)
- coefdiff <- data.frame("Std. coef diff" = tempStdDiff[, 1], 
-                    "p value" = pval[, 1], check.names = F)
- 
- if(intercept == FALSE){
-   coefdiff = coefdiff[-1, ]
- }
- return(coefdiff)
-}
+compute.diff <- function(synthetic, observed, intercept, lof.varcov, ...){  
+  
+  # tempStdDiff <- cbind((synthetic[,"B.syn"] - observed[,"B"]) / synthetic[,2]) 
+  tempStdDiff <- (synthetic - observed[,1]) / observed[,2] 
+  # pval <- round(2 * (1 - pnorm(sqrt(m*k/n)*abs(tempStdDiff))), 3)
+  
+  pval <- round(2 * (1 - pnorm(abs(synthetic - observed[,1])/sqrt(diag(lof.varcov)))), 3) 
+  coefdiff <- data.frame("Std. coef diff" = tempStdDiff, 
+                         "p value" = pval, check.names = FALSE)
 
+  if(intercept == FALSE){
+    coefdiff = coefdiff[-1, ]
+  }
+  return(coefdiff)
+} 

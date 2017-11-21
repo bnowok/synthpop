@@ -213,10 +213,6 @@ check.method.syn <- function(setup, data, proper) {
  event          <- setup$event
  denom          <- setup$denom                    #GRdenom new
 
- # check if var has predictors
- if (sum(pred) > 0) has.pred <- apply(pred != 0, 1, any)   # GR condition added
- else has.pred <- rep(0,nvar)
-
  # change method for constant variables but leave passive variables untouched
  # factors and character variables with missing data won't count,
  # as NA is made into an additional level
@@ -233,7 +229,7 @@ check.method.syn <- function(setup, data, proper) {
      if (constant) {
        if (any(vis == j)) {
 	       method[j] <- "constant" 
-         if (print.flag==T) cat('\nVariable ', varnames[j], 
+         if (print.flag==T) cat('Variable ', varnames[j], 
            ' has only one value so its method has been changed to "constant".\n', sep = "")
 	       pred[j, ] <- 0
        }
@@ -279,6 +275,10 @@ check.method.syn <- function(setup, data, proper) {
  }
  #---
 
+ # check if var has predictors
+ if (sum(pred) > 0) has.pred <- apply(pred != 0, 1, any)   # GR condition added
+ else has.pred <- rep(0,nvar) 
+ 
  if(any(method == "parametric")){ # the default argument
    # set method for first in visit.sequence to "sample"
    # method[vis[1]] <- "sample"  
@@ -295,7 +295,7 @@ check.method.syn <- function(setup, data, proper) {
 	       else if(is.logical(y))   method[j] <- default.method[2]
 	       else if(nlevels(y)!=1) stop("Variable ",j," ",varnames[j],
 		     " type not numeric or factor.") # to prevent a constant values failing
-	     }
+	     } else if (method[j]!="constant") method[j] <- "sample" 
 	   }
 	 }
  }
@@ -308,12 +308,15 @@ check.method.syn <- function(setup, data, proper) {
    fullNames <- method[active]                                #!GR-29/8/16
    if (m==0) fullNames[grep("nested",fullNames)] <- "nested"  #!GR-29/8/16
    fullNames <- paste("syn", fullNames,sep=".")               #!GR-29/8/16
-   notFound  <- !sapply(fullNames, exists, mode="function", inherit=TRUE)
+   notFound  <- !(fullNames %in% c('syn.bag', 'syn.cart', 'syn.cartbboot', 'syn.collinear', 
+      'syn.ctree', 'syn.cubertnorm', 'syn.lognorm', 'syn.logreg', 'syn.nested', 'syn.norm', 
+      'syn.normrank', 'syn.pmm', 'syn.polr', 'syn.polyreg', 'syn.ranknorm', 'syn.rf', 
+      'syn.sample', 'syn.satcat', 'syn.smooth', 'syn.sqrtnorm', 'syn.survctree') | 
+      sapply(fullNames, exists, mode = "function", inherit = TRUE)) 
    if (any(notFound)) stop(paste("The following functions were not found:",
-                           paste(fullNames[notFound],collapse=", ")))
+                           paste(unique(fullNames[notFound]),collapse=", ")), call. = FALSE)
  }
- 
- 
+
  # type checks on built-in  methods 
 
  for(j in vis) {
@@ -467,8 +470,7 @@ check.method.syn <- function(setup, data, proper) {
      }                 
    } 
  } 
- 
- 
+
  setup$event            <- event
  setup$method           <- method
  setup$predictor.matrix <- pred
@@ -477,7 +479,7 @@ check.method.syn <- function(setup, data, proper) {
  
  return(setup)
 }
-##--------------------end of--check.method.syn-------------------------
+##--------------------end-of--check.method.syn-------------------------
  
 
 ##------------------check.rules.syn------------------------------------
@@ -648,7 +650,7 @@ check.rules.syn <- function(setup, data) {
  call <- match.call()
  nvar <- ncol(data)
  if (!is.na(seed) & seed=="sample") {
-   seed <- sample.int(1000,1)
+   seed <- sample.int(1e9,1)
    # cat("No seed has been provided and it has been set to ", seed,".\n\n", sep="")
  }
  if (!is.na(seed)) set.seed(seed)
@@ -803,19 +805,9 @@ check.rules.syn <- function(setup, data) {
    levels(data[,j])[is.na(levels(data[,j]))] <- "NAlogical"          
  }
 
- # Identify any factors with > maxfaclevels levels that are in visit.sequence
- no.fac.levels <- sapply(data, function(x) length(levels(x)))
- too.many.levels <- no.fac.levels > maxfaclevels
- notsmapling <- !(grepl("nested", method) | grepl("sample", method))
- if (any(inpred & too.many.levels & notsmapling)) {
-   stop("Factor(s) with more than ",maxfaclevels," levels: ",
-     paste0(varnames[inpred & too.many.levels]," (",
-     no.fac.levels[inpred & too.many.levels],")",collapse=", "), call. = FALSE,
-     "\nYou can increase 'maxfaclevels' to continue but it may cause computational problems. \nConsider removing factor(s) from prediction matrix, combining categories or using 'nested' method.\n\n")
- }
  
 #---
- #browser()
+ # browser()
  setup  <- check.method.syn(setup, data, proper)
  if (any(rules!="")) setup <- check.rules.syn(setup, data)
 
@@ -828,6 +820,17 @@ check.rules.syn <- function(setup, data) {
  cont.na          <- setup$cont.na
  default.method   <- setup$default.method
  denom            <- setup$denom                       #GRdenom new
+
+ # Identify any factors with > maxfaclevels levels that are in visit.sequence
+ no.fac.levels <- sapply(data, function(x) length(levels(x)))
+ too.many.levels <- no.fac.levels > maxfaclevels
+ notsmapling <- !(grepl("nested", method) | grepl("sample", method) | grepl("satcat", method) | grepl("constant", method))
+ if (any(inpred & too.many.levels & notsmapling)) {
+   stop("Factor(s) with more than ",maxfaclevels," levels: ",
+     paste0(varnames[inpred & too.many.levels]," (",
+     no.fac.levels[inpred & too.many.levels],")",collapse=", "), call. = FALSE,
+     "\nYou can increase 'maxfaclevels' to continue but it may cause computational problems. \nConsider removing factor(s) from prediction matrix, combining categories or using 'nested' method.\n\n")
+ }
 
  # Not used variables are identified and dropped if drop.not.used==T
  # reclculate inpred & notevent in case they have changed after

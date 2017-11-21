@@ -9,19 +9,10 @@
 # and if strata != NULL calling syn.strata
 # ?????
 
-
-# To check:
-# 1. Defaults agree with syn() ?
-
-# To do:
-# 1. NAs in a stratifying variable/indicator: combine with another stratum? 
-
 # Other issues:
 # - multiple printout (per strata, per m)
-# - print strata names?
 # - compare() by strata?
-
-# 12/08/2016:error when zero number of observation for strata in synthetic data
+# - k as a sum?
 
 syn.strata <- function(data, strata = NULL, 
                 minstratumsize = 10 + 10 * length(visit.sequence), 
@@ -43,6 +34,11 @@ syn.strata <- function(data, strata = NULL,
  
  m0 <- max(1, m)
 
+ if (!is.na(seed) & seed == "sample") {
+   seed <- sample.int(1e9,1)
+ }
+ if (!is.na(seed)) set.seed(seed)
+ 
  # CHECKS
  #--------
  if (is.null(strata)) stop("Argument strata is missing.", call. = FALSE) 
@@ -114,7 +110,7 @@ syn.strata <- function(data, strata = NULL,
  synds <- list(setNames(vector("list",length(synds.names)),synds.names)) 
  synds <- rep(synds, m0)
  sel.names <- match(c("call", "m", "predictor.matrix", "proper", "strata.syn",
-   "strata.lab", "models"), synds.names)
+   "strata.lab", "models", "seed"), synds.names)
  same.by.m <- c("call", "m", "method", "visit.sequence", "predictor.matrix", 
    "smoothing", "event", "denom", "proper", "n", "rules", "rvalues", "cont.na", 
    "semicont", "drop.not.used", "drop.pred.only", "models", "seed", "var.lab", 
@@ -126,7 +122,7 @@ syn.strata <- function(data, strata = NULL,
  strata.n.syn <- vector("list", m0) 
  for (j in 1:m0){ 
    synds[[j]]$strata.syn <- sort(factor(sample(stratalev.lab, k, replace = TRUE, 
-     prob = strata.n.obs), levels = stratalev.lab))   
+     prob = strata.n.obs), levels = stratalev.lab, exclude = NULL))   
    synds[[j]]$strata.lab <- stratalev.lab
    strata.n.syn[[j]] <- table(synds[[j]]$strata.syn, deparse.level = 0)
    if (tab.stratasyn == TRUE) {  
@@ -147,14 +143,22 @@ syn.strata <- function(data, strata = NULL,
      syn.args$minstratumsize <- NULL
    syn.args$m <- 1
    syn.args$visit.sequence <- visit.sequence
+   # vs <- visit.sequence
+   # syn.args$visit.sequence <- c(vs[(vs %in% strata)],vs[!(vs %in% strata)])  #!GR 9/17 move strata to start of visit sequence
+  
    
    for (i in 1:nstrata) {
      if (print.flag) cat("\nm = ",j,", strata = ", stratalev.lab[i],
        "\n-----------------------------------------------------\n", sep="")
-     syn.args$data   <- data[strata.lab == stratalev.lab[i],]
-     syn.args$k      <- strata.n.syn[[j]][i]; names(syn.args$k) <- "strata"
+     if (!is.na(stratalev.lab[i])) {
+       syn.args$data <- data[strata.lab == stratalev.lab[i],]  
+     } else {
+       syn.args$data <- data[is.na(as.character(strata.lab)),]
+     }
+     syn.args$k <- strata.n.syn[[j]][i]; names(syn.args$k) <- "strata"
+     syn.args$seed <- NA 
      if (syn.args$k == 0 | m==0) syn.args$m <- 0 else syn.args$m <- 1
-     synds.ind[[i]]  <- do.call("syn", syn.args)
+     synds.ind[[i]] <- do.call("syn", syn.args)
    }
    synds[[j]]$call <- match.call()
    synds[[j]]$m <- m
@@ -163,6 +167,7 @@ syn.strata <- function(data, strata = NULL,
      paste0("synds.ind[[", 1:nstrata, "]]$predictor.matrix", collapse = ", "),")")))
    synds[[j]]$models <- eval(parse(text = paste0("list(", 
      paste0("synds.ind[[", 1:nstrata, "]]$models", collapse = ", "),")")))
+   synds[[j]]$seed <- seed
    synds[[j]][-sel.names] <- eval(parse(text = paste0("Map(rbind, ", 
      paste0("synds.ind[[", 1:nstrata, "]][-sel.names]", collapse = ", "),")")))
    if (k > 0 & m > 0) rownames(synds[[j]]$syn) <- 1:k

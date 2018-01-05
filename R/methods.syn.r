@@ -4,7 +4,7 @@ print.synds <- function(x, ...){
   cat("Call:\n($call) ")
   print(x$call)
   cat("\nNumber of synthesised data sets: \n($m) ",x$m,"\n")  
-  if (x$m==1){
+  if (x$m == 1) {
     cat("\nFirst rows of synthesised data set: \n($syn)\n")
     print(head(x$syn))
   } else {
@@ -25,24 +25,24 @@ print.synds <- function(x, ...){
 ###-----summary.synds------------------------------------------------------
 
 summary.synds <- function(object, msel = NULL, 
-  maxsum = 7, digits = max(3, getOption("digits")-3), ...){
+  maxsum = 7, digits = max(3, getOption("digits") - 3), ...){
   if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s)", call. = FALSE)
 
   sy <- list(m = object$m, msel = msel, method = object$method)
 
-  if (object$m == 1){
+  if (object$m == 1) {
     sy$result <- summary(object$syn,...)
-  } else if (is.null(msel)){
+  } else if (is.null(msel)) {
     zall <- vector("list",object$m) 
     for (i in 1:object$m) zall[[i]] <- lapply(object$syn[[i]], summary,
       maxsum = maxsum, digits = digits, ...)
     zall.df <- Reduce(function(x,y) mapply("rbind",x,y),zall)
     meanres <- lapply(zall.df, function(x) apply(x,2,mean))
     sy$result <- summary.out(meanres)
-  } else if (length(msel)==1){
+  } else if (length(msel) == 1) {
     sy$result <- summary(object$syn[[msel]],...)
   } else {
-    for (i in (1:length(msel))){
+    for (i in (1:length(msel))) {
       sy$result[[i]] <- summary(object$syn[[msel[i]]],...)
     }
   }
@@ -55,26 +55,26 @@ summary.synds <- function(object, msel = NULL,
 
 print.summary.synds <- function(x, ...){
 
- if (x$m==1){
+ if (x$m == 1) {
    cat("Synthetic object with one synethesis using methods:\n")
    print(x$method)
    cat("\n")
    print(x$result)
- } else if (is.null(x$msel)){
-   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep="")
+ } else if (is.null(x$msel)) {
+   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep = "")
    print(x$method)
-   cat("\nSummary (average) for all synthetic data sets:\n",sep="")
+   cat("\nSummary (average) for all synthetic data sets:\n",sep = "")
    print(x$result)  
- } else if (length(x$msel)==1){
-   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep="")
+ } else if (length(x$msel) == 1) {
+   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep = "")
    print(x$method)
-   cat("\nSummary for synthetic data set ",x$msel,":\n",sep="")
+   cat("\nSummary for synthetic data set ",x$msel,":\n",sep = "")
    print(x$result)
  } else {
-   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep="")
+   cat("Synthetic object with ",x$m," syntheses using methods:\n",sep = "")
    print(x$method)
-   for (i in (1:length(x$msel))){
-     cat("\nSummary for synthetic data set ",x$msel[i],":\n",sep="")
+   for (i in (1:length(x$msel))) {
+     cat("\nSummary for synthetic data set ",x$msel[i],":\n",sep = "")
      print(x$result[[i]])
    }
  }
@@ -97,10 +97,10 @@ mcoefvar <- function(analyses, ...) {
     allnames <- Reduce(union,namesbyfit)
     matcoef <- matvar <- matrix(NA, m, length(allnames))
     dimnames(matcoef)[[2]] <- dimnames(matvar)[[2]] <- allnames
-    for (i in 1:m){
+    for (i in 1:m) {
       pos <- match(namesbyfit[[i]],allnames)
       matcoef[i,pos] <- analyses[[i]]$coefficients[,1]
-      matvar [i,pos] <- analyses[[i]]$coefficients[,2]^2
+      matvar[i,pos] <- analyses[[i]]$coefficients[,2]^2
     }
     mcoefavg <- apply(matcoef, 2, mean, na.rm = TRUE)
     mvaravg  <- apply(matvar,  2, mean, na.rm = TRUE)
@@ -116,11 +116,11 @@ mcoefvar <- function(analyses, ...) {
 
 lm.synds <- function(formula, data, ...)
 {
- if (!class(data)=="synds") stop("Data must have class synds\n")
+ if (!class(data) == "synds") stop("Data must have class synds\n")
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method)==as.character(formula[[2]])]=="" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
  
  # Check validity of inference from vars not in visit sequence or with method ""
  checkinf(vars, formula, data$visit.sequence, data$method)  
@@ -130,11 +130,11 @@ lm.synds <- function(formula, data, ...)
  analyses <- as.list(1:data$m)
 
  # do the repated analysis, store the result without data
- if (data$m==1) {
-   analyses[[1]] <- summary(lm(formula,data=data$syn,...))
+ if (data$m == 1) {
+   analyses[[1]] <- summary(lm(formula, data = data$syn,...))
  } else {
-   for(i in 1:data$m) {
-     analyses[[i]] <- summary(lm(formula,data=data$syn[[i]],...))
+   for (i in 1:data$m) {
+     analyses[[i]] <- summary(lm(formula, data = data$syn[[i]],...))
    }
  }
  allcoefvar <- mcoefvar(analyses = analyses)
@@ -153,13 +153,13 @@ lm.synds <- function(formula, data, ...)
 
 ###-----glm.synds----------------------------------------------------------
 
-glm.synds <- function(formula, family="binomial", data, ...)
+glm.synds <- function(formula, family = "binomial", data, ...)
 {
- if (!class(data)=="synds") stop("Data must have class synds\n")
+ if (!class(data) == "synds") stop("Data must have class synds\n")
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method)==as.character(formula[[2]])]=="" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
  
  # Check validity of inference from vars not in visit sequence or with method ""
  checkinf(vars, formula, data$visit.sequence, data$method)  
@@ -169,11 +169,11 @@ glm.synds <- function(formula, family="binomial", data, ...)
  analyses <- as.list(1:data$m)
  
  # do the repated analysis, store the result without data
- if (data$m==1) {
-   analyses[[1]] <- summary(glm(formula,data=data$syn,family=family,...))
+ if (data$m == 1) {
+   analyses[[1]] <- summary(glm(formula,data = data$syn, family = family, ...))
  } else {
-   for(i in 1:data$m) {
-     analyses[[i]] <- summary(glm(formula,data=data$syn[[i]],family=family,...))
+   for (i in 1:data$m) {
+     analyses[[i]] <- summary(glm(formula,data = data$syn[[i]], family = family, ...))
    }
  }
  allcoefvar <- mcoefvar(analyses = analyses)
@@ -190,12 +190,55 @@ glm.synds <- function(formula, family="binomial", data, ...)
 }
 
 
+###-----multinom.synds-----------------------------------------------------
+
+multinom.synds <- function(formula, data, ...)
+{
+  if (!class(data) == "synds") stop("Data must have class 'synds'.\n")
+  if (is.matrix(data$method)) data$method <- data$method[1,]
+  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
+  if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
+  if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+  
+  # Check validity of inference from vars not in visit sequence or with method ""
+  checkinf(vars, formula, data$visit.sequence, data$method)  
+  
+  call <- match.call()
+  fitting.function <- "multinom"
+  analyses <- as.list(1:data$m)
+  
+  # do the repated analysis, store the result without data
+  for (i in 1:data$m) {
+    if (data$m == 1) fit <- multinom(formula, data = data$syn, Hess = TRUE, ...)
+    else fit <- multinom(formula, data = data$syn[[i]], Hess = TRUE, ...)
+    ss <- summary(fit)
+    analyses[[i]] <- list(coefficients = cbind(as.vector(t(ss$coefficients)),
+                                               as.vector(t(ss$standard.errors)),
+                                               as.vector(t(ss$coefficients)/t(ss$standard.errors))))
+    dd <- dimnames(t(ss$coefficients))
+    dimnames(analyses[[i]]$coefficients) <- list(paste(rep(dd[[2]], each = length(dd[[1]])),
+                                                       rep(dd[[1]], length(dd[[2]])), sep = ":"),
+                                                       c("Estimate", "se", "z value"))
+  }
+  allcoefvar <- mcoefvar(analyses = analyses)
+  
+  # return the complete data analyses as a list of length m
+  object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
+                 mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+                 fitting.function = fitting.function,
+                 n = data$n, k = data$k, proper = data$proper, 
+                 m = data$m, method = data$method, 
+                 mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
+  class(object) <- "fit.synds"
+  return(object)
+}
+
 ###-----checkinf-----------------------------------------------------------
-# used in glm.synds and lm.synds 
+# used in glm.synds and lm.synds and multinom.synds 
 
 checkinf <- function(vars, formula, vs, method){
   inform <- all.vars(formula) # get variables in formula
-  if("." %in% inform) inform <- vars
+  if ("." %in% inform) inform <- vars
   if (any(!inform %in% vars)) stop("Variable(s) in formula are not in synthetic data: ",
     paste(inform[!inform %in% vars], collapse = ", "), call. = FALSE)
   if (any(!inform %in% names(vs))) cat("\nSTERN WARNING: Variable(s) in formula are\nnot in visit sequence:",
@@ -207,8 +250,8 @@ This inference will be wrong because these\nvariables will not match synthesised
   vsin <- vs[names(vs) %in% inform]
   methin <- method[names(method) %in% inform]
   methin <- methin[match(names(vsin), names(methin))] 
-  blankmeths <-(1:length(methin))[methin == ""]
-  if (!all(blankmeths==(1:length(blankmeths)))) { 
+  blankmeths <- (1:length(methin))[methin == ""]
+  if (!all(blankmeths == (1:length(blankmeths)))) { 
     cat("\nSTERN WARNING: Variables in formula with\nblank methods are not at start of visit sequence",
 "\n******************************************
 This inference will be wrong because these\nvariables will not match synthesised data
@@ -226,16 +269,16 @@ print.fit.synds <- function(x, msel = NULL, ...)
   if (!is.null(msel) & !all(msel %in% (1:x$m))) stop("Invalid synthesis number(s).", call. = FALSE)
   n <- sum(x$n); if (is.list(x$k)) k <- sum(x$k[[1]]) else k <- sum(x$k)
 
-  if (n != k | x$m>1) cat("Note: To get a summary of results you would expect from the original data, or for population inference use the summary function on your fit.\n") 
+  if (n != k | x$m > 1) cat("Note: To get a summary of results you would expect from the original data, or for population inference use the summary function on your fit.\n") 
   
   cat("\nCall:\n")
   print(x$call)
-  if (is.null(msel)){
+  if (is.null(msel)) {
     cat("\nCombined coefficient estimates:\n")
     print(x$mcoefavg)
   } else {
     cat("\nCoefficient estimates for selected synthetic data set(s):\n")
-    print(x$mcoef[msel,,drop=FALSE])
+    print(x$mcoef[msel,,drop = FALSE])
   }
   invisible(x)
 }
@@ -268,10 +311,11 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 
 ## Inference to Q hat
 #---
- if (population.inference == FALSE){ 
+ if (population.inference == FALSE) { 
    result <- cbind(coefficients,
                    sqrt(vars),
-                   coefficients/sqrt(vars),2*pnorm(-abs(coefficients/sqrt(vars))))
+                   coefficients/sqrt(vars),
+                   2*pnorm(-abs(coefficients/sqrt(vars))))
    colnames(result) <- c("xpct(Beta)", "xpct(se.Beta)", "xpct(z)", "Pr(>|xpct(z)|)")
 #--- 
 
@@ -284,7 +328,7 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
   # else if ( object$method[1,][dimnames(object$method)[[2]] == as.character(formula(object)[[2]])] == "" ) cat("\nWarning: If your response variable is not synthesised, the standard errors here are probably too large.\n")
     
   ## incomplete method  
-   if(incomplete == TRUE){
+   if (incomplete == TRUE) {
      bm <- apply(object$mcoef, 2, var)
      result <- cbind(coefficients,
                      sqrt(bm/m + vars),
@@ -293,7 +337,7 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 
   ## simple synthesis   
     } else {
-      if (object$proper == FALSE) Tf <- vars*(1+n/k/m) else Tf <- vars*(1+(n/k+1)/m)
+      if (object$proper == FALSE) Tf <- vars*(1 + n/k/m) else Tf <- vars*(1 + (n/k + 1)/m)
       result <- cbind(coefficients, 
                       sqrt(Tf), 
                       coefficients/sqrt(Tf),
@@ -317,13 +361,14 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 ###-----print.summary.fit.synds--------------------------------------------
 
 print.summary.fit.synds <- function(x, ...) {
+ 
  if (!is.null(x$msel) & !all(x$msel %in% (1:x$m))) stop("Invalid synthesis number(s)", call. = FALSE)
  cat("Warning: Note that all these results depend on the synthesis model being correct.\n")  
 
- if (x$m==1) {
+ if (x$m == 1) {
    cat("\nFit to synthetic data set with a single synthesis.\n")
  } else {
-   cat("\nFit to synthetic data set with ",x$m," syntheses.\n",sep="")
+   cat("\nFit to synthetic data set with ", x$m, " syntheses.\n",sep = "")
  }
 
  if (x$population.inference) {
@@ -356,7 +401,7 @@ print.summary.fit.synds <- function(x, ...) {
    print(allzvalues)
    
    # for(i in x$msel) {          
-   #   cat("\nsyn=",i,"\n",sep="")
+   #   cat("\nsyn=",i,"\n",sep = "")
    #   print(x$analyses[[i]]$coefficients)
    # }
  }      
@@ -370,7 +415,7 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
 
   cat("\nCall used to fit models to the data:\n")
   print(x$call)
-  if (print.coef == TRUE){
+  if (print.coef == TRUE) {
     cat("\nEstimates for the observed data set:\n")
     print(x$coef.obs)
     cat("\nCombined estimates for the synthetised data set(s):\n")
@@ -379,18 +424,18 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
     
   cat("\nDifferences between results based on synthetic and observed data:\n")
     print(cbind.data.frame(x$coef.diff,x$ci.overlap))                                 
-  if (x$m==1) {
-    cat("\nMeasures for one synthesis and ", x$ncoef, " coefficients", sep="") 
+  if (x$m == 1) {
+    cat("\nMeasures for one synthesis and ", x$ncoef, " coefficients", sep = "") 
   } else {
-    cat("\nMeasures for ", x$m, " syntheses and ", x$ncoef, " coefficients", sep="") 
+    cat("\nMeasures for ", x$m, " syntheses and ", x$ncoef, " coefficients", sep = "") 
   }   
   cat("\nMean confidence interval overlap: ", x$mean.ci.overlap)
   cat("\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
-  cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval,3), " for test that synthesis model is compatible ", sep="")
-  if (x$incomplete==FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep="")
-  else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep="") 
+  cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval,3), " for test that synthesis model is compatible ", sep = "")
+  if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep = "")
+  else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep = "") 
 
-  if (!is.null(x$ci.plot)){
+  if (!is.null(x$ci.plot)) {
     cat("\nConfidence interval plot:\n")
     print(x$ci.plot)
   }
@@ -401,8 +446,9 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
 ###-----print.compare.synds------------------------------------------------
 
 print.compare.synds <- function(x, ...) {
+
   cat("\nComparing percentages observed with synthetic\n\n")
-  if (class(x$plots)[1]=="gg"){
+  if (class(x$plots)[1] == "gg") {
     print(x$tables) 
     print(x$plots)
   } else {
@@ -419,96 +465,132 @@ print.compare.synds <- function(x, ...) {
 }
 
 
-###-----print.utility.gen------------------------------------------------
+###-----print.utility.gen--------------------------------------------------
 
-print.utility.gen <- function(x,print.zscores =x$print.zscores,digits= x$digits,
-  usethresh = x$usethresh,zthresh=x$zthresh, print.variable.importance=x$print.variable.importance, ...){
-  #
-	cat("\nUtility score calculated by method: ",x$method,"\n")
-  cat("\nCall was: ","\n")
+print.utility.gen <- function(x, digits = x$digits,  
+  print.zscores = x$print.zscores, zthresh = x$zthresh, 
+  print.ind.results = x$print.ind.results,
+  print.variable.importance = x$print.variable.importance, ...){
+  
+  cat("\nUtility score calculated by method: ", x$method, "\n")
+  cat("\nCall:\n")
   print(x$call)
-	  if (x$method=="cart") cat("\nNull utility sumulated from a permutation test with ",x$nperm,"replications\n")
-  if (x$m>1) {
-	mnU<-mean(x$utilVal); mnE<-mean(x$utilExp); mnR<-mean(x$utilR); mnS<-mean(x$utilStd)
-      cat("\nMean utility score from ",x$m," syntheses \nUtility ",round(mnU,x$digits)," Expected value",round(mnE,x$digits),
-      " Ratio to expected ",round(mnR,x$digits)," Standardised ",round(mnS,x$digits),"\n")
-      if (x$m<11) {
-        cat("\nIndividual utility score results from ",x$m,"syntheses\n\n")
-        tabres<-rbind(round(x$utilVal,x$digits),round(x$utilExp,x$digits),round(x$utilR,x$digits), round(x$utilStd,x$digits))
-        dimnames(tabres)<-list(c("Utility","Expected","Ratio","Standardised"),paste("syn",1:length(x$utilVal)))
-        print(tabres)
+  
+  if (!is.null(x$resamp.method)) {
+    if (x$resamp.method == "perm") cat("\nNull utility simulated from a permutation test with ", x$nperm," replications\n", sep = "")
+    else if (x$resamp.method == "pairs") cat("\nNull utility simulated from ", x$m*(x$m - 1)/2," pairs of syntheses\n", sep = "")
+    
+    if (!is.list(x$nnosplits)) { 
+      if (x$nnosplits[1] > 0) cat(
+"\n***************************************************************
+Warning: null utility resamples failed to split ", x$nnosplits[1], " times from ", x$nnosplits[2],
+"\n***************************************************************\n", sep = "")
+    } else {
+      for (ss in 1:x$m) {
+        if (x$nnosplits[[ss]][1] > 0) cat("\nSynthesis ", ss, 
+          " null utility resamples failed to split ", x$nnosplits[[ss]][1],
+          " times from ", x$nnosplits[[ss]][2], sep = "")
       }
-  }
-  else {
-     cat("\nUtility score results\nUtility ",round(x$utilVal,x$digits)," Expected value",round(x$utilExp,x$digits),
-      " Ratio to expected ",round(x$utilR,x$digits)," Standardised ",round(x$utilStd,x$digits),"\n")}
-  if (x$print.zscores==TRUE) {
-    if(x$method=="cart") cat("\nZscores not available for CART models\n")
-    else {
-      if (x$m==1) {
-        zscores=summary(x$fit)$coefficients[,3]
-        if (x$usethresh==TRUE) { 
-          cat("\nShowing Zscores greater than the threshold of +/- ",x$zthresh,"\n")
-          zscores<-zscores[abs(zscores)>x$zthresh]
-          if (length(zscores)==0) cat("No z scores above threshold of ",x$zthresh,"\n")
-          else print(zscores)
-        }
-        else print(zscores)
-      }
-      else{
-        if (x$usethresh==TRUE) { 
-          cat("\nShowing Zscores greater than the threshold of +/- ",x$zthresh,"\n")
-          for (i in 1:x$m){
-            zscores=summary(x$fit[[i]])$coefficients[,3]
-            cat("Synthesis ",i,"\n")
-            zscores<-zscores[abs(zscores)>x$zthresh]
-            if (length(zscores)==0) cat("No z scores above threshold of ",x$zthresh,"\n")
-            else print(zscores)
-          }
-        }
-        else  { 
-          for (i in 1:x$m){
-            zscores=summary(x$fit[[i]])$coefficients[,3]
-            cat("Synthesis ",i,"\n")
-            print(zscores)
-          }
-        }
-      }
+      cat("\n")
     }
   }
   
- if (x$print.variable.importance==TRUE) {
-  if(x$method!="cart" & x$tree.method=="rpart") cat("Variable importance only available for CART models using function rpart\n")
-  else {
-  cat("\nRelative importance of each variable scaled to add to 100\n" )
-    if (x$m==1) {
-      variable.importance<-x$fit$variable.importance
-      variable.importance<-round(variable.importance/sum(variable.importance)*100,x$digits)
-      print(variable.importance)
+  if (x$m > 1) {
+    cat("\nUtility score results from ", x$m, " syntheses",
+        "\npMSE: ", mean(x$pMSE),
+        "; Utility: ", round(mean(x$utilVal), digits),
+        "; Expected value: ", round(mean(x$utilExp), digits),
+        "; Ratio to expected: ", round(mean(x$utilR), digits),
+        "; Standardised: ", round(mean(x$utilStd),digits), "\n", sep = "")
+    
+    if (print.ind.results == TRUE) {
+      cat("\nIndividual utility score results from ", x$m, " syntheses\n", sep = "")
+      tabres <- cbind(x$pMSE, round(x$utilVal, digits), round(x$utilExp, digits), 
+        round(x$utilR, digits), round(x$utilStd, digits))
+      dimnames(tabres) <- list(1:length(x$utilVal), 
+        c("pMSE", "Utility","Expected","Ratio","Standardised"))
+      print(tabres)
     }
-    else{
-       for (i in 1:x$m){
-       cat("Synthesis ",i,"\n")
-         variable.importance<-x$fit[[i]]$variable.importance
-         variable.importance<-round(variable.importance/sum(variable.importance)*100,x$digits)
-         print(variable.importance)
+    
+  } else {
+    cat("\nUtility score results\n",
+        "pMSE: ", x$pMSE,
+        "; Utility: ", round(x$utilVal, digits),
+        "; Expected value: ", round(x$utilExp, digits),
+        "; Ratio to expected: ", round(x$utilR, digits),
+        "; Standardised: ", round(x$utilStd, digits),"\n", sep = "")
+  }
+  
+  if (print.zscores == TRUE) {
+    if (x$method == "cart") {
+      cat("\nz-scores not available for CART models\n")
+    } else {
+      if (x$m > 1) {
+        allzscores <- vector("list", x$m) 
+        for (i in 1:x$m) allzscores[[i]] <- summary(x$fit[[i]])$coefficients[ ,3] 
+        allnames <- unique(unlist(lapply(allzscores, names)))
+        allzscores.NA <- lapply(allzscores, "[", allnames) 
+        allzscores.NA.df <- do.call(cbind, allzscores.NA)
+        zscores <- apply(allzscores.NA.df, 1, mean, na.rm = TRUE)  
+        names(zscores) <- allnames
+      } else {
+        zscores <- summary(x$fit)$coefficients[ ,3]
+      }
+      
+      if (!is.na(zthresh)) { 
+        zscores <- zscores[abs(zscores) > zthresh]
+        if (length(zscores) == 0) {
+          cat("\nNo z-scores (or mean z-scores if m > 1) above threshold of +/-", zthresh,"\n", sep = "")
+        } else {
+          cat("\nz-scores (or mean z-scores if m > 1) greater than the threshold of +/- ", zthresh, "\n", sep = "")
+          print(zscores)
+        }  
+      } else {
+        cat("\nAll z-scores (or mean z-scores if m > 1)\n")
+        print(zscores)
+      }
     }
   }
- }
-}
-	invisible(x)
-	
+  #browser()
+  if (print.variable.importance == TRUE) {
+    if (x$method != "cart" | x$tree.method != "rpart") {
+      cat("\nVariable importance only available for CART models using function 'rpart'\n")
+    } else {
+      cat("\nRelative importance of each variable scaled to add to 100\n" )
+      if (x$m == 1) {
+        variable.importance <- x$fit$variable.importance
+        variable.importance <- round(variable.importance/sum(variable.importance)*100, digits)
+        print(variable.importance)
+      } else {
+        cat("(results for ", x$m, " syntheses)\n", sep = "")
+        variable.importance <- vector("list", x$m)
+        for (i in 1:x$m) {
+          if (is.null(x$fit[[i]]$variable.importance)) x$fit[[i]]$variable.importance <- NA
+          variable.importance[[i]] <- x$fit[[i]]$variable.importance
+          variable.importance[[i]] <- round(variable.importance[[i]]/sum(variable.importance[[i]])*100, digits)
+        }
+        allnames <- unique(unlist(lapply(variable.importance, names)))
+        all.vars <- lapply(variable.importance, "[", allnames) 
+        all.vars.importance <- do.call(rbind, all.vars)
+        colnames(all.vars.importance) <- allnames
+        rownames(all.vars.importance) <- 1:x$m
+        print(all.vars.importance)
+      }
+    }
+  }
+  invisible(x)
+  
 }
 
 
 ###-----print.utility.tab--------------------------------------------------
 
 print.utility.tab <- function(x, print.tables = x$print.tables,  
-  print.zdiff = x$print.zdiff, digits = x$digits,...){
+  print.zdiff = x$print.zdiff, digits = x$digits, ...){
 
-  if(print.tables == TRUE) {
+  if (print.tables == TRUE) {
     if (is.table(x$tab.obs)) {
-      if (sum(x$tab.obs)!= x$n) {
+      if (sum(x$tab.obs) != x$n) {
         cat("\nObserved adjusted to match the size of the synthetic data: \n($tab.obs)\n")
         print(round(x$tab.obs, digits))
       } else {
@@ -522,50 +604,50 @@ print.utility.tab <- function(x, print.tables = x$print.tables,
       print(round(meantabd, digits))
     } 
 
-    if (x$m==1) {
+    if (x$m == 1) {
       cat("\nSynthesised: \n($tab.syn)\n")
 	    print(x$tab.syn) 
     } else {
       meantab <- apply(simplify2array(x$tab.syn), c(1,2), mean)
-      cat("\nMean of ",x$m," synthetic tables ($tab.syn):\n", sep="")
+      cat("\nMean of ",x$m," synthetic tables ($tab.syn):\n", sep = "")
       print(round(meantab, digits))
     }
   }
   
-  if(print.zdiff == TRUE) {
-    cat("\nTable of Z scores for differences: \n($tab.zdiff)\n")
-    if (x$m==1) {
+  if (print.zdiff == TRUE) {
+    cat("\nTable of z-scores for differences: \n($tab.zdiff)\n")
+    if (x$m == 1) {
       print(round(x$tab.zdiff, digits)) 
     } else {
       meanzdiff <- apply(simplify2array(x$tab.zdiff), c(1,2), mean)
-      cat("\nMean of ",x$m," Z score tables:\n", sep="")
+      cat("\nMean of ",x$m," z-score tables:\n", sep = "")
       print(round(as.table(meanzdiff), digits))
     }
   }
   
-  if (x$m==1){
+  if (x$m == 1) {
     cat("\nNumber of cells in each table: ", 
         x$df[1] + x$nempty[1] + 1,
         "; Number of cells contributing to utility measures: ", 
-        x$df + 1,"\n", sep="")
+        x$df + 1,"\n", sep = "")
     cat("\nUtility score results\n")
     cat("Freeman Tukey (FT): ", round(x$UtabFT,digits), ";",
         " Ratio to degrees of freedom (df): ", round(x$ratioFT,digits), ";",
-        " p-value: ", x$pvalFT, "\n", sep="")
+        " p-value: ", x$pvalFT, "\n", sep = "")
     cat("Voas Williamson (VW): ", round(x$UtabVW,digits), ";",
         " Ratio to degrees of freedom (df): ", round(x$ratioVW,digits), ";",
-        " p-value: ", x$pvalVW, "\n", sep="")
-  } else if (x$m>1){
-    cat("\nAverage results for ", x$m, " syntheses\n", sep="")
+        " p-value: ", x$pvalVW, "\n", sep = "")
+  } else if (x$m > 1) {
+    cat("\nAverage results for ", x$m, " syntheses\n", sep = "")
     cat("\nNumber of cells in each table: ", 
-        round(mean(x$df[1] + x$nempty[1] + 1),digits),
+        round(mean(x$df[1] + x$nempty[1] + 1), digits),
         "; Number of cells contributing to utility measures: ", 
-        round(mean(x$df + 1),digits),"\n", sep="")
+        round(mean(x$df + 1), digits),"\n", sep = "")
     cat("\nUtility score results\n")
     cat("Freeman Tukey (FT): ", round(mean(x$UtabFT),digits), ";",
-        " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT),digits),"\n", sep="")
+        " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT),digits),"\n", sep = "")
     cat("Voas Williamson (VW): ", round(mean(x$UtabVW), digits), ";",
-        " Ratio to degrees of freedom (df): ",  round(mean(x$ratioVW), digits),"\n", sep="")
+        " Ratio to degrees of freedom (df): ",  round(mean(x$ratioVW), digits),"\n", sep = "")
     
     cat("\nResults from individual syntheses\n")
     tab.res <- cbind.data.frame(x$df,
@@ -582,7 +664,7 @@ print.utility.tab <- function(x, print.tables = x$print.tables,
 
 
 ###-----summary.out--------------------------------------------------------
-summary.out <- function (z, digits = max(3L, getOption("digits") - 3L), ...)
+summary.out <- function(z, digits = max(3L, getOption("digits") - 3L), ...)
 {
     ncw <- function(x) {
         zz <- nchar(x, type = "w")

@@ -1,3 +1,34 @@
+synthpop 1.4-1
+---------------
+
+NEW FEATURES
+* New version of utility.gen() and print.utility.gen(). These now implement 
+  the methods described in Snoke et. al. and include the following:
+  - appropriate method of getting the null distribution is selected based on 
+    synthesis details;
+  - warning messages if CART models fail to split;
+  - allow a seed value to be set and stored for resampling methods;
+  - printing Z scores from logit models using the average fit over different 
+    syntheses.
+* New function multinom.synds() to fit multinomial models to synthetic data 
+  using the multinom() function from the package nnet.
+
+CHANGES
+* Default `cp` parameter in syn.cart() changed to 1e-8.
+* Default `print.tables` parameter in utility.tab() changed to `TRUE`.
+* All syn() result components that are lists, e.g. `cont.na`, have their
+  elements named.
+  
+BUG FIXES
+* Call to classIntervals() in utility.tab() uses style = "fisher" as default 
+  to avoid problems for variables with a small number of unique values. 
+* utility.tab() computes breaks for grouping from the combined data rather 
+  than just from the observed. This avoids problems when synthetic values are 
+  outside the range of the observed ones.
+* In compare.fit.synds() the quantity real.varcov needs to be multiplied by 
+  sigma^2 when fitting.function is "lm".
+
+
 synthpop 1.4-0
 ---------------
 
@@ -23,8 +54,9 @@ CHANGES
 * The `msel` parameter of print.summary.fit.synds() prints a table of estimates 
   rather than a lsiting of each fit in detail.
 * Several changes in compare.fit.synds() are described in detail in the new 
-  vignette on iference(). These include extensions of the lack-of-fit tests 
-  and confidence interval overlap measures for different options.
+  vignette on inference ('Inference from fitted models in synthpop'). These 
+  include extensions of the lack-of-fit tests and confidence interval overlap 
+  measures for different options.
 
 BUG FIXES
 * replicated.uniques() for a single variable.
@@ -35,6 +67,7 @@ BUG FIXES
 * Missing data factor level <NA> as a stratum in syn.strata()  
 * `seed` for syn.strata(). 
 * print.fit.synds() for syn.strata() object.
+
 
 synthpop 1.3-2
 ---------------

@@ -1,22 +1,25 @@
 \name{utility.gen}
 \alias{utility.gen}
 \alias{print.utility.gen}
-\title{[UNDER REVISION] Distributional comparison of synthesised and observed data}
+\title{Distributional comparison of synthesised and observed data}
 \description{
  Distributional comparison of synthesised data set with the original (observed) 
  data set using propensity scores.
 }
 \usage{
-utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
-            vars = NULL, aggregate = FALSE, maxit = 200, groups = FALSE, ngroups = 5,
-            mincriterion = 0, nperms = 50, cp = 1e-8, minbucket = 5, digits = 2,
-            print.zscores = FALSE, usethresh = TRUE, zthresh = 1.6, 
-            print.variable.importance = FALSE, \dots)
+utility.gen(object, data, method = "logit", maxorder = 1, 
+            tree.method = "rpart", resamp.method = NULL,  
+            nperms = 50, cp = 1e-3, minbucket = 5, mincriterion = 0, 
+            vars = NULL, aggregate = FALSE, maxit = 200, ngroups = NULL,
+            print.every = 10, digits = 2, print.zscores = FALSE, zthresh = 1.6, 
+            print.ind.results = TRUE, print.variable.importance = FALSE, \dots)
 
-\method{print}{utility.gen}(x, print.zscores = x$print.zscores, digits = x$digits, 
-   usethresh = x$usethresh, zthresh = x$zthresh, 
-   print.variable.importance = x$print.variable.importance, \dots)
+\method{print}{utility.gen}(x, digits = x$digits, 
+  print.zscores = x$print.zscores, zthresh = x$zthresh, 
+  print.ind.results = x$print.ind.results,  
+  print.variable.importance = x$print.variable.importance, \dots)
 }
+
 \arguments{
   \item{object}{an object of class \code{synds}, which stands for 'synthesised 
     data set'. It is typically created by function \code{syn()} and it includes 
@@ -24,14 +27,29 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
     data set when \code{object$m = 1} or a list of length \code{object$m} when 
     \code{object$m > 1}.}
   \item{data}{the original (observed) data set.}
-  \item{method}{a single string or a vector of strings specifying the 
-    method(s) for modeling the propensity scores.  Methods can be selected 
-    from \code{"logit"} and \code{"cart"}. } 
-  \item{tree.method}{Implementation of cart in R, can be \code{"rpart"} or 
-    \code{"ctree"}.}
+  \item{method}{a single string specifying the method for modeling the propensity 
+    scores. Method can be selected from \code{"logit"} and \code{"cart"}. } 
   \item{maxorder}{maximum order of interactions to be considered in 
     \code{"logit"} method. For model without interactions \code{0} should be
-    provided.}  
+    provided.}   
+  \item{tree.method}{implementation of \code{"cart"} method, can be \code{"rpart"} 
+    or \code{"ctree"}.}
+  \item{resamp.method}{method used for resampling estimate of the null \code{pMSE}, 
+    can be \code{"perm"} or \code{"pairs"}. For \code{pMSEs} calculated with 
+    method \code{"cart"} it defaults to \code{"perm"} if all the variables from 
+    \code{"object"} in \code{"vars"} have been synthesised or to \code{"pairs"} 
+    if some have not (i.e. have \code{method = ""}).}
+  \item{nperms}{number of permutations for the permutation test to obtain the 
+    null distribution of the utility measure when \code{resamp.method = "perm"}.}
+  \item{cp}{complexity parameter for classification with tree.method 
+   \code{"rpart"}. Small values grow bigger trees.}
+  \item{minbucket}{minimum number of observations allowed in a leaf for 
+    classification when \code{method = "cart"}.}
+  \item{mincriterion}{criterion between 0 and 1 to use to control 
+    \code{tree.method = "ctree"} when the tree will not be allowed to split 
+    further. A value of \code{0.95} would be equivalent to a \code{5\%} 
+    significance test. Here we set it to \code{0} to effectively disable this 
+    test and grow large trees.}
   \item{vars}{variables to be included in the utility comparison. If none are 
     specified all the variables in the synthesised data will be included.}
   \item{aggregate}{logical flag as to whether the data should be aggregated by 
@@ -40,31 +58,25 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
     \code{method = "logit"}.}
   \item{maxit}{maximum iterations to use when \code{method = "logit"}. If the 
     model does not converge in this number a warning will suggest increasing it.} 
-  \item{groups}{logical variable as to whether any numerical variables are to 
-    be categorised into groups.}
-  \item{ngroups}{target number of groups for each variable: final number may 
-    differ if there are many repeated values.}
-  \item{mincriterion}{Criterion between 0 and 1 to use to control 
-    \code{tree.method = "ctree"} when the tree will not be allowed to split 
-    further. A value of \code{0.95} would be equivalent to a \code{5\%} significance test. 
-    Here we set it to \code{0} to effectively disable this test and grow large trees.}
-  \item{nperms}{number of permutations for the permutation test to obtain the 
-    null distribution of the utility measure when \code{method = "cart"}.}
-  \item{cp}{complexity parameter for classification with tree.method 
-   \code{"rpart"}. Small values grow bigger trees.}
-  \item{minbucket}{minimum number of observations allowed in a leaf for 
-    classification when \code{method = "cart"}.}
+  \item{ngroups}{target number of groups for categorisation of each numeric 
+    variable: final number may differ if there are many repeated values. If 
+    \code{NULL} (default) variables are not categorised into groups.}
+  \item{print.every}{controls the printing of progress of resampling when  
+    \code{resamp.method} is not \code{NULL}. When \code{print.every = 0} 
+    no progress is reported, otherwise the resample number is printed every 
+    \code{print.every}.}
   \item{\dots}{additional parameters passed to \code{\link{glm}},
     \code{\link{rpart}}, or \code{\link{ctree}}.} 
-  \item{x}{an object of class \code{utility.gen}}
-  \item{digits}{Number of digits to print in output}
-  \item{print.zscores}{logical value as to whether z scores for coefficients of 
-    the logit model should be printed.}
-  \item{usethresh}{logical value as to whether printing of z scores below the 
-    threshold should be suppressed.}
-  \item{zthresh}{threshold value to use to suppress the printing of z scores 
-    under \code{+}/\code{-} this value when \code{usethresh = TRUE} for 
-    \code{method = "logit"}.}
+  \item{x}{an object of class \code{utility.gen}.}
+  \item{digits}{number of digits to print in the default output, excluding 
+    \code{pMSE} values.}  
+  \item{print.zscores}{logical value as to whether z-scores for coefficients of 
+    the logit model should be printed.}  
+  \item{zthresh}{threshold value to use to suppress the printing of z-scores 
+    under \code{+}/\code{-} this value for \code{method = "logit"}. If set to 
+    \code{NA} all z-scores are printed.}  
+  \item{print.ind.results}{logical value as to whether utility score results 
+    from individual syntheses should be printed.}
   \item{print.variable.importance}{logical value as to whether the variable 
     importance measure should be printed when \code{tree.method = "rpart"}.}
 }
@@ -82,9 +94,9 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
 
   Propensity scores can be modeled by logistic regression \code{method = "logit"} 
   or by two different implementations of classification and regression trees as 
-  method \code{"cart"}.  For logistic regression the predictors are all 
-  variables in the data and their interactions up to order \code{maxorder}. The
-  default of \code{1} gives all main effects and first order interactions. For logistic 
+  method \code{"cart"}. For logistic regression the predictors are all variables 
+  in the data and their interactions up to order \code{maxorder}. The default of 
+  \code{1} gives all main effects and first order interactions. For logistic 
   regression the null distribution of the propensity score is derived and is 
   used to calculate ratios and standardised values.
   
@@ -104,15 +116,22 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
   \item{method}{method used to fit propensity score.}
   \item{tree.method}{cart function used to fit propensity score when 
     \code{method = "cart"}.}
-  \item{utilVal}{utility value(s).}
+  \item{pMSE}{Propensity score mean square error from the utility model or a  
+    vector of these values if \code{object$m > 1}.}
+  \item{utilVal}{utility value(s). Calculated from the \code{pMSE} as 
+    \code{pMSE*(n1+n2)^3/n1^2/n2} or a vector of these values if 
+    \code{object$m > 1}. For \code{method = "logit"} the null distribution of 
+    this quantity will be chi-squared with degrees of freedom equal to the number 
+    of parameters involving synthesised variables in the propensity score minus 1. 
+    For \code{method = "cart"} its distribution will be obtained by resampling.}
   \item{utilExp}{expected value(s) of the utility score if the synthesis method 
     is correct.}
   \item{utilR}{ratio(s) of \code{utilVal(s)} to \code{utilExp}.}
-  \item{utilStd}{utility value standardised by expressing it as z scores, 
+  \item{utilStd}{utility value standardised by expressing it as z-scores, 
     difference(s) from the expected value divided by the expected standard 
     deviation.}
   \item{fit}{the fitted model for the propensity score or a list of fitted 
-    models of length \code{m} if \code{m>0}.}
+    models of length \code{m} if \code{m > 0}.}
 }
 \references{
   Woo, M-J., Reiter, J.P., Oganian, A. and Karr, A.F. (2009). Global measures 
@@ -131,7 +150,7 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
  \code{\link{utility.tab}}
 }
 \examples{
-  \dontrun{
+\dontrun{
   ods <- SD2011[1:1000, c("age", "bmi", "depress", "alcabuse", "englang")]
   s1 <- syn(ods, m = 5)
   utility.gen(s1, ods)
@@ -140,6 +159,5 @@ utility.gen(object, data, method = "logit", tree.method = "rpart", maxorder = 1,
   u2 <- utility.gen(s1, ods, groups = TRUE)
   print(u2, print.zscores = TRUE)
   u3 <- utility.gen(s1, ods, method = "cart", nperms = 20)
-  print(u3, print.variable.importance = TRUE)
-  }
+  print(u3, print.variable.importance = TRUE)}
 }

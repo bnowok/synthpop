@@ -414,7 +414,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   w   <- aug$w
   xfy <- cbind.data.frame(yf, xf)  
   fit <- multinom(formula(xfy), data = xfy, weights = w,
-  maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
+    maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
   if(fit$convergence == 1) cat(" <- Reached max number of iterations for a multinomial model suggest rerunning with polyreg.maxit increased (default 1000)\n")             
   post <- predict(fit, xp, type = "probs")   
   if (length(y)==1) post <- matrix(post, nrow=1, ncol=length(post)) 
@@ -426,7 +426,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   idx   <- 1 + apply(draws,2,sum)
    
   res <- levels(yf)[idx]
-  return(list(res = res, fit = fit$coefficients))   # fit = "polyreg"
+  return(list(res = res, fit = summary(fit)$coefficients))   # fit = "polyreg"
 }
 
 
@@ -507,7 +507,7 @@ syn.passive <- function(data, func)
 ###-----syn.cart-----------------------------------------------------------
 
 syn.cart <- function(y, x, xp, smoothing, proper = FALSE, 
-                     minbucket = 5, cp = 1e-04, ...)
+                     minbucket = 5, cp = 1e-08, ...)
 {
   if (proper==TRUE){
     s <- sample(length(y), replace=TRUE)
@@ -717,7 +717,7 @@ syn.bag <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...)
 ###-----syn.cartbboot-----------------------------------------------------
 
 syn.cartbboot <- function(y, x, xp, proper = FALSE, 
-                           minbucket = 5, cp = 1e-04, ...) 
+                           minbucket = 5, cp = 1e-08, ...) 
 {
   if (proper==TRUE){
     s <- sample(length(y),replace=TRUE)

@@ -9,8 +9,8 @@
 }
 \usage{
 syn.ctree(y, x, xp, smoothing, proper = FALSE, minbucket = 5, ...)
-syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-04, ...)  
-%syn.cartbboot(y, x, xp, minbucket = 5, cp = 1e-04, ...) 
+syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)  
+%syn.cartbboot(y, x, xp, minbucket = 5, cp = 1e-08, ...) 
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}

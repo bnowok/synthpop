@@ -20,14 +20,14 @@ export(syn,
        syn.nested,
        syn.satcat)
 
-export(compare, compare.synds, compare.fit.synds, multi.compare, 
-       print.compare.fit.synds,	lm.synds, glm.synds, 
+export(compare, compare.synds, compare.fit.synds,  
+       print.compare.fit.synds,	multi.compare,
+       lm.synds, glm.synds, multinom.synds, 
        print.fit.synds, print.synds,
        summary.synds, print.summary.synds,
        summary.fit.synds, print.summary.fit.synds,
        replicated.uniques, sdc, read.obs, write.syn,
-       #utility.gen, 
-       utility.tab)
+       utility.gen, utility.tab)
 
 S3method(compare, default)
 S3method(compare, synds)
@@ -40,7 +40,7 @@ S3method(summary, fit.synds)
 S3method(print, summary.fit.synds)
 S3method(print, compare.fit.synds)
 S3method(print, compare.synds)
-#S3method(print, utility.gen)
+S3method(print, utility.gen)
 S3method(print, utility.tab)
 
 #exportClasses(synds)
@@ -73,5 +73,5 @@ importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment"
            "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
            "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
            "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", 
-           "smooth.spline", "pf", "printCoefmat")
+           "smooth.spline", "pf", "printCoefmat","vcov")
 importFrom("utils", "head", "read.csv", "read.table", "tail", "write.csv", "write.table")

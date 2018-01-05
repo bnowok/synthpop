@@ -53,18 +53,19 @@ lm.synds(formula, data, ...)
   \item{mvar}{a matrix of variance estimates from all \code{m} syntheses.}
 }
 \seealso{
-  \code{\link[stats]{glm}},\code{\link[stats]{lm}}
+  \code{\link[stats]{glm}},\code{\link[stats]{lm}}, 
+  \code{\link[synthpop]{multinom.synds}}, \code{\link[synthpop]{compare}}
 }
 \examples{
 ### Logit model 
-ods <- SD2011[1:1000,c("sex","age","edu","marital","ls","smoke")]
+ods <- SD2011[1:1000, c("sex", "age", "edu", "marital", "ls", "smoke")]
 s1 <- syn(ods, m = 3)
 f1 <- glm.synds(smoke ~ sex + age + edu + marital + ls, data = s1, family = "binomial")
 f1
 print(f1, msel = 1:2)
   
 ### Linear model
-ods <- SD2011[1:1000,c("sex","age","income","marital","depress")]
+ods <- SD2011[1:1000,c("sex", "age", "income", "marital", "depress")]
 ods$income[ods$income == -8] <- NA
 s2 <- syn(ods, m = 3)
 f2 <- lm.synds(depress ~ sex + age + log(income) + marital, data = s2)

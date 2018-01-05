@@ -8,7 +8,7 @@
   model is correct.}
 \usage{
 utility.tab(object, data, vars = NULL, ngroups = 5, 
-            print.tables = FALSE, print.zdiff = FALSE, 
+            print.tables = TRUE, print.zdiff = FALSE, 
             digits = 2, \dots) 
        
 \method{print}{utility.tab}(x, print.tables = x$print.tables, 
@@ -25,12 +25,13 @@ utility.tab(object, data, vars = NULL, ngroups = 5,
     variables to be used to form the table.}
   \item{ngroups}{if numerical (non-factor) variables are included they will be 
     classified into this number of groups to form tables. Classification is 
-    performed using \code{classIntervals()} function for \code{n = ngroups} and
-    arguments of \code{classIntervals()} may also be specified in the call to
-    \code{utility.tab()}.}
+    performed using \code{classIntervals()} function for \code{n = ngroups}. 
+    By default, to avoid problems for variables with a small number of unique 
+    values, \code{style = "fisher"}. Arguments of \code{classIntervals()} may be, 
+    however, specified in the call to \code{utility.tab()}.}
   \item{digits}{an integer indicating the number of decimal places 
     for printing statistics, \code{tab.zdiff} and mean results for \code{m > 1}.}  
-  \item{print.tables}{a logical value that determines if tables of observed, 
+  \item{print.tables}{a logical value that determines if tables of observed and 
     synthesised are to be printed.} 
   \item{print.zdiff}{a logical value that determines if tables of  Z scores for 
    differences between observed and expected are to be printed.} 

@@ -30,7 +30,7 @@ obs.vars <- names(data)
 #if (k == 0) m <- 0 #!BN-12/08/2016
 
 # set default method for everything to cart and to blank (which will get defaults) if method is "parametric"
-if (all(method=="")) method="cart"
+if (all(method == "")) method = "cart"  # change to "ctree"?
 # else if (length(method)==1 && method=="parametric") method=rep("",dim(data)[2])
 
 if (!is.null(attr(data,"filetype")) && attr(data,"filetype")=="sav") {
@@ -614,8 +614,10 @@ check.rules.syn <- function(setup, data) {
 ##------------------namedlist------------------------------------
 # check args that should be provided as a named list 
 # and create list with elements for each variable 
- namedlist <- function(x, varnames=colnames(data), nvars=length(varnames), 
-                       missval=NA, argname, argdescription="", asvector=FALSE){
+ namedlist <- function(x, varnames = colnames(data), 
+                       nvars = length(varnames), 
+                       missval = NA, argname, argdescription = "", 
+                       asvector = FALSE){
    if (is.null(x)) {
      x <- as.list(rep(missval,nvars))
    } else if (!is.list(x) | any(names(x)=="") | is.null(names(x))) {
@@ -637,6 +639,7 @@ check.rules.syn <- function(setup, data) {
      x.missval[x.ind] <- x
      x <- x.missval 
    }
+   names(x) <- varnames
    if (asvector) x <- unlist(x)
    return(x)  
  }
@@ -698,7 +701,7 @@ check.rules.syn <- function(setup, data) {
 
  data     <- as.data.frame(data)
  varnames <- dimnames(data)[[2]]
-
+ 
  # Named lists: check args and create list with elements for each variables 
  # C O N T I N O U S  V A R S  W I T H  M I S S I N G  D A T A  C O D E S
  # S E M I - C O N T I N O U S  V A R S 

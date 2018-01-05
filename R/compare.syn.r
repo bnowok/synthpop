@@ -11,14 +11,14 @@ compare.synds <- function(object, data, vars = NULL,
   msel = NULL, breaks = 20, nrow = 2, ncol = 2, rel.size.x = 1,
   cols = c("#1A3C5A","#4187BF"), ...){ 
                                                                          ## GR6 & GR7 extra parameter nrow and drop plot.na
- if (is.null(data)) stop("Requires parameter data to give name of the real data\n", call.=FALSE)
- if (!is.data.frame(data)) stop("Argument data must be a data frame\n", call.=FALSE)          ## GR2 extra check
- #if (class(object)!="synds") stop("Object must have class synds\n", call.=FALSE )                                                                    
- if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s)", call.=FALSE)                                                                        
+ if (is.null(data)) stop("Requires parameter data to give name of the real data\n", call. = FALSE)
+ if (!is.data.frame(data)) stop("Argument data must be a data frame\n", call. = FALSE)          ## GR2 extra check
+ #if (class(object)! = "synds") stop("Object must have class synds\n", call. = FALSE )                                                                    
+ if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s)", call. = FALSE)                                                                        
 
  # browser()
  # single / pooled synthetic data sets                                  
- if (object$m==1) {
+ if (object$m == 1) {
    syndsall <- object$syn 
  } else if (length(msel) == 1) {
    syndsall <- object$syn[[msel]]
@@ -37,16 +37,16 @@ compare.synds <- function(object, data, vars = NULL,
 
  if (!is.null(vars)){
    if (!(all(vars %in% synnames))) stop("Variable(s) ", 
-     paste0(vars[is.na(match(vars,synnames))], collapse=", "),
-     " not in synthetic data \n", call.=FALSE)
+     paste0(vars[is.na(match(vars,synnames))], collapse = ", "),
+     " not in synthetic data \n", call. = FALSE)
    if (!(all(vars %in% realnames))) stop("Variable(s) ", 
-     paste0(vars[is.na(match(vars,realnames))], collapse=", "),
-     " not in observed data \n", call.=FALSE)
+     paste0(vars[is.na(match(vars,realnames))], collapse = ", "),
+     " not in observed data \n", call. = FALSE)
    commonnames <- commonnames[match(vars,commonnames)]
  }
  
  if (!(all(synnames %in% realnames))) cat("Warning: Variable(s)", 
-   paste0(synnames[is.na(match(synnames,realnames))], collapse=", "),
+   paste0(synnames[is.na(match(synnames,realnames))], collapse = ", "),
    "in synthetic object but not in observed data\n",
    " Looks like you might not have the correct data for comparison\n")
  
@@ -64,7 +64,7 @@ compare.synds <- function(object, data, vars = NULL,
 
  # frequency tables for factors
  if (sum(fac) > 0) {
-   any.fac.na <- unlist(apply(df.obs[,fac,drop=FALSE],2,function(x) any(is.na(x))))    
+   any.fac.na <- unlist(apply(df.obs[,fac,drop = FALSE],2,function(x) any(is.na(x))))    
    per.obs.fac <- ggfac(df.obs[, fac, drop = FALSE], anyna = any.fac.na)
 
    if (length(msel) <= 1) per.syn.facall <- ggfac(df.synall[, fac, drop = FALSE], 
@@ -155,9 +155,9 @@ compare.synds <- function(object, data, vars = NULL,
  # sorts the factor labels in the right order for numeric vars
  per.fac$Value <- as.character(per.fac$Value)
  vals <- unique(per.fac$Value)
- valsnum <- unique(per.fac$Value[per.fac$Variable %in% names(num[num==TRUE])])
+ valsnum <- unique(per.fac$Value[per.fac$Variable %in% names(num[num == TRUE])])
  valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals,1,4)!="miss"]))
- valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals,1,4)=="miss"])
+ valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals,1,4) == "miss"])
  vals[vals %in% valsnum] <- c(valsnum.nonmiss,valsnum.miss)
  per.fac$Value <- factor(as.character(per.fac$Value),levels=vals)
 
@@ -194,7 +194,7 @@ compare.synds <- function(object, data, vars = NULL,
    plots[[i]] <- p
   }
  
- if (length(tables)==1) {
+ if (length(tables) == 1) {
    tables <- tables[[1]]
    plots  <- plots[[1]]
  }  
@@ -219,7 +219,7 @@ ggfac <- function(data, name = "observed", anyna){
   data <- as.data.frame(data)
   perlist  <- lapply(data, pertable)
   for (i in 1:length(perlist)) {
-    if (anyna[i]==FALSE) perlist[[i]] <- perlist[[i]][-length(perlist[[i]])]  
+    if (anyna[i] == FALSE) perlist[[i]] <- perlist[[i]][-length(perlist[[i]])]  
   }
   Percent  <- unlist(perlist, use.names = F)
   Value    <- unlist(lapply(perlist,names), use.names = F)
@@ -311,54 +311,54 @@ compare.fit.synds <- function(object, data, plot = "Z",
  syn.coef    <- object$mcoefavg
  
  call <- match.call()
- # if (!class(object)=="fit.synds") stop("Object must have class fit.synds\n")
+ # if (!class(object) == "fit.synds") stop("Object must have class fit.synds\n")
  if (!is.data.frame(data)) stop("Data must be a data frame\n")  # theoretically can be a matrix (?)
  if (ci.level <= 0 | ci.level > 1) stop("ci.level must be beteen 0 and 1.\n")
  if (incomplete == TRUE & m < length(syn.coef) + 1) stop("\nYou have selected incompletely synthesised data with m less than number of coefficients.\nLack-of-fit test cannot be calculated unless m > ", length(syn.coef),".\n", call. = FALSE)
 
  # get fit to real data
- if (fitting.function=="lm") {
- real.fit <- summary(do.call(object$fitting.function,
-                     args=list(formula=formula(object),data=call$data)))
+ if (fitting.function %in% c("multinom")) {
+   real.fit.0 <- do.call(object$fitting.function,
+                         args = list(formula = formula(object),
+                         Hess = TRUE, data = call$data))
+   real.fit <- summary(real.fit.0)
+ } else if (fitting.function %in% c("lm")) {
+   real.fit <- summary(do.call(object$fitting.function,
+                       args = list(formula = formula(object), 
+                       data = call$data)))
  } else {
- real.fit <- summary(do.call(object$fitting.function,
-                     args=list(formula=formula(object),
-                     family=object$call$family,data=call$data)))
+   real.fit <- summary(do.call(object$fitting.function,
+                       args = list(formula = formula(object),
+                       family = object$call$family, 
+                       data = call$data)))
  }
  
- real.varcov <- real.fit$cov.unscaled                  
- real.coef   <- real.fit$coefficients[,1] 
- real.se     <- real.fit$coefficients[,2]  
+ if (object$fitting.function == "multinom") { 
+   real.varcov <- vcov(real.fit.0) 
+   dd <- dimnames(t(real.fit$coefficients))
+   real.coef <- as.vector(t(real.fit$coefficients))
+   real.se   <- as.vector(t(real.fit$standard.errors))
+   names(real.coef) <- names(real.se) <- 
+     paste(rep(dd[[2]], each = length(dd[[1]])), 
+     rep(dd[[1]], length(dd[[2]])), sep = ":")
+   real.fit$coefficients <- cbind(real.coef, real.se, real.coef / real.se) ##GR 12/17 clumsy to make match glm and lm 
+ } else {
+   real.varcov <- real.fit$cov.unscaled   
+   if (object$fitting.function == "lm") real.varcov <- real.varcov * real.fit$sigma^2  #GR 12/17     
+   real.coef   <- real.fit$coefficients[,1] 
+   real.se     <- real.fit$coefficients[,2]  
+ }
 
-
- if (population.inference==FALSE) { syn.fit  <- summary.fit.synds(object,real.varcov=real.varcov,incomplete=incomplete)}
- else syn.fit  <- summary.fit.synds(object,incomplete=incomplete,population.inference=TRUE,real.varcov=real.varcov)
+ syn.fit  <- summary.fit.synds(object, incomplete = incomplete, 
+                               population.inference = population.inference,
+                               real.varcov = real.varcov) 
+ syn.coef <- syn.fit$coefficients[,1] 
+ syn.se   <- syn.fit$coefficients[,2] 
  
- if (return.plot == TRUE){
+ if (return.plot == TRUE) {
    yvar <- as.character(formula(object)[[2]])
 
-   # # prepare data for plotting confidence intervals (one data frame)
-   # if (plot=="Z"){
-   #   BetaCI <- dfCI(real.fit, Z = TRUE, ci.level = ci.level)
-   #   BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn",
-   #               model.name = "synthetic", ci.level = ci.level)
-   #   xlab = "Z value"
-   #   title = paste0("Z values for fit to ",yvar)
-   # } else {
-   #   BetaCI <- dfCI(real.fit)
-   #   if (population.inference == FALSE) {
-   #     BsynCI <- dfCI(syn.fit, names.est.se = c("B.syn","se(B).syn"),
-   #                    model.name = "synthetic", ci.level = ci.level)  
-   #   } else {
-   #     BsynCI <- dfCI(syn.fit, names.est.se = c("B.syn","se(B.syn)"),
-   #                    model.name = "synthetic", ci.level = ci.level)
-   #   }
-   #   xlab = "Value"
-   #   title = paste0("Coefficients for fit to ",yvar)
-   # }
-   
-   # prepare data for plotting confidence intervals (one data frame)
-   if (plot=="Z"){
+ if (plot == "Z") {
      BetaCI <- dfCI(real.fit, Z = TRUE, ci.level = ci.level)
      
      if (population.inference == FALSE) {  ## get interval from real var
@@ -366,7 +366,8 @@ compare.fit.synds <- function(object, data, plot = "Z",
        for (i in c(1,3,4)) BsynCI[,i] <- BsynCI[,i] + (syn.coef - real.coef)/real.se    #!GR ci by shifting
        BsynCI[,5] <- "synthetic"
      } else {
-       BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn", model.name = "synthetic", ci.level = ci.level)
+       BsynCI <- dfCI(syn.fit, Z = TRUE, name.Z = "Z.syn", 
+                      model.name = "synthetic", ci.level = ci.level)
      }
      xlab = "Z value"
      title = paste0("Z values for fit to ",yvar)
@@ -374,12 +375,13 @@ compare.fit.synds <- function(object, data, plot = "Z",
    } else {
      BetaCI <- dfCI(real.fit, Z = FALSE, ci.level = ci.level)  #!GR 9/17  next line name.Z changed
      
-     if (population.inference==FALSE) {  ## get interval from real var
+     if (population.inference == FALSE) {  ## get interval from real var
        BsynCI <- BetaCI
        for (i in c(1,3,4)) BsynCI[,i] <- BsynCI[,i] + (syn.coef - real.coef)    #!GR ci by shifting
        BsynCI[,5] <- "synthetic"
      } else {
-       BsynCI <- dfCI(syn.fit, Z = FALSE, name.Z = "syn.coef", model.name = "synthetic", ci.level = ci.level)
+       BsynCI <- dfCI(syn.fit, Z = FALSE, name.Z = "syn.coef", 
+                      model.name = "synthetic", ci.level = ci.level)
      }
 
      xlab = "Value"
@@ -388,8 +390,8 @@ compare.fit.synds <- function(object, data, plot = "Z",
    
    modelCI <- rbind.data.frame(BetaCI, BsynCI)
    rownames(modelCI) <- 1:nrow(modelCI)
-
-   if(!plot.intercept) modelCI <- modelCI[modelCI$Coefficient!="(Intercept)",]
+   
+   if (!plot.intercept) modelCI <- modelCI[modelCI$Coefficient != "(Intercept)",]
 
    CI.geom <- geom_errorbar(aes_string(ymin = "LowCI", ymax = "HighCI",
      color = "Model", linetype = "Model"), data = modelCI, width = 0, 
@@ -421,20 +423,20 @@ compare.fit.synds <- function(object, data, plot = "Z",
  ncoef <- nrow(res.obs) 
  
  diff <- syn.coef - real.coef
- if(incomplete == TRUE){   ####  var cov for incomplete
+ if (incomplete == TRUE) {   ####  var cov for incomplete
    QB <- matrix(NA, m, length(object$mcoefavg))
-     for(i in 1:m){
+     for (i in 1:m) {
        QB[i,] <- object$mcoef[i,] - object$mcoefavg
      }
-     lof.varcov <- t(QB) %*% QB/(m-1)/m
+     lof.varcov <- t(QB) %*% QB/(m - 1)/m
  }
- else if (object$proper == TRUE) lof.varcov <- real.varcov * (1+n/k)/m
+ else if (object$proper == TRUE) lof.varcov <- real.varcov * (1 + n/k)/m
  else lof.varcov <- real.varcov*n/k/m
 
  lack.of.fit <- t(diff) %*% solve(lof.varcov) %*% diff  #!GR multiply by m for combined test
  if (incomplete == FALSE) lof.pvalue  <- 1 - pchisq(lack.of.fit,ncoef)
  else {
-   lack.of.fit <- lack.of.fit * (object$m-ncoef)/ncoef/(object$m-1) #!GR18/10/17 Hotellings T square
+   lack.of.fit <- lack.of.fit * (object$m - ncoef)/ncoef/(object$m - 1) #!GR18/10/17 Hotellings T square
    lof.pvalue  <- 1 - pf(lack.of.fit, ncoef, object$m - ncoef)      #!GR18/10/17 changed degrees of freedom for denom
  }
  

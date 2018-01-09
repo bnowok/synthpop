@@ -1,3 +1,13 @@
+synthpop 1.4-2
+---------------
+
+BUG FIXES
+* In syn.polyreg() numerical variables used as predictors for the multinom() 
+  function are scaled so as to have a range (0,1) to improve convergence. An 
+  extra warning is included if all the preicted values are in one category, 
+  which can result when the model fails to iterate due to sparse data.
+
+
 synthpop 1.4-1
 ---------------
 

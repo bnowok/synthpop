@@ -28,8 +28,13 @@
   \item Compute predicted categories. \item Add appropriate
   noise to predictions.}
   
-  The algorithm of \code{syn.polyreg} uses the function
-  \code{\link[nnet]{multinom}} from the \pkg{nnet} package.
+  The algorithm of \code{syn.polyreg} uses the function 
+  \code{\link[nnet]{multinom}} from the \pkg{nnet} package. Any numerical 
+  variables are scaled to cover the range (0,1) before fitting. Warnings 
+  are printed if the algorithm fails to converge in \code{maxit} iterations
+  and also if the synthesised data has only one category. The latter may occur 
+  if the variable being synthesised is sparse so that the algorithm fails to 
+  iterate.
 
   In order to avoid bias due to perfect prediction, the
   data are augmented by the method of White, Daniel and Royston (2010).

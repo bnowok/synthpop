@@ -284,7 +284,7 @@ syn.strata(data, strata = NULL,
 \examples{
 ### selection of variables
 vars <- c("sex","age","marital","income","ls","smoke")
-ods  <- SD2011[1:2000,vars]
+ods  <- SD2011[1:1000,vars]
  
 ### default synthesis
 s1 <- syn(ods)

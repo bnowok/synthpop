@@ -406,17 +406,25 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
     y   <- y[s]  
     y   <- factor(y)
   }
-  
   aug <- augment.syn(y, x, ...)
   # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
   xf  <- aug$x
   yf  <- aug$y
   w   <- aug$w
-  xfy <- cbind.data.frame(yf, xf)  
+  
+  ### rescaling numeric to [0,1]
+  toscale <- sapply(xf, function (z) (is.numeric(z) & (any(z < 0) | any(z > 1))))
+  rsc <- sapply(xf[, toscale, drop = FALSE], range)
+  xf_sc <- xf
+  for (i in names(toscale[toscale == TRUE])) xf_sc[, i] <- (xf_sc[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+  for (i in names(toscale[toscale == TRUE])) xp[, i] <- (xp[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+  ###
+  
+  xfy <- cbind.data.frame(yf, xf_sc)  
   fit <- multinom(formula(xfy), data = xfy, weights = w,
     maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
   if(fit$convergence == 1) cat(" <- Reached max number of iterations for a multinomial model suggest rerunning with polyreg.maxit increased (default 1000)\n")             
-  post <- predict(fit, xp, type = "probs")   
+  post <- predict(fit, xp, type = "probs") 
   if (length(y)==1) post <- matrix(post, nrow=1, ncol=length(post)) 
   if (!is.factor(y)) y <- as.factor(y)
   nc <- length(levels(yf))                    
@@ -424,8 +432,14 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   if (is.vector(post)) post <- matrix(c(1-post,post),ncol=2)
   draws <- un > apply(post,1,cumsum)
   idx   <- 1 + apply(draws,2,sum)
-   
   res <- levels(yf)[idx]
+  if (length(table(res)) == 1) {
+    cat("\n***************************************************************************************")
+    cat("\nWarning the polyreg fit produces only one category for the variable being synthesised." )
+    cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
+    cat("\nbecause the variable is sparse. Check results for this variable carefully.")
+    cat("\n****************************************************************************************\n")
+}
   return(list(res = res, fit = summary(fit)$coefficients))   # fit = "polyreg"
 }
 

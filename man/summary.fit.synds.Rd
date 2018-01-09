@@ -99,7 +99,7 @@ simple or proper synthesis (for details see Raab et al. (2017)).}
 \code{\link{compare.fit.synds}}, \code{\link{summary}}, \code{\link{print}} 
 }
 \examples{
-ods <- SD2011[1:2000,c("sex","age","edu","ls","smoke")]
+ods <- SD2011[1:1000,c("sex","age","edu","ls","smoke")]
   
 ### simple synthesis
 s1 <- syn(ods, m = 5)

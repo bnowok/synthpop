@@ -1,3 +1,15 @@
+synthpop 1.4-3
+---------------
+
+CHANGES
+* In padModel.syn() the default for newly defined synthesising methods is 
+  NOT to create dummy variables from factors before fitting models.
+
+BUG FIXES
+* Extraction of variable name from a tranformed dependant variable in 
+  glm.synds(), lm.synds() and multinom.synds().
+
+
 synthpop 1.4-2
 ---------------
 

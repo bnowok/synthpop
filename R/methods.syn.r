@@ -120,7 +120,7 @@ lm.synds <- function(formula, data, ...)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
  
  # Check validity of inference from vars not in visit sequence or with method ""
  checkinf(vars, formula, data$visit.sequence, data$method)  
@@ -159,8 +159,8 @@ glm.synds <- function(formula, family = "binomial", data, ...)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
- 
+ if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+
  # Check validity of inference from vars not in visit sequence or with method ""
  checkinf(vars, formula, data$visit.sequence, data$method)  
 
@@ -198,7 +198,7 @@ multinom.synds <- function(formula, data, ...)
   if (is.matrix(data$method)) data$method <- data$method[1,]
   if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
   if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
-  if (data$method[names(data$method) == as.character(formula[[2]])] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+  if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
   
   # Check validity of inference from vars not in visit sequence or with method ""
   checkinf(vars, formula, data$visit.sequence, data$method)  

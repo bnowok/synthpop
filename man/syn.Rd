@@ -173,6 +173,8 @@ syn.strata(data, strata = NULL,
  \describe{
    \item{ctree, cart}{classification and regression trees (CART), 
      see \code{\link{syn.cart}}}
+   \item{bagging, random forests}{methods using ensembles of CART trees, 
+     see \code{\link{syn.bag}} and \code{\link{syn.rf}}}
    \item{survctree}{classification and regression trees (CART)
      for duration time data (parametric methods for survival data are 
      not implemented yet),  see \code{\link{syn.survctree}}}

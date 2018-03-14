@@ -394,7 +394,7 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
     }
     
     # Adjustment for synthetic data that have different size than original data
-    tabd[[i]]       <- table(data) * nrow(syndata[[i]])/nrow(data)
+    tabd[[i]]       <- table(data) * (nrow(syndata[[i]])/nrow(data))
     
     totcells        <- length(tabd[[i]])
     tab.syn[[i]]    <- table(syndata[[i]])

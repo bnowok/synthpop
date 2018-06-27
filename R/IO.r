@@ -67,46 +67,54 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
  uniques.exclude = NULL, recode.vars = NULL, bottom.top.coding = NULL,
  recode.exclude = NULL, smooth.vars = NULL){
 
- if(!is.null(smooth.vars) & (any(!smooth.vars %in% names(data)) | any(!(is.numeric(smooth.vars) | is.integer(smooth.vars))))) stop("Some of smooth.vars not in the data or not numeric", call. = FALSE)  
-    
- if (!is.null(recode.vars)){
+ if (!is.null(smooth.vars)) {
+   if (object$m == 1) { 
+     if (any(!smooth.vars %in% names(object$syn))) stop("Some of smooth.vars not in the data", call. = FALSE)  
+     if (any(!(sapply(object$syn[, smooth.vars], function(x) is.numeric(x) | is.integer(x))))) stop("Some of smooth.vars not numeric", call. = FALSE)  
+   } else {
+     if (any(!smooth.vars %in% names(object$syn[[1]]))) stop("Some of smooth.vars not in the data", call. = FALSE)  
+     if (any(!(sapply(object$syn[[1]][, smooth.vars], function(x) is.numeric(x) | is.integer(x))))) stop("Some of smooth.vars not numeric", call. = FALSE)  
+   }  
+ }
+   
+ if (!is.null(recode.vars)) {
    if (!is.null(bottom.top.coding) && !is.list(bottom.top.coding)) 
        bottom.top.coding <- list(bottom.top.coding)
    if (!is.null(recode.exclude) && !is.list(recode.exclude)) 
        recode.exclude <- list(recode.exclude)
-   if (length(bottom.top.coding)!=length(recode.vars) | 
-       any(sapply(bottom.top.coding,length)!=2)) 
+   if (length(bottom.top.coding) != length(recode.vars) | 
+       any(sapply(bottom.top.coding,length) != 2)) 
        stop("Bottom and top codes have to be provided for each variable in recode.vars.\nUse NA if there is no need for bottom or top recoding.\nFor more than one variable to be recoded provide a list of two-element vectors, e.g. list(c(0,60),c(NA,5000))",
        call. = FALSE)
-   if (!is.null(recode.exclude) && length(bottom.top.coding)!=length(recode.exclude))
+   if (!is.null(recode.exclude) && length(bottom.top.coding) != length(recode.exclude))
        stop("recode.exclude have to include codes for each variable in recode.vars.\nUse NA if all values should be considered for recoding.\nFor more than one variable to be recoded provide a list, e.g. list(NA,c(NA,-8)).",
        call. = FALSE)
  }
 
- if (object$m==1){
+ if (object$m == 1) {
    if (!is.null(recode.vars)) {
      cols <- match(recode.vars,colnames(object$syn)) 
-     for(i in cols){
+     for (i in cols) {
        j <- match(i,cols) 
        recoded <- bottom.top.recoding(object$syn[,i],bottom.top.coding[[j]][1],
          bottom.top.coding[[j]][2],recode.exclude[[j]])
        object$syn[,i] <- recoded$x
        cat("\n",recode.vars[j],": no. of bottom-coded values - ",
          recoded$no.recoded.bottom,", no. of top-coded values - ",
-         recoded$no.recoded.top, sep="")
+         recoded$no.recoded.top, sep = "")
      }
    cat("\n")
    }
    if (rm.replicated.uniques) {
      du <- replicated.uniques(object, data, exclude = uniques.exclude) 
      object$syn <- object$syn[!du$replications,]
-     cat("no. of replicated uniques: ", du$no.replications, "\n", sep="")
+     cat("no. of replicated uniques: ", du$no.replications, "\n", sep = "")
    }
-   if (!is.null(label)) object$syn <- cbind.data.frame(flag=label, object$syn)
+   if (!is.null(label)) object$syn <- cbind.data.frame(flag = label, object$syn)
    
-   if (!is.null(smooth.vars)){
+   if (!is.null(smooth.vars)) {
      numindx  <- which(names(object$syn) %in% smooth.vars)
-     for (i in numindx){
+     for (i in numindx) {
        yy <- object$syn[,i][!(object$syn[,i] %in% object$cont.na[[i]])]  
        yyrank <- rank(yy)
        yyforsmooth <- sort(yy)
@@ -116,30 +124,30 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
    } 
  }
   
- if (object$m>1){
+ if (object$m > 1) {
    if (!is.null(recode.vars)) {
      cols <- match(recode.vars,colnames(object$syn[[1]])) 
-     for(k in 1:object$m){
+     for (k in 1:object$m) {
        cat("\nm =",k)
-       for(i in cols){
+       for (i in cols) {
          j <- match(i,cols) 
          recoded <- bottom.top.recoding(object$syn[[k]][,i],bottom.top.coding[[j]][1],
            bottom.top.coding[[j]][2],recode.exclude[[j]])
          object$syn[[k]][,i] <- recoded$x
          cat("\n",recode.vars[j], ": no. of bottom-coded values - ",
          recoded$no.recoded.bottom, ", no. of top-coded values - ",
-         recoded$no.recoded.top, sep="")
+         recoded$no.recoded.top, sep = "")
        }
      }
    cat("\n")
    }
    if (rm.replicated.uniques) {
      du <- replicated.uniques(object, data, exclude = uniques.exclude) 
-     for (i in 1:object$m){ 
+     for (i in 1:object$m) { 
        object$syn[[i]] <- object$syn[[i]][!du$replications[,i],]
      }
    cat("no. of replicated uniques: ", 
-     paste0(du$no.replications, collapse=", "),"\n", sep="")
+     paste0(du$no.replications, collapse = ", "),"\n", sep="")
    }
    if (!is.null(label)) object$syn <- mapply(cbind.data.frame, flag=label,
      object$syn, SIMPLIFY=FALSE, USE.NAMES=FALSE)

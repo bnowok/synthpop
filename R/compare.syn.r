@@ -401,7 +401,7 @@ compare.fit.synds <- function(object, data, plot = "Z",
      color = "Model", shape = "Model"), data = modelCI, 
      size = point.size, position = position_dodge(width = dodge.height))
 
-   p <- ggplot(data = modelCI, aes_string(x = coefficient, y = value))
+   p <- ggplot(data = modelCI, aes_string(x = "Coefficient", y = "Value"))
    p <- p + geom_hline(yintercept = 0, colour = "grey", linetype = 2, lwd = 1)
    p <- p + CI.geom + point.geom + labs(title = title, y = xlab)
    p <- p + scale_shape_manual(values = c(16:17), breaks = c("synthetic","observed")) +

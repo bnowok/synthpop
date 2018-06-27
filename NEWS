@@ -1,3 +1,13 @@
+synthpop 1.4-4
+---------------
+
+BUG FIXES
+* Compatibility with the new version of ggplot2 (2.3.0).
+* Check in multi.compare() for missing argument `var`.
+* Check in sdc() for data type of variables to be smoothed.
+* Size of $syn when k < n and all synthesising methods without predictors.
+
+
 synthpop 1.4-3
 ---------------
 
@@ -8,12 +18,6 @@ CHANGES
 BUG FIXES
 * Extraction of variable name from a tranformed dependant variable in 
   glm.synds(), lm.synds() and multinom.synds().
-
-
-synthpop 1.4-2
----------------
-
-BUG FIXES
 * In syn.polyreg() numerical variables used as predictors for the multinom() 
   function are scaled so as to have a range (0,1) to improve convergence. An 
   extra warning is included if all the preicted values are in one category, 

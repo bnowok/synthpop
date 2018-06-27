@@ -1,5 +1,5 @@
 ###-----multi.compare------------------------------------------------------
-multi.compare <- function (object, data, var = NULL, by = NULL, msel = NULL, 
+multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL, 
   barplot.position = "fill", cont.type = "hist", y.hist = "count", 
   boxplot.point = TRUE, binwidth = NULL, ...) {
  
@@ -8,19 +8,21 @@ multi.compare <- function (object, data, var = NULL, by = NULL, msel = NULL,
  if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
  if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE)
  if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)
-
- if (length(var)!=1){
-   cat("\nParameter var set to ",var,", should be a single variable.\nOnly first variable used.\n") 
+ if (is.null(var)) stop("Argument var is missing.\n", call. = FALSE)
+  
+ 
+ if (length(var) > 1) {
+   cat("\nParameter var set to ", var, ", should be a single variable.\nOnly first variable used.\n") 
    var <- var[1]
  }
- if (!(var %in% names(data))) stop("\nParameter var set to ",var,
+ if (!(var %in% names(data))) stop("\nArgument var set to ",var,
    ", should be the name of a variable in data\n", call. = FALSE)
- if (!all(by %in% names(data))) stop("\nParameter by set to ", by,
-   ", should all be names of variables in data.\n", call.=FALSE)
- if (any(var %in% by)){  
-   cat("\nParameter var: ",var,"included in parameter by: ", by,
+ if (!all(by %in% names(data))) stop("\nArgument by set to ", by,
+   ", should all be names of variables in data.\n", call. = FALSE)
+ if (any(var %in% by)) {  
+   cat("\nArgument var: ",var,"included in argument by: ", by,
    " now removed from by.\n")
-   by <- by[-match(var,by)]
+   by <- by[-match(var, by)]
  }
 #--- 
  

@@ -952,6 +952,11 @@ check.rules.syn <- function(setup, data) {
               denom = denom,                  #GRdenom new
               categories = NULL,
               smoothing = smoothing)         
+   
+   if (k != dim(data)[1]){          #!BN-27/06/2018
+     p$syn <- p$syn[sample(1:nrow(data),k,replace=TRUE),]
+     dimnames(p$syn)[[1]] <- 1:k
+   }
  }
 
  if (m > 0) {

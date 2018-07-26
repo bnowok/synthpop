@@ -11,24 +11,30 @@
 \usage{
 syn(data, method = vector("character", length = ncol(data)), 
     visit.sequence = (1:ncol(data)), predictor.matrix = NULL,  
-    m = 1, k = nrow(data), proper = FALSE, minnumlevels = -1,  
-    maxfaclevels = 60, rules = NULL, rvalues = NULL, 
-    cont.na = NULL, semicont = NULL, smoothing = NULL, 
-    event = NULL, denom = NULL, drop.not.used = FALSE, drop.pred.only = FALSE,
-    default.method = c("normrank", "logreg", "polyreg", "polr"), models = FALSE,
-    print.flag = TRUE, seed = "sample", ...)
+    m = 1, k = nrow(data), proper = FALSE, 
+    minnumlevels = -1, maxfaclevels = 60, 
+    rules = NULL, rvalues = NULL, 
+    cont.na = NULL, semicont = NULL, 
+    smoothing = NULL, event = NULL, denom = NULL, 
+    drop.not.used = FALSE, drop.pred.only = FALSE, 
+    default.method = c("normrank", "logreg", "polyreg", "polr"),
+    numtocat = NULL, catgroups = rep(5, length(numtocat)), 
+    models = FALSE, print.flag = TRUE, seed = "sample", ...)
     
 syn.strata(data, strata = NULL, 
     minstratumsize = 10 + 10 * length(visit.sequence),  
     tab.strataobs = TRUE, tab.stratasyn = FALSE,
     method = vector("character", length = ncol(data)),
     visit.sequence = (1:ncol(data)), predictor.matrix = NULL,
-    m = 1, k = nrow(data), proper = FALSE, minnumlevels = 5, 
-    maxfaclevels = 60, rules = NULL, rvalues = NULL,
-    cont.na = NULL, semicont = NULL, smoothing = NULL, 
-    event = NULL, denom = NULL, drop.not.used = FALSE, drop.pred.only = FALSE,
-    default.method = c("normrank","logreg","polyreg","polr"), models = FALSE,
-    print.flag = TRUE, seed = "sample", ...)    
+    m = 1, k = nrow(data), proper = FALSE, 
+    minnumlevels = -1, maxfaclevels = 60, 
+    rules = NULL, rvalues = NULL,
+    cont.na = NULL, semicont = NULL, 
+    smoothing = NULL, event = NULL, denom = NULL, 
+    drop.not.used = FALSE, drop.pred.only = FALSE,
+    default.method = c("normrank", "logreg", "polyreg", "polr"),
+    numtocat = NULL, catgroups = rep(5,length(numtocat)), 
+    models = FALSE, print.flag = TRUE, seed = "sample", ...)    
    
 \method{print}{synds}(x, \dots)   
 }
@@ -97,8 +103,8 @@ syn.strata(data, strata = NULL,
   \item{smoothing}{a named list specifying smoothing method (\code{"density"} 
      or \code{""}) to be used for selected variables. Smoothing can only be 
      applied to continuous variables synthesised using \code{sample}, 
-     \code{ctree}, \code{cart} or \code{normrank} method. The names of the 
-     list elements must correspond to the names of the variables whose values 
+     \code{ctree}, \code{cart}, \code{normrank} or \code{nested} method. The names 
+     of the list elements must correspond to the names of the variables whose values 
      are to be smoothed. Smoothing is applied to the synthesised values.
      For \code{"density"} smoothing a Gaussian kernel density estimator is 
      applied with bandwidth selected using the Sheather-Jones 
@@ -122,6 +128,19 @@ syn.strata(data, strata = NULL,
      and ordered factors with more than two levels respectively. 
      They are used when \code{method} is set to \code{"parametric"} or 
      when there is an inconsistency between variable type and provided method.}
+  \item{numtocat}{a vector of numbers or names to indicate columns of \code{data}
+    that are to be categorised into factors before synthesis. 
+    After the categorical variables have been synthesised the  numerical variables
+    are synthesised from them by the method \code{syn.nested} and are placed in the
+    same position in the synthetic data as in the original. 
+    The categorised variables are not stored in the synthetic data.
+    If you want to keep the categorised values you should change
+    the relevant variables in \code{data} before running \code{syn}
+    with the function \code{numtocat.syn()}}
+  \item{catgroups}{An integer or a vector of integers of the same length as
+    \code{numtocat} giving the target number of groups into which of the
+     numeric variables is to be categorised. The function \code{group_var}
+     performs the categorisation.}
   \item{models}{if \code{TRUE} parameters of models fitted to the original data 
      and used to generate the synthetic values are stored.}
   \item{print.flag}{if \code{TRUE} (default) synthesising history and 
@@ -169,7 +188,8 @@ syn.strata(data, strata = NULL,
  automatically, if necessary, to methods for categorical variables. 
  Methods for variables not in a visit sequence will be changed into blank.
 
- The built-in elementary synthesising methods include:
+ The built-in elementary synthesising methods  defined by conditional 
+ distributions include:
  \describe{
    \item{ctree, cart}{classification and regression trees (CART), 
      see \code{\link{syn.cart}}}
@@ -200,6 +220,14 @@ syn.strata(data, strata = NULL,
      see \code{\link{syn.satcat}}}
   }
  
+  These methods use a group of variables that are synthesised together. 
+  They must always be together at the start of the visit sequence:
+ \describe{
+   \item{catall}{fit a saturated log-linear model,
+     see \code{\link{syn.catall}}}
+   \item{ipf}{fit a log-linear model, defined by its margins, by iterative 
+   proportional fitting  see \code{\link{syn.ipf}}}
+}
  The functions corresponding to these methods are called \code{syn.method}, 
  where \code{method} is a string with the name of a synthesising method. 
  For instance a function corresponding to \code{ctree} function is called
@@ -264,14 +292,19 @@ syn.strata(data, strata = NULL,
      synthesis parameters.}
   \item{drop.pred.only}{a logical value indicating whether variables not
      synthesised and used as predictors only are saved in the synthesised data.}
+  \item{models}{if \code{models = TRUE} a named list of estimates of models 
+     fitted to the original data and used to generate the synthetic values is 
+     returned from the \code{$fit} component of each method 
+     (e.g. \code{syn.cart()}). The list is ordered by the variables position 
+     in the data, and any models used to predict missing values are appended 
+     to the list.}
   \item{seed}{an integer used as a \code{set.seed()} argument.}   
   \item{var.lab}{a vector of variable labels for data imported from SPSS using 
      \code{read.obs()}.}   
   \item{val.lab}{a list value labels for factors for data imported from SPSS 
      using \code{read.obs()}.}       
   \item{obs.vars}{a vector of all variable names in the observed data set.}
-  \item{models}{estimates of models fitted to the original data and used to 
-     generate the synthetic values.}
+
 }
 \note{See package vignette for additional information.}
 
@@ -286,7 +319,7 @@ syn.strata(data, strata = NULL,
 \examples{
 ### selection of variables
 vars <- c("sex","age","marital","income","ls","smoke")
-ods  <- SD2011[1:1000,vars]
+ods  <- SD2011[1:1000, vars]
  
 ### default synthesis
 s1 <- syn(ods)
@@ -321,8 +354,11 @@ with(s6$syn, table(marital[age < 18 & sex == 'MALE']))
 ### results for default parametric synthesis without the rule  
 with(s2$syn, table(marital[age < 18 & sex == 'MALE']))
 
+### synthesis with ipf for all variables
+s7 <- syn(ods[, 1:3], method = "ipf", numtocat = "age")
+
 ### stratified synthesis
-s7 <- syn.strata(ods, strata = "sex")
+s8 <- syn.strata(ods, strata = "sex")
 }
 
 \keyword{datagen}

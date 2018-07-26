@@ -8,7 +8,7 @@
   regression trees (without or with bootstrap).
 }
 \usage{
-syn.ctree(y, x, xp, smoothing, proper = FALSE, minbucket = 5, ...)
+syn.ctree(y, x, xp, smoothing, proper = FALSE, minbucket = 5, mincriterion = 0.9, ...)
 syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)  
 %syn.cartbboot(y, x, xp, minbucket = 5, cp = 1e-08, ...) 
 }
@@ -24,7 +24,12 @@ syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)
     \code{\link[party]{ctree_control}} for details.}
   \item{cp}{complexity parameter. Any split that does not
     decrease the overall lack of fit by a factor of cp is not
-    attempted. See \code{\link[rpart]{rpart.control}} for details.}
+    attempted. Small values of \code{cp} will grow large trees. 
+    See \code{\link[rpart]{rpart.control}} for details.}
+  \item{mincriterion}{\code{1 - p-value} of the test that must be 
+    exceeded for a split to be retained. Small values of 
+    \code{mincriterion} will grow large trees. 
+    See \code{\link[party]{ctree_control}} for details.}
   \item{\dots}{additional parameters passed to 
     \code{\link[party]{ctree_control}} for \code{syn.ctree} and 
     \code{\link[rpart]{rpart.control}} for \code{syn.cart}.}
@@ -51,7 +56,11 @@ syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)
   CART models were suggested for generation of synthetic data by 
   Reiter (2005) and then evaluated by Drechsler and Reiter (2011).
 }
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{A list with two components
+  \item{res}{A vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{The fitted model which is an item of class \code{rpart.object} 
+    or \code{ctree.object} that can be printed or plotted.}
+}
 \references{
   Reiter, J.P. (2005). Using CART to generate partially synthetic, 
   public use microdata. \emph{Journal of Official Statistics}, 

@@ -496,29 +496,28 @@ Warning: null utility resamples failed to split ", x$nnosplits[1], " times from 
   }
   
   if (x$m > 1) {
-    cat("\nUtility score results from ", x$m, " syntheses",
-        "\npMSE: ", mean(x$pMSE),
-        "; Utility: ", round(mean(x$utilVal), digits),
-        "; Expected value: ", round(mean(x$utilExp), digits),
-        "; Ratio to expected: ", round(mean(x$utilR), digits),
-        "; Standardised: ", round(mean(x$utilStd),digits), "\n", sep = "")
+    cat("\nMean utility score results from ", x$m, " syntheses\n",
+        "Utility: ", round(mean(x$utilVal), digits),
+        "\nExpected value: ", round(mean(x$utilExp), digits),
+        "\nRatio to expected: ", round(mean(x$utilR), digits),
+        "\npMSE (propensity score mean square error): ", round(mean(x$pMSE),digits), "\n\n", sep = "")
     
     if (print.ind.results == TRUE) {
-      cat("\nIndividual utility score results from ", x$m, " syntheses\n", sep = "")
-      tabres <- cbind(x$pMSE, round(x$utilVal, digits), round(x$utilExp, digits), 
-        round(x$utilR, digits), round(x$utilStd, digits))
-      dimnames(tabres) <- list(1:length(x$utilVal), 
-        c("pMSE", "Utility","Expected","Ratio","Standardised"))
+      cat("Individual utility score results from ", x$m, " syntheses\n", sep = "")
+      tabres <- data.frame(round(x$utilVal, digits), round(x$utilExp, digits), 
+                           round(x$utilR, digits), x$pval, round(x$pMSE, digits))
+      names(tabres) <- c("Utility", "Expected", "Ratio", "p-value", "pMSE")
       print(tabres)
+      cat("\n")
     }
     
   } else {
-    cat("\nUtility score results\n",
-        "pMSE: ", x$pMSE,
-        "; Utility: ", round(x$utilVal, digits),
-        "; Expected value: ", round(x$utilExp, digits),
-        "; Ratio to expected: ", round(x$utilR, digits),
-        "; Standardised: ", round(x$utilStd, digits),"\n", sep = "")
+    cat("\nUtility score results",
+        "\nUtility score: ", round(x$utilVal, digits),
+        "\nExpected value: ", round(x$utilExp, digits),
+        "\nRatio to expected: ", round(x$utilR, digits),
+        "\np-value: ", x$pval,
+        "\npMSE (propensity score mean square error): ", round(x$pMSE, digits), "\n\n", sep = "")
   }
   
   if (print.zscores == TRUE) {
@@ -586,11 +585,13 @@ Warning: null utility resamples failed to split ", x$nnosplits[1], " times from 
 ###-----print.utility.tab--------------------------------------------------
 
 print.utility.tab <- function(x, print.tables = x$print.tables,  
-  print.zdiff = x$print.zdiff, digits = x$digits, ...){
-
+                              print.zdiff = x$print.zdiff, 
+                              print.stats = x$print.stats, 
+                              digits = x$digits, ...){
+  
   if (print.tables == TRUE) {
     if (is.table(x$tab.obs)) {
-      if (sum(x$tab.obs) != x$n) {
+      if (sum(x$tab.obs) != x$n) { 
         cat("\nObserved adjusted to match the size of the synthetic data: \n($tab.obs)\n")
         print(round(x$tab.obs, digits))
       } else {
@@ -603,10 +604,10 @@ print.utility.tab <- function(x, print.tables = x$print.tables,
       meantabd <- apply(simplify2array(x$tab.obs), c(1,2), mean)
       print(round(meantabd, digits))
     } 
-
+    
     if (x$m == 1) {
       cat("\nSynthesised: \n($tab.syn)\n")
-	    print(x$tab.syn) 
+      print(x$tab.syn) 
     } else {
       meantab <- apply(simplify2array(x$tab.syn), c(1,2), mean)
       cat("\nMean of ",x$m," synthetic tables ($tab.syn):\n", sep = "")
@@ -631,35 +632,37 @@ print.utility.tab <- function(x, print.tables = x$print.tables,
         "; Number of cells contributing to utility measures: ", 
         x$df + 1,"\n", sep = "")
     cat("\nUtility score results\n")
-    cat("Freeman Tukey (FT): ", round(x$UtabFT,digits), ";",
-        " Ratio to degrees of freedom (df): ", round(x$ratioFT,digits), ";",
-        " p-value: ", x$pvalFT, "\n", sep = "")
-    cat("Voas Williamson (VW): ", round(x$UtabVW,digits), ";",
-        " Ratio to degrees of freedom (df): ", round(x$ratioVW,digits), ";",
-        " p-value: ", x$pvalVW, "\n", sep = "")
+    if ("VW" %in% print.stats) cat("Voas Williamson (VW): ", round(x$UtabVW,digits), ";",
+      " Ratio to degrees of freedom (df): ", round(x$ratioVW,digits), ";",
+      " p-value: ", x$pvalVW, "\n", sep = "")
+    if ("FT" %in% print.stats) cat("Freeman Tukey (FT): ", round(x$UtabFT,digits), ";",
+      " Ratio to degrees of freedom (df): ", round(x$ratioFT,digits), ";",
+      " p-value: ", x$pvalFT, "\n", sep = "")
   } else if (x$m > 1) {
     cat("\nAverage results for ", x$m, " syntheses\n", sep = "")
     cat("\nNumber of cells in each table: ", 
         round(mean(x$df[1] + x$nempty[1] + 1), digits),
         "; Number of cells contributing to utility measures: ", 
         round(mean(x$df + 1), digits),"\n", sep = "")
-    cat("\nUtility score results\n")
-    cat("Freeman Tukey (FT): ", round(mean(x$UtabFT),digits), ";",
-        " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT),digits),"\n", sep = "")
-    cat("Voas Williamson (VW): ", round(mean(x$UtabVW), digits), ";",
-        " Ratio to degrees of freedom (df): ",  round(mean(x$ratioVW), digits),"\n", sep = "")
-    
+    cat("\nAverage utility score results\n")
+    if ("VW" %in% print.stats) cat("Voas Williamson (VW): ", round(mean(x$UtabVW), digits), ";",
+      " Ratio to degrees of freedom (df): ",  round(mean(x$ratioVW), digits),"\n", sep = "")    
+    if ("FT" %in% print.stats) cat("Freeman Tukey (FT): ", round(mean(x$UtabFT),digits), ";",
+      " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT),digits),"\n", sep = "")
+
     cat("\nResults from individual syntheses\n")
     tab.res <- cbind.data.frame(x$df,
-    round(x$UtabFT,digits), round(x$pvalFT,digits),
-    round(x$UtabVW,digits), round(x$pvalVW,digits))
+                                round(x$UtabVW,digits), round(x$pvalVW,digits),
+                                round(x$UtabFT,digits), round(x$pvalFT,digits))
     colnames(tab.res) <- c("df", 
-                           "FT Utility","FT p-value",
-                           "VW Utility","VW p-value")
+                           "VW Utility", "VW p-value",
+                           "FT Utility", "FT p-value")
+    if (!("VW" %in% print.stats)) tab.res <- tab.res[,-(2:3)]
+    if (!("FT" %in% print.stats)) tab.res <- tab.res[,-(4:5)]
     print(tab.res)
   }
-
- 	invisible(x)
+  
+  invisible(x)
 }
 
 

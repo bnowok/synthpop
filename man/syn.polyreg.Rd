@@ -7,8 +7,8 @@
   unordered polytomous regression (without or with bootstrap).
 }
 \usage{
-  syn.polyreg(y, x, xp, proper = FALSE, maxit = 1000, trace = FALSE, 
-    MaxNWts = 10000, ...)
+syn.polyreg(y, x, xp, proper = FALSE, maxit = 1000, trace = FALSE, 
+            MaxNWts = 10000, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -37,7 +37,11 @@
   iterate.
 
   In order to avoid bias due to perfect prediction, the
-  data are augmented by the method of White, Daniel and Royston (2010).
+  data are augmented by the method of White, Daniel and Royston (2010).   
+  
+  NOTE that when the function is called by setting elements of method in \code{syn()}
+  to \code{"polyreg"}, the parameters \code{maxit}, \code{trace} and \code{MaxNWts}
+  can be supplied to \code{syn()} as e.g. \code{polyreg.maxit}.
 }
 \value{A vector of length \code{k} with synthetic values of \code{y}.}
 \references{

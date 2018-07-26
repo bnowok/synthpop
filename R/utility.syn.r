@@ -9,8 +9,7 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
 {
  
  m   <- object$m
- cna <- object$cont.na
-  
+
  # Check input parameters 
  # ---
  if (is.null(method) || length(method) != 1 || is.na(match(method, c("cart", "logit")))) {
@@ -36,14 +35,25 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
    }
  } else {
    if (m == 1) vars <- names(object$syn) else vars <- names(object$syn[[1]])
-   if (!all(vars %in% names(data))) stop("Some variables in synthetic data not in data.\n", call. = FALSE)
+   if (!all(vars %in% names(data))) stop("Some variables in synthetic data not in original data.\n", call. = FALSE)
    else data <- data[, vars]  # make data match synthetic
  } 
-  
+
+ # get cont.na and method parameters for stratified synthesis    
+ # --------
+ if (!is.null(object$strata.syn)) {
+   # cna <- apply(object$cont.na, 2, function(y) {unlist(unique(y))})
+   cna <- object$cont.na[1,]
+   syn.method <- object$method[1,] 
+ } else {
+   cna <- object$cont.na 
+   syn.method <- object$method
+ } 
+
  # Check whether some variables are unsynthesised  
  incomplete <- FALSE
  nsynthd <- length(vars)
- unsyn.vars <- names(object$method)[object$method == ""]  # identify unsynthesised
+ unsyn.vars <- names(syn.method)[syn.method == ""]  # identify unsynthesised
  if (any(vars %in% unsyn.vars) & !is.null(unsyn.vars)) {
    notunsyn <- vars[!vars %in% unsyn.vars]  # synthesised vars
    incomplete <- TRUE
@@ -106,8 +116,9 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
      }
    }
  }   
+ 
  for (i in numvars) {
-   if (anyNA(data[,i])) {
+   if (anyNA(data[,i]) & is.null(ngroups)) {
      newname <- paste(names(data)[i], "NA", sep = "_")
      data <- data.frame(data, 1*(is.na(data[,i])))
      names(data)[length(data)] <- newname
@@ -124,6 +135,32 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
        }
      }
    }
+   if (any(!is.na(cna[[i]]))  & is.null(ngroups)) {               
+     cna[[i]] <- cna[[i]][!is.na(cna[[i]])]
+     for (j in 1:length(cna[[i]])) {
+       newname <- paste(names(data)[i], "cna",j, sep = "_")
+       data <- data.frame(data, 1*(data[,i] == cna[[i]][j]))
+       data[data[,i] == cna[[i]][j], i] <- 0
+       names(data)[length(data)] <- newname
+     }
+     if (m == 1) {
+       for (j in 1:length(cna[[i]])) {
+         newname <- paste(names(object$syn)[i], "cna",j, sep = "_")
+         object$syn <- data.frame(object$syn, 1*(object$syn[,i] == cna[[i]][j]))
+         object$syn[object$syn[,i] == cna[[i]][j], i] <- 0
+         names(object$syn)[length(object$syn)] <- newname
+       }
+     } else {
+       for (k in 1:m) {
+         for (j in 1:length(cna[[i]])) {
+           newname <- paste(names(object$syn[[k]])[i], "cna",j, sep = "_")
+           object$syn[[k]] <- data.frame(object$syn[[k]], 1*(object$syn[[k]][,i] == cna[[i]][j]))
+           object$syn[[k]][object$syn[[k]][,i] == cna[[i]][j], i] <- 0
+           names(object$syn[[k]])[length(object$syn[[k]])] <- newname
+         }
+       }
+     }
+   }  
  }
 
  nnosplits <- NA  # for 'logit'
@@ -262,12 +299,16 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
     n2 <- nrow(object$syn)
     res.ind <- propcalcs(object$syn, data)
     pMSE <- res.ind$utilVal * n1^2 * n2/(n1 + n2)^4
+    
+    pval <- round(1 - pchisq(res.ind$utilVal, res.ind$utilExp), 4)
+    if (pval < 0.0001) pval <- "< 0.0001"
+    
     res <- list(call = match.call(), m = m, method = method, tree.method = tree.method, 
                 resamp.method = resamp.method, maxorder = maxorder, vars = vars, 
                 aggregate = aggregate, maxit = maxit, ngroups = ngroups,
                 mincriterion = mincriterion, nperms = nperms, 
                 pMSE = pMSE, utilVal = res.ind$utilVal, utilExp = res.ind$utilExp, utilR = res.ind$utilR, 
-                utilStd = res.ind$utilStd, fit = res.ind$fit, nnosplits = res.ind$nnosplits, 
+                utilStd = res.ind$utilStd, pval = pval, fit = res.ind$fit, nnosplits = res.ind$nnosplits, 
                 digits = digits, print.ind.results = print.ind.results, print.zscores = print.zscores,
                 zthresh = zthresh, print.variable.importance = print.variable.importance)
   } else {
@@ -318,12 +359,15 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
     }
     for (j in 1:m) pMSE[j] <- utilVal[j] * n1^2 * n2/(n1 + n2)^4
     
+    pval <- round(1 - pchisq(utilVal, utilExp), 4)
+    pval[pval < 0.0001] <- "< 0.0001"
+    
     res <- list(call = match.call(), m = m, method = method, tree.method = tree.method,
                 resamp.method = resamp.method, maxorder = maxorder, vars = vars,
                 aggregate = aggregate, maxit = maxit, ngroups = ngroups,
                 mincriterion = mincriterion, nperms = nperms,
                 pMSE = pMSE, utilVal = utilVal, utilExp = utilExp, utilR = utilR,
-                utilStd = utilStd, fit = fit, nnosplits = nnosplits, 
+                utilStd = utilStd, pval = pval, fit = fit, nnosplits = nnosplits, 
                 digits = digits, print.ind.results = print.ind.results, print.zscores = print.zscores, 
                 zthresh = zthresh, print.variable.importance = print.variable.importance)
   }
@@ -336,9 +380,12 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
 ###-----utility.tab--------------------------------------------------------
 
 utility.tab <- function(object, data, vars = NULL, ngroups = 5, 
-                        print.tables = TRUE, print.zdiff = FALSE, 
+                        useNA = TRUE, print.tables = length(vars) < 4, 
+                        print.stats = 'VW', print.zdiff = FALSE, 
                         digits = 2, ...) 
 {
+  vars <- unique(vars)
+    
   # CHECKS 
   #---------
   if (is.null(data)) 
@@ -353,10 +400,19 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
      paste(vars[!(vars %in% names(data))], collapse = ", "), call. = FALSE)
   #---------
 
-  my_cont.na <- object$cont.na[match(vars,names(data))]
   data  <- data[, vars, drop = FALSE]
   nvars <- ncol(data)  
   data.orig <- data
+
+  # get cont.na parameters for stratified synthesis    
+  # --------
+  if (!is.null(object$strata.syn)) {
+    # cna <- apply(object$cont.na, 2, function(y) {unlist(unique(y))})
+    cna <- object$cont.na[1,]
+  } else {
+    cna <- object$cont.na
+  } 
+  cna <- cna[vars]  
 
   m <- object$m
   if (m == 1) syndata <- list(object$syn) else syndata <- object$syn   
@@ -379,14 +435,14 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
     for (j in 1:nvars) {
       if (is.numeric(data[,j])) {
         grpd <- group_num(data[,j], syndata[[i]][,j], 
-          n = ngroups, cont.na = my_cont.na[[j]], ...)
+          n = ngroups, cont.na = cna[[j]], ...)
         data[,j] <- grpd[[1]]; syndata[[i]][,j] <- grpd[[2]]
       } else if (is.character(data[,j])) {
         data[,j] <- factor(data[,j])
         syndata[[i]][,j] <- factor(syndata[[i]][,j], 
                                    levels = levels(data[,j]))
       }
-      if (any(is.na(data[,j]))) {
+      if (any(is.na(data[,j])) & useNA) {
         # makes missings into part of factors if present 
         data[,j] <- addNA(data[,j]) 
         syndata[[i]][,j] <- addNA(syndata[[i]][,j]) 
@@ -395,7 +451,6 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
     
     # Adjustment for synthetic data that have different size than original data
     tabd[[i]]       <- table(data) * (nrow(syndata[[i]])/nrow(data))
-    
     totcells        <- length(tabd[[i]])
     tab.syn[[i]]    <- table(syndata[[i]])
     nempty[i]       <- sum(tabd[[i]] + tab.syn[[i]] == 0)  
@@ -413,7 +468,6 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
     pvalVW[i]       <- 1 - pchisq(UtabVW[i], df[i])
     # stdVW[i] <-(UtabVW[i] - df[i]) / sqrt(2*df[i])
     tab.zdiff[[i]]  <- diff/sqrt(expect)
-
   }
 
   if (m == 1) {
@@ -440,9 +494,10 @@ utility.tab <- function(object, data, vars = NULL, ngroups = 5,
               tab.syn = tab.syn, 
               tab.zdiff = tab.zdiff,
               digits    = digits, 
+              print.stats  = print.stats, 
               print.zdiff  = print.zdiff, 
               print.tables = print.tables, 
-              n = object$n)
+              n = sum(object$n))
   
   class(res) <- "utility.tab"
   return(res)
@@ -457,25 +512,28 @@ group_num <- function(x1, x2, n = 5, style = "fisher", cont.na = NA, ...) {
   # Categorise 2 continous variables into factors of n groups 
   # with same groupings determined by the first one
   
-  if (!is.numeric(x1) | !is.numeric(x2)) stop("x1 and x2 must be numeric.\n", call. = FALSE)
+  if (!is.numeric(x1) | !is.numeric(x2)) stop("x1 and x2 must be numeric.\n", 
+                                              call. = FALSE)
   
   # Select non-missing(nm) values 
-  x1nm <- x1[!(x1 %in% cont.na)]
-  x2nm <- x2[!(x2 %in% cont.na)]
+  x1nm <- x1[!(x1 %in% cont.na) & !is.na(x1)]
+  x2nm <- x2[!(x2 %in% cont.na) & !is.na(x2)]
+
   # Derive breaks
-  my_breaks <- classIntervals(rbind(x1nm, x2nm), n = n, style = style, ...)$brks
+  my_breaks <- classIntervals(c(x1nm, x2nm), n = n, style = style, ...)$brks
   my_levels <- c(levels(cut(x1nm, breaks = my_breaks, 
                  dig.lab = 8, right = FALSE, include.lowest = TRUE)),
                  cont.na[!is.na(cont.na)])
+  
   # Apply groupings to non-missing data
-  x1[!(x1 %in% cont.na)] <- as.character(cut(x1nm, breaks = my_breaks, 
-                            dig.lab = 8, right = FALSE, include.lowest = TRUE))
-  x2[!(x2 %in% cont.na)] <- as.character(cut(x2nm, breaks = my_breaks, 
-                            dig.lab = 8, right = FALSE, include.lowest = TRUE))
+  x1[!(x1 %in% cont.na) & !is.na(x1)] <- as.character(cut(x1nm, 
+    breaks = my_breaks, dig.lab = 8, right = FALSE, include.lowest = TRUE))
+  x2[!(x2 %in% cont.na) & !is.na(x2)] <- as.character(cut(x2nm, 
+    breaks = my_breaks, dig.lab = 8, right = FALSE, include.lowest = TRUE))
   x1 <- factor(x1, levels = my_levels)
   x2 <- factor(x2, levels = my_levels)
-  return(list(x1,x2))  
   
+  return(list(x1,x2))  
 }  
 
 

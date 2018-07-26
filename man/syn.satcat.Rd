@@ -14,8 +14,9 @@ syn.satcat(y, x, xp, proper = FALSE, ...)
   \item{x}{a matrix (\code{n} x \code{p}) with the original predictor variables
     for \code{y}.}
   \item{xp}{a matrix (\code{k} x \code{p}) with synthetic values of \code{x}.}
-  \item{proper}{if \code{proper = TRUE} values are a bootstrapped 
-    sample from the synthesised data.} 
+  \item{proper}{if \code{proper = TRUE} \code{x} and \code{y} are replaced 
+    with a bootstrap sample before synthesis, thus effectively sampling from 
+    the posterior distribution of the model, given the data.} 
   \item{\dots}{additional parameters.}
 }
 \details{It is intended that the variables in \code{x} are categorical (factor) 
@@ -23,7 +24,8 @@ variables. If  \code{y} is also a categorical variable \code{syn.satcat} will
 give the same results as fitting a saturated polychotomous regression model but 
 will usually be much faster. \code{syn.satcat} will fail with an error message 
 if previous syntheses have generated a combination of variables in \code{xp} 
-that was not present in \code{x}.}
+that was not present in \code{x}. Use of the \code{syn.catall} method for 
+grouped variables can overcome this.}
 \value{A vector of length \code{k} with synthetic values of \code{y}.}
 \examples{
 ods <- SD2011[, c("region", "sex", "agegr", "placesize")]

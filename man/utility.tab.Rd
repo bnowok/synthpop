@@ -7,13 +7,16 @@
   utility measures to compare them with their expectation if the synthesising 
   model is correct.}
 \usage{
-utility.tab(object, data, vars = NULL, ngroups = 5, 
-            print.tables = TRUE, print.zdiff = FALSE, 
-            digits = 2, \dots) 
-       
+
+utility.tab(object, data, vars = NULL, ngroups = 5, useNA = TRUE,
+            print.tables = length(vars) < 4, print.stats = 'VW',
+            print.zdiff = FALSE, digits = 2, \dots) 
+
 \method{print}{utility.tab}(x, print.tables = x$print.tables, 
-  print.zdiff = x$print.zdiff, digits = x$digits, \dots)
+  print.zdiff = x$print.zdiff, print.stats = x$print.stats, 
+  digits = x$digits, \dots)
 }
+
 \arguments{
   \item{object}{an object of class \code{synds}, which stands for 'synthesised 
     data set'. It is typically created by function \code{syn()} or 
@@ -29,13 +32,17 @@ utility.tab(object, data, vars = NULL, ngroups = 5,
     By default, to avoid problems for variables with a small number of unique 
     values, \code{style = "fisher"}. Arguments of \code{classIntervals()} may be, 
     however, specified in the call to \code{utility.tab()}.}
-  \item{digits}{an integer indicating the number of decimal places 
-    for printing statistics, \code{tab.zdiff} and mean results for \code{m > 1}.}  
+  \item{useNA}{determines if NA values are to be included in tables.}
   \item{print.tables}{a logical value that determines if tables of observed and 
     synthesised are to be printed.} 
+  \item{print.stats}{Determines which chi-squred statistics to print to
+     compare the observed and synthetic tables : 'VW' for
+     Voas Williams, 'FT' for Freeman Tukey or c('VW','FT') for both.}   
   \item{print.zdiff}{a logical value that determines if tables of  Z scores for 
    differences between observed and expected are to be printed.} 
-  \item{\dots}{additional parameters; can be passed to classIntervals() function.}   
+  \item{digits}{an integer indicating the number of decimal places 
+    for printing statistics, \code{tab.zdiff} and mean results for \code{m > 1}.}  
+    \item{\dots}{additional parameters; can be passed to classIntervals() function.}   
   \item{x}{an object of class \code{utility.tab}.}
 }
 \details{Forms tables of observed and synthesised values for the variables 
@@ -73,7 +80,6 @@ utility.tab(object, data, vars = NULL, ngroups = 5,
     absolute values indicate a large contribution to lack-of-fit.}    
   \item{n}{number of observation in the original dataset.}
 }
-
 \references{
   Nowok, B., Raab, G.M and Dibben, C. (2016). synthpop: Bespoke
   creation of synthetic data in R. \emph{Journal of Statistical Software},

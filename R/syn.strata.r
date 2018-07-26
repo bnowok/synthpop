@@ -21,12 +21,13 @@ syn.strata <- function(data, strata = NULL,
                 visit.sequence = (1:ncol(data)),
                 predictor.matrix = NULL,
                 m = 1, k = nrow(data), proper = FALSE,
-                minnumlevels = 5, maxfaclevels = 60,
+                minnumlevels = -1, maxfaclevels = 60,
                 rules = NULL, rvalues = NULL,
                 cont.na = NULL, semicont = NULL,
                 smoothing = NULL, event = NULL, denom = NULL,
                 drop.not.used = FALSE, drop.pred.only = FALSE,
                 default.method = c("normrank","logreg","polyreg","polr"),
+                numtocat = NULL, catgroups = rep(5,length(numtocat)), 
                 models = FALSE,
                 print.flag = TRUE,
                 seed = "sample",
@@ -64,7 +65,7 @@ syn.strata <- function(data, strata = NULL,
  }
  #--------
  
- # make sure stratification variables are include in visit.sequence
+ # make sure stratification variables are included in visit.sequence
  # important when drop.not.used==T
  if (is.character(strata) & any(!duplicated(strata))){   #GR-20/10/2016 drop.not.used == TRUE removed from the condition
    strata <- match(strata, colnames(data))
@@ -106,15 +107,15 @@ syn.strata <- function(data, strata = NULL,
  synds.names <- c("call", "m", "syn", "method", "visit.sequence", 
    "predictor.matrix", "smoothing", "event", "denom", "proper", "n", "k", 
    "rules", "rvalues", "cont.na", "semicont", "drop.not.used", "drop.pred.only", 
-   "models", "seed", "var.lab", "val.lab", "obs.vars", "strata.syn", "strata.lab")
+   "models", "seed", "var.lab", "val.lab", "obs.vars", "strata.syn", "strata.lab","numtocat","catgroups")
  synds <- list(setNames(vector("list",length(synds.names)),synds.names)) 
  synds <- rep(synds, m0)
  sel.names <- match(c("call", "m", "predictor.matrix", "proper", "strata.syn",
-   "strata.lab", "models", "seed"), synds.names)
+   "strata.lab",  "seed","numtocat","catgroups"), synds.names)
  same.by.m <- c("call", "m", "method", "visit.sequence", "predictor.matrix", 
    "smoothing", "event", "denom", "proper", "n", "rules", "rvalues", "cont.na", 
-   "semicont", "drop.not.used", "drop.pred.only", "models", "seed", "var.lab", 
-   "val.lab", "obs.vars", "strata.lab")
+   "semicont", "drop.not.used", "drop.pred.only",  "seed", "var.lab", 
+   "val.lab", "obs.vars", "strata.lab","numtocat","catgroups")
  same.by.m.idx <- match(same.by.m, synds.names) 
   
  syn.args <- as.list(match.call()[-1])

@@ -1,3 +1,43 @@
+synthpop 1.5-0
+---------------
+
+NEW FEATURES
+* New methods "catall" and "ipf" that synthesise a group of variables together 
+  at the start of the synthesis.
+* New parameters `numtocat` and `catgroups` for syn(). Variables in `numtocat` 
+  are converted into categorical variables with levels determined by their 
+  distribution and `catgroups` gives the target number of groups for each 
+  variable. The data with the categorical versions are then synthesised and 
+  finally the synthesised variables in `numtocat` are created from bootstrap 
+  samples within the categories. This feature was developed for the  second 
+  stage of "ipf" and "catall" but can be used with any method. Variables
+  in `numtocat` must have a method suitable for categorical data.
+* New function numtocat.syn() can be used to group numeric variables into 
+  categories. It can be used before synthesis to create a new data frame that 
+  can then be synthesised. It should be used instead of the `numtocat` parameter 
+  of syn() if you want to keep the categorical variables in the synthetic data.
+* The function nested.syn() can now be used with continuous variables nested
+  within categories. It also allows smoothing of the non-missing data.
+* New function codebook.syn() that can be used to check features of data 
+  before synthesis.
+
+CHANGES
+* Some improvements to utility.tab(): 
+  - default for `print.tables` is to print if up to a 3-way table;
+  - a new parameter `useNA` to include or exclude NA values from tables;
+  - a new parameter `print.stats` to allow a choice of what statistics to be 
+    printed and the default is to print only the Voas-Williamson statistic with 
+    a simpler format.
+* Format of printed output from utility.gen() has been changed to emphasise the 
+  ratio to the expected as the most important measure.
+* `mincriterion` for syn.ctree() changed to `0.9`.
+* If syn() paramater `models = TRUE`, models are stored for the variables
+  in the visit sequence and for missing values in the continous variables.
+
+BUG FIXES
+* utility.tab() and utility.gen() for synthetic data generated from syn.strata().
+* Smoothing for "sample" method.
+
 synthpop 1.4-4
 ---------------
 
@@ -72,7 +112,7 @@ CHANGES
 * If `models = TRUE` in syn(), for `logreg` and `ployreg` coefficients of the 
   fitted model are returned. 
 * Output from print.summary.fit.synds() is labelled differently according to
-  whether `population.inference` is `TRUE` or `FALSE` (see vignette on inference). 
+  whether `population.inference` is TRUE or FALSE (see vignette on inference). 
   Also it now includes p-values and stars as are shown for lm() and glm().
 * Warning messages are given in summary.fit.synds() when inference is attempted
   from an invalid model where synthsis has not conditioned on any variables
@@ -168,7 +208,7 @@ CHANGES
 * write.syn() saves complete synds object into a file synobject_filename.RData. 
 * Error on exceeding `maxfaclevels` in not generated if `method` for the factor
   is set to "sample" or "nested".
-* For constant variables method is changed to `constant`. 
+* For constant variables method is changed to "constant". 
 * Year format for variables `ymarr` and `ysepdiv` in SD2011 dataset changed 
   from `yy` to `yyyy`.     
 
@@ -217,7 +257,7 @@ CHANGES
   `funname.argname` arguments, e.g. ctree.minbucket = 5; they are 
   function-specific; `minbucket` removed from arguments.  
 * Smoothing is possible for numeric variables when synthesised with the method 
-  'sample'.
+  "sample".
 * compare() is a generic function with two methods (for class `synds` and 
   `fit.synds`); it replaced two separate functions.   
 * New argument `return.plot` for compare() method for class `fit.synds`.

@@ -90,7 +90,8 @@ simple or proper synthesis (for details see Raab et al. (2017)).}
 
   Raab, G.M., Nowok, B. and Dibben, C. (2017). Practical data synthesis for 
   large samples. \emph{Journal of Privacy and Confidentiality}, \bold{7}(3), 
-  67-97. Available at: \url{http://repository.cmu.edu/jpc/vol7/iss3/4}
+  67-97. Available at: 
+  \url{https://journalprivacyconfidentiality.org/index.php/jpc/article/view/407}
 
   Reiter, J.P. (2003) Inference for partially synthetic, public use microdata 
   sets. \emph{Survey Methodology}, \bold{29}, 181-188.

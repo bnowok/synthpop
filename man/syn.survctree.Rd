@@ -29,7 +29,11 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   \item For each \code{xp} find the terminal node. \item Randomly 
   draw a donor from the members of the node and take the observed 
   value of \code{yevent} and \code{y} from that draw as the 
-  synthetic values.}
+  synthetic values.}    
+  
+  NOTE that when the function is called by setting elements of method in 
+  \code{syn()} to \code{"survctree"}, the parameter \code{minbucket}
+  can be supplied to \code{syn()} as e.g. \code{survctree.minbucket}.
 }
 \value{
   A list with the following components:

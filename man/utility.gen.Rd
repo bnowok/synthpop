@@ -130,6 +130,8 @@ utility.gen(object, data, method = "logit", maxorder = 1,
   \item{utilStd}{utility value standardised by expressing it as z-scores, 
     difference(s) from the expected value divided by the expected standard 
     deviation.}
+  \item{pval}{p-value(s) for the chi-square test(s) for \code{utilVal} with 
+    \code{utilExp} degrees of freedom.}
   \item{fit}{the fitted model for the propensity score or a list of fitted 
     models of length \code{m} if \code{m > 0}.}
 }
@@ -143,8 +145,9 @@ utility.gen(object, data, method = "logit", maxorder = 1,
   \emph{Journal of the American Statistical Association},
   \bold{79}(387), 516-524.
   
-  Snoke, J., Raab, G.M., Nowok, B., Dibben, C. and Slavkovic, A. (forthcoming). 
+  Snoke, J., Raab, G.M., Nowok, B., Dibben, C. and Slavkovic, A. (2018). 
   General and specific utility measures for synthetic data. 
+  \emph{Journal of the Royal Statistical Society: Series A}, \bold{181}, Part 3, 663-688.
 }
 \seealso{
  \code{\link{utility.tab}}

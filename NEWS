@@ -5,7 +5,7 @@ NEW FEATURES
 * New methods "catall" and "ipf" that synthesise a group of variables together 
   at the start of the synthesis.
 * New parameters `numtocat` and `catgroups` for syn(). Variables in `numtocat` 
-  are converted into categorical variables with levels determined by their 
+  are converted into categorical variables with breaks determined by their 
   distribution and `catgroups` gives the target number of groups for each 
   variable. The data with the categorical versions are then synthesised and 
   finally the synthesised variables in `numtocat` are created from bootstrap 
@@ -20,6 +20,9 @@ NEW FEATURES
   within categories. It also allows smoothing of the non-missing data.
 * New function codebook.syn() that can be used to check features of data 
   before synthesis.
+* New parameter to compare.synds() `stat` with possible values "percents" or 
+  "counts" allows tables and plots to display counts instead of percentages in 
+  groups.
 
 CHANGES
 * Some improvements to utility.tab(): 
@@ -31,7 +34,7 @@ CHANGES
 * Format of printed output from utility.gen() has been changed to emphasise the 
   ratio to the expected as the most important measure.
 * `mincriterion` for syn.ctree() changed to `0.9`.
-* If syn() paramater `models = TRUE`, models are stored for the variables
+* If the syn() parameter `models = TRUE`, models are stored for the variables
   in the visit sequence and for missing values in the continous variables.
 
 BUG FIXES

@@ -446,8 +446,8 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
 ###-----print.compare.synds------------------------------------------------
 
 print.compare.synds <- function(x, ...) {
-
-  cat("\nComparing percentages observed with synthetic\n\n")
+  if (x$stat == "counts") cat("\nComparing counts observed with synthetic\n\n") 
+  else cat("\nComparing percentages observed with synthetic\n\n")
   if (class(x$plots)[1] == "gg") {
     print(x$tables) 
     print(x$plots)

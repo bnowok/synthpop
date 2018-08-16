@@ -70,7 +70,10 @@ utility.gen <- function(object, data, method = "logit", maxorder = 1,
  else if (!is.null(resamp.method) && resamp.method == "pairs" & m == 1) stop("resamp.method = \"pairs\" needs a synthesis with m > 1, m = 10 suggested.\n", call. = FALSE)
  
  # Drop any single value columns 
- leneq1 <- function(x) length(table(as.numeric(x), useNA = "ifany")) %in% (0:1) 
+ leneq1 <- function(x) length(table(as.numeric(x[!is.na(x)]), useNA = "ifany")) %in% (0:1) 
+ 
+ dchar <- sapply(data,is.character)   ##GR
+ if (any(dchar == TRUE)) for ( i in 1:dim(data)[2]) if (dchar[i] == TRUE) data[,i] <- factor(data[,i])
  dout <- sapply(data,leneq1)
  if (m == 1) sout <- sapply(object$syn,leneq1)
  else  sout <- sapply(object$syn[[1]],leneq1)

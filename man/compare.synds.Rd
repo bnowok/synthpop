@@ -13,7 +13,7 @@
 \usage{
 \method{compare}{synds}(object, data, vars = NULL, msel = NULL, 
   breaks = 20, nrow = 2, ncol = 2, rel.size.x = 1, 
-  cols = c("#1A3C5A","#4187BF"), ...)
+  cols = c("#1A3C5A","#4187BF"), stat = "percents", ...)
 
 \method{print}{compare.synds}(x, \dots)
 }
@@ -33,6 +33,10 @@
   \item{ncol}{the number of columns for the plotting area.}
   \item{rel.size.x}{a number representing the relative size of x-axis labels.}
   \item{cols}{bar colors.}
+  \item{stat}{determines whether tables and plots present percentages 
+   \code{stat = "percents"}, the default, or counts \code{stat = "counts"}. 
+   If \code{m > 1} and \code{msel = NULL} average counts for synthetic data 
+   are presented.}
   \item{\dots}{additional parameters.}
 
   \item{x}{an object of class \code{compare.synds}.}
@@ -43,9 +47,9 @@ as non-missing values. They are indicated by \code{miss.} suffix.
 }
 \value{
 An object of class \code{compare.synds} which is a list including a list 
-of comparative percent frequency tables (\code{tables}) and 
-a ggplot object (\code{plots}) with bar charts/histograms. If multiple plots
-are produced they and their corresponding frequency tables are stored as a list. 
+of comparative frequency tables (\code{tables}) and a ggplot object
+(\code{plots}) with bar charts/histograms. If multiple plots are produced
+they and their corresponding frequency tables are stored as a list. 
 }
 \references{
   Nowok, B., Raab, G.M and Dibben, C. (2016). synthpop: Bespoke
@@ -56,5 +60,5 @@ are produced they and their corresponding frequency tables are stored as a list.
 ods <- SD2011[ , c("sex","age","edu","marital","ls","income")]
 s1  <- syn(ods)
 compare(s1, ods, vars = "ls")
-compare(s1, ods, vars = "income")
+compare(s1, ods, vars = "income", stat = "counts", breaks = 10)
 }

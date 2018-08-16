@@ -324,7 +324,6 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
   # logistic regression model. See Rubin (1987, p. 169-170) for
   # a description of the method.
   
-
   # The method consists of the following steps:
   # 1. Fit a logit, and find (bhat, V(bhat))
   # 2. Draw BETA from N(bhat, V(bhat))
@@ -952,7 +951,7 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
      margins <- split(mx_margins, col(mx_margins))
    } else if (gmargins == "oneway") {
      margins <- as.list(1:nv)
-   } else stop("\nOnly 'oneway' or 'twoway' are implemented for gmargins.\n")
+   } else stop("Only 'oneway' or 'twoway' are implemented for gmargins.\n", call. = FALSE)
    if (!is.null(othmargins)) for (i in 1:length(othmargins)) {
      margins[[length(margins) + 1]] <- othmargins[[i]]
    }
@@ -1082,9 +1081,9 @@ syn.smooth <- function(ysyn, yobs)
 checksz <- function(sz, x) 
 {
   if (!is.list(sz)) stop("structzero needs to be a list.\n", call. = FALSE)
-  if (!is.character(names(sz)) || !all(grepl("_", names(sz)))) stop("structzero list elements must be named using variable names\nseperated by an underscore, e.g. sex_edu", call. = FALSE)
+  if (!is.character(names(sz)) || !all(grepl("_", names(sz)))) stop("\nstructzero list elements must be named using variable names\nseperated by an underscore, e.g. sex_edu", call. = FALSE)
   allvars  <- unique(unlist(strsplit(names(sz), "_")))
-  if (!all(allvars %in% names(x))) stop("Structural zero variables must match names of variables in the data.", call. = FALSE)
+  if (!all(allvars %in% names(x))) stop("\nStructural zero variables must match names of variables in the data.", call. = FALSE)
 
   dd  <- as.data.frame(table(x, useNA = "ifany"))
   res <- rep(FALSE, nrow(dd))

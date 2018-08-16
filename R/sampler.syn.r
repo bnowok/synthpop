@@ -20,7 +20,8 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
  if (length(dots) == 0) {
    mth.args <- NULL
  } else {  
-   mth.args.dots <- strsplit(names(dots), "\\.")
+   #mth.args.dots <- strsplit(names(dots), "\\.")
+   mth.args.dots <- regmatches(names(dots), regexpr("\\.", names(dots)), invert = TRUE)
    mth.dots  <- unique(lapply(mth.args.dots, "[[", 1))
    args.dots <- lapply(mth.args.dots, "[[", -1)
    mth.args  <- setNames(vector("list", length(mth.dots)), unlist(mth.dots))
@@ -67,11 +68,11 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
              ncol(data) - length(numtocat) > length(grouped)) {
            cat("First ", length(grouped), " variables (", 
                paste(names(grouped), collapse = ", "),
-               ") synthesised together by method '", ordmethod[1], "'", sep = "")
+               ") synthesised together by method '", ordmethod[1], "'\n", sep = "")
          } else {
            cat("All ", length(grouped), 
                " variables in the data synthesised together by method '", 
-               ordmethod[1], "'", sep = "")
+               ordmethod[1], "'\n", sep = "")
          }   
        }   
        x <- p$data[, grouped]

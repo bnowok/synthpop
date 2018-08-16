@@ -9,14 +9,19 @@ compare.default <- function(object, ...)
 ###-----compare.synds------------------------------------------------------
 compare.synds <- function(object, data, vars = NULL, 
   msel = NULL, breaks = 20, nrow = 2, ncol = 2, rel.size.x = 1,
-  cols = c("#1A3C5A","#4187BF"), ...){ 
-                                                                         ## GR6 & GR7 extra parameter nrow and drop plot.na
+  cols = c("#1A3C5A","#4187BF"), stat = "percents", ...){ 
+                                                                         
  if (is.null(data)) stop("Requires parameter data to give name of the real data\n", call. = FALSE)
- if (!is.data.frame(data)) stop("Argument data must be a data frame\n", call. = FALSE)          ## GR2 extra check
+ if (!is.data.frame(data)) stop("Argument data must be a data frame\n", call. = FALSE)          
  #if (class(object)! = "synds") stop("Object must have class synds\n", call. = FALSE )                                                                    
  if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s)", call. = FALSE)                                                                        
 
- # browser()
+ if (!(length(stat) == 1 & stat %in% c("percents", "counts"))) { 
+   cat('Parameter stat must be "percents" or "counts".\n' )
+   stat <- "percents"
+   cat('Changed to default value of "percents".\n')
+ }
+
  # single / pooled synthetic data sets                                  
  if (object$m == 1) {
    syndsall <- object$syn 
@@ -35,7 +40,7 @@ compare.synds <- function(object, data, vars = NULL,
  commonnames <- synnames[match(realnames,synnames)]
  commonnames <- commonnames[!is.na(commonnames)]
 
- if (!is.null(vars)){
+ if (!is.null(vars)) {
    if (!(all(vars %in% synnames))) stop("Variable(s) ", 
      paste0(vars[is.na(match(vars,synnames))], collapse = ", "),
      " not in synthetic data \n", call. = FALSE)
@@ -65,14 +70,19 @@ compare.synds <- function(object, data, vars = NULL,
  # frequency tables for factors
  if (sum(fac) > 0) {
    any.fac.na <- unlist(apply(df.obs[,fac,drop = FALSE],2,function(x) any(is.na(x))))    
-   per.obs.fac <- ggfac(df.obs[, fac, drop = FALSE], anyna = any.fac.na)
-
-   if (length(msel) <= 1) per.syn.facall <- ggfac(df.synall[, fac, drop = FALSE], 
-     name = "synthetic", anyna = any.fac.na)
+   per.obs.fac <- ggfac(df.obs[, fac, drop = FALSE], anyna = any.fac.na, stat = stat)  
+   if (length(msel) <= 1) {
+     per.syn.facall <- ggfac(df.synall[, fac, drop = FALSE], 
+     name = "synthetic", anyna = any.fac.na, stat = stat)
+     if (stat == "counts") {
+       per.syn.facall$perdf$Count <- per.syn.facall$perdf$Count/object$m        #BN:16/08/2018
+       per.syn.facall$perlist <- lapply(per.syn.facall$perlist,"/",object$m)    #BN:16/08/2018
+     }
+   }
    if (length(msel) > 1) {
      per.syn.fac <- vector("list",length(msel))
      for (i in 1:length(msel)) per.syn.fac[[i]] <- ggfac(df.syn[[i]][, fac, drop = FALSE], 
-       name = paste0("syn=", msel[i]), anyna = any.fac.na)
+       name = paste0("syn=", msel[i]), anyna = any.fac.na, stat = stat)   
    }
  } else {                                       
    per.obs.fac    <- NULL
@@ -84,42 +94,47 @@ compare.synds <- function(object, data, vars = NULL,
    cont.index <- match(colnames(df.obs[, num, drop = FALSE]), colnames(syndsall))    
    na <- object$cont.na[cont.index]  
   # to exclude from summaries if no missing in data
-   any.na <- unlist(apply(df.obs[,num,drop=FALSE],2,function(x) any(is.na(x))))  
+   any.na <- unlist(apply(df.obs[, num, drop = FALSE], 2, function(x) any(is.na(x))))  
    
    lbreaks    <- as.list(rep(breaks, length(na)))                   
   ## get limits(=breaks) from both observed and synthetic
   #--
    df.both  <- rbind.data.frame(df.obs, df.synall)                
    per.both <- ggnum(df.both[, num, drop = FALSE], na = na, 
-     breaks = lbreaks, anyna = any.na) 
+     breaks = lbreaks, anyna = any.na, stat = stat) ##GR stat added 
   #--  
    per.obs.num <- ggnum(df.obs[, num, drop = FALSE], na = na, 
-     breaks = per.both$hbreaks, anyna = any.na)
+     breaks = per.both$hbreaks, anyna = any.na, stat = stat) ##GR stat added
    
    if (length(msel) <= 1) {
-     per.syn.numall <- ggnum(df.synall[, num, drop = FALSE], name = "synthetic", 
-       na = na, breaks = per.both$hbreaks, anyna = any.na) 
+     per.syn.numall <- ggnum(df.synall[, num, drop = FALSE], 
+       name = "synthetic", na = na, breaks = per.both$hbreaks, 
+       anyna = any.na, stat = stat) 
+       if (stat == "counts") {
+         per.syn.numall$perdf$Count <- per.syn.numall$perdf$Count/object$m        #BN:16/08/2018
+         per.syn.numall$perlist <- lapply(per.syn.numall$perlist,"/",object$m)    #BN:16/08/2018
+       }
    } 
    if (length(msel) > 1) {
      per.syn.num <- vector("list",length(msel))
      for (i in 1:length(msel)) per.syn.num[[i]] <- ggnum(df.syn[[i]][, num, drop = FALSE], 
-       name =  paste0("syn=",msel[i]), 
-       na = na, breaks = per.both$hbreaks, anyna = any.na)
+       name =  paste0("syn=",msel[i]), na = na, breaks = per.both$hbreaks, 
+       anyna = any.na, stat = stat) 
    } 
  } else {
    per.obs.num <- NULL
    per.syn.numall <- NULL
  }
 
- # data frame for ploting 
+ # data frame for plotting 
  if (length(msel) <= 1) per.fac <- rbind.data.frame(per.obs.fac$perdf, 
    per.obs.num$perdf, per.syn.facall$perdf, per.syn.numall$perdf )
 
  if (length(msel) > 1) {
    per.fac <- rbind.data.frame(per.obs.fac$perdf, per.obs.num$perdf)
    for (i in 1:length(msel)) {
-     if (sum(fac)>0) temp.fac <- per.syn.fac[[i]]$perdf else temp.fac <- NULL
-     if (sum(num)>0) temp.num <- per.syn.num[[i]]$perdf else temp.num <- NULL  
+     if (sum(fac) > 0) temp.fac <- per.syn.fac[[i]]$perdf else temp.fac <- NULL
+     if (sum(num) > 0) temp.num <- per.syn.num[[i]]$perdf else temp.num <- NULL  
      per.fac <- rbind.data.frame(per.fac, temp.fac, temp.num)
    }
  }
@@ -131,35 +146,35 @@ compare.synds <- function(object, data, vars = NULL,
  # list of result tables
  if (length(msel) <= 1) {
    os.table.fac <- mapply(rbind, obs = per.obs.fac$perlist, 
-     syn = per.syn.facall$perlist, SIMPLIFY = FALSE)
+     syn = per.syn.facall$perlist, SIMPLIFY = FALSE)  
    os.table.num <- mapply(rbind, obs = per.obs.num$perlist, 
-     syn = per.syn.numall$perlist, SIMPLIFY = FALSE)
+     syn = per.syn.numall$perlist, SIMPLIFY = FALSE)  
  }
  if (length(msel) > 1) {
    os.table.fac <- per.obs.fac$perlist 
    os.table.num <- per.obs.num$perlist 
    for (i in 1:length(msel)) {
-     if (sum(fac)>0) temp.fac <- per.syn.fac[[i]]$perlist else temp.fac <- NULL
-     if (sum(num)>0) temp.num <- per.syn.num[[i]]$perlist else temp.num <- NULL
+     if (sum(fac) > 0) temp.fac <- per.syn.fac[[i]]$perlist else temp.fac <- NULL
+     if (sum(num) > 0) temp.num <- per.syn.num[[i]]$perlist else temp.num <- NULL
      os.table.fac <- mapply(rbind, os.table.fac, temp.fac, SIMPLIFY = FALSE)    
      os.table.num <- mapply(rbind, os.table.num, temp.num, SIMPLIFY = FALSE)     
    }
   }
  os.table <- c(os.table.fac, os.table.num)
- if (is.null(msel)){
+ if (is.null(msel)) {
    for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed","synthetic")
  } else {
    for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed",paste0("syn=", msel))
  }
- Value <- Percent <- Data <- NULL                               ## otherwise 'no visible binding for global variables'
+ Value <- Percent <- Count <- Data <- NULL                               ## otherwise 'no visible binding for global variables'
  # sorts the factor labels in the right order for numeric vars
  per.fac$Value <- as.character(per.fac$Value)
  vals <- unique(per.fac$Value)
  valsnum <- unique(per.fac$Value[per.fac$Variable %in% names(num[num == TRUE])])
- valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals,1,4)!="miss"]))
+ valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals,1,4) != "miss"]))
  valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals,1,4) == "miss"])
  vals[vals %in% valsnum] <- c(valsnum.nonmiss,valsnum.miss)
- per.fac$Value <- factor(as.character(per.fac$Value),levels=vals)
+ per.fac$Value <- factor(as.character(per.fac$Value), levels = vals)
 
  # get different plots in order of data
  nperplot <- nrow*ncol
@@ -168,10 +183,10 @@ compare.synds <- function(object, data, vars = NULL,
  tables   <- vector("list",nplots)
  
  for (i in 1:nplots) {
-   min <-(i-1)*nperplot+1
-   max <- min(length(commonnames),(i-1)*nperplot+nperplot)
+   min <- (i - 1)*nperplot + 1
+   max <- min(length(commonnames),(i - 1)*nperplot + nperplot)
  # tables
-   ttables <- vector("list",(max-min+1))
+   ttables <- vector("list",(max - min + 1))
    names(ttables) <- commonnames[min:max]
    for (j in commonnames[min:max]) {
      ttables[[j]] <- os.table[[j]]
@@ -181,7 +196,8 @@ compare.synds <- function(object, data, vars = NULL,
   # plots
    per.fact <- per.fac[per.fac$Variable %in% commonnames[min:max],]
    # per.fact <- per.fact[order(match(per.fact$Variable,commonnames[min:max])),]
-   p <- ggplot(data=per.fact, aes(x=Value,y=Percent,fill=Data))
+   if (stat == "percents") p <- ggplot(data=per.fact, aes(x=Value,y=Percent,fill=Data))
+   else p <- ggplot(data=per.fact, aes(x=Value,y=Count,fill=Data))
    p <- p + geom_bar(position="dodge",colour=cols[1], stat="identity") + 
       facet_wrap(~ Variable, scales="free", ncol=ncol)  
    p <- p + guides(fill = guide_legend(override.aes = list(colour = NULL))) + 
@@ -199,42 +215,46 @@ compare.synds <- function(object, data, vars = NULL,
    plots  <- plots[[1]]
  }  
  #browser()
- res <- list(tables = tables, plots = plots)
+ res <- list(tables = tables, plots = plots, stat = stat) ##GR stat added
  class(res) <- "compare.synds"
  return(res)
 }
 
 
 ###-----pertable-----------------------------------------------------------
-# calculate percentages
-pertable <- function(x) {
- res <- table(x, useNA = "always")*100/sum(table(x, useNA = "always")) 
+# calculate counts/percentages
+pertable <- function(x, stat, ...) { ##GR stat added
+ res <- table(x, useNA = "always")   
+ if (stat == "percents") res <- res*100/sum(res) 
  return(res)
 }
 
 
 ###-----ggfac--------------------------------------------------------------
 # calculate percentages for factors and store in a data frame (a long format)
-ggfac <- function(data, name = "observed", anyna){ 
+ggfac <- function(data, name = "observed", anyna, stat){ 
   data <- as.data.frame(data)
-  perlist  <- lapply(data, pertable)
+  perlist  <- lapply(data, pertable, stat = stat)
   for (i in 1:length(perlist)) {
     if (anyna[i] == FALSE) perlist[[i]] <- perlist[[i]][-length(perlist[[i]])]  
   }
-  Percent  <- unlist(perlist, use.names = F)
-  Value    <- unlist(lapply(perlist,names), use.names = F)
-  Variable <- rep(names(perlist),sapply(perlist,length))
-  perdf    <- cbind.data.frame(Percent, Value, Variable)
+  if (stat == "percents") Percent  <- unlist(perlist, use.names = FALSE) 
+  else Count <- unlist(perlist, use.names = FALSE)
+  Value <- unlist(lapply(perlist,names), use.names = FALSE)
+  Variable <- rep(names(perlist), sapply(perlist,length))
+  if (stat == "percents") perdf <- cbind.data.frame(Percent, Value, Variable) 
+  else  perdf <- cbind.data.frame(Count, Value, Variable)
+  
   perdf$Data <- name
   return(list(perdf = perdf, perlist = perlist))
 } 
-
 
 ###-----ggnum--------------------------------------------------------------
 # calculate percentages for numeric variables (non-missing values and 
 # missing data categories seperately) and store in a data frame (a long format)
 ggnum <- function(data, name = "observed", na = as.list(rep(NA,ncol(data))), 
-                  breaks = as.list(rep(30,ncol(data))), anyna){ 
+                  breaks = as.list(rep(30,ncol(data))), anyna, 
+                  stat = stat){ 
   data <- as.data.frame(data)
 
 # non-missing values  
@@ -242,15 +262,15 @@ ggnum <- function(data, name = "observed", na = as.list(rep(NA,ncol(data))),
   perlist <- vector("list", nvar)
   hbreaks <- vector("list", nvar)
   
-  for (i in 1:nvar){
+  for (i in 1:nvar) {
   ## counts for non-missing values  
     vardata <- data[!(data[,i] %in% na[[i]]),i]                  
-    hh      <- hist(vardata, breaks = breaks[[i]], plot=F)
+    hh      <- hist(vardata, breaks = breaks[[i]], plot = FALSE)
     counts  <- hh$counts
     names(counts) <- hh$breaks[-length(hh$breaks)]
     hbreaks[[i]]  <- hh$breaks
   ## counts for missing values  
-    dataNA <- data[(data[,i] %in% na[[i]]),i] 
+    dataNA <- data[data[,i] %in% c(NA,na[[i]]),i]
     
     if (length(dataNA) == 0) {
       if (anyna[i] == TRUE) {
@@ -266,17 +286,20 @@ ggnum <- function(data, name = "observed", na = as.list(rep(NA,ncol(data))),
         NAcounts <- table(dataNA)  
       }
     } 
-    if (!is.null(NAcounts)) names(NAcounts) <- paste("miss", names(NAcounts), sep=".") 
+    if (!is.null(NAcounts)) names(NAcounts) <- paste("miss", names(NAcounts), sep = ".") 
     counts <- c(counts, NAcounts)
-    perlist[[i]] <- counts*100/length(data[,i])
+    if (stat == "percents") perlist[[i]] <- counts*100/length(data[,i])
+    else perlist[[i]] <- counts
   }
   names(perlist) <- colnames(data)
 
 # create data frame in a long format  
-  Percent  <- unlist(perlist, use.names = F)
+  if (stat == "percents") Percent  <- unlist(perlist, use.names = F) 
+  else Count  <- unlist(perlist, use.names = F)
   Value    <- unlist(lapply(perlist,names), use.names = F)
   Variable <- rep(names(perlist),sapply(perlist,length))
-  perdf    <- cbind.data.frame(Percent, Value, Variable)
+  if (stat == "percents") perdf    <- cbind.data.frame(Percent, Value, Variable)
+  else perdf    <- cbind.data.frame(Count, Value, Variable)
   perdf$Data <- name
   
 return(list(perdf = perdf, perlist = perlist, hbreaks = hbreaks))
@@ -472,7 +495,7 @@ dfCI <- function(modelsummary, names.est.se = c("Estimate","Std. Error"),
           model.name = "observed",  ci.level = 0.95, Z = FALSE, 
           name.Z = colnames(modelsummary$coefficients)[3]){
   
-  CI <- qnorm(1- (1 - ci.level)/2)
+  CI <- qnorm(1 - (1 - ci.level)/2)
   if (!Z) {
     #msCI <- as.data.frame(modelsummary$coefficients[,names.est.se])
     msCI <- as.data.frame(modelsummary$coefficients[,1:2]) 

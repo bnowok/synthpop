@@ -358,9 +358,9 @@ check.method.syn <- function(setup, data, proper) {
  # check nested variables
  #---
  nestmth.idx <- grep("nested", method)
- gr.vars <- vector("character",length(method))
+ gr.vars <- vector("character", length(method))
  gr.vars[nestmth.idx] <- substring(method[nestmth.idx], 8)
- 
+
  if (length(nestmth.idx) > 0) { 
    for (i in nestmth.idx) {
      # check if provided grouped var exists
@@ -372,13 +372,16 @@ check.method.syn <- function(setup, data, proper) {
        " can not be predicted by itself.\n", call. = FALSE) 
        
      # check if var nested in gr.var
-     tabvars <- table(data[,i], data[,gr.vars[i]])
+     #? tabvars   <- table(data[,i], data[,gr.vars[i]]) 
+     tabvars <- table(data[,i], data[,gr.vars[i]], useNA = "ifany") 
      tabvars01 <- ifelse(tabvars > 0, 1, 0)
-     ymulti    <- rowSums(tabvars01) > 1
-     if ("NAtemp" %in% names(ymulti)) ymulti["NAtemp"] <- FALSE  # missing values are excluded
-     if (any(ymulti)) cat("\nNOTE: Variable", varnames[i], 
-       "is not nested within its predictor", gr.vars[i], ". Check categories:", 
-       paste0(rownames(tabvars01)[ymulti], collapse = ", "), "\n", sep = " ")
+     ymulti <- rowSums(tabvars01) > 1
+     if ("NAtemp" %in% names(ymulti)) ymulti["NAtemp"] <- FALSE  
+     ymulti[names(ymulti) %in% cont.na[[i]]] <- FALSE  # missing values and cont.na are excluded 
+     if (any(ymulti)) cat("\nNOTE: Variable ", varnames[i], 
+       " is not nested within its predictor ", gr.vars[i], ".\nCheck values of ", 
+       varnames[i], ": ", paste0(rownames(tabvars01)[ymulti], collapse = ", "), 
+       "\n\n", sep = "")
    
    # adjust predictor matrix
    pred[i, -match(gr.vars[i], varnames)] <- 0  # remove all predictors except the group var
@@ -637,6 +640,22 @@ check.rules.syn <- function(setup, data) {
  
  if (any(vars.wrong)) stop("Unexpected variable(s) in rules: ",
    paste(vars.in.rules[vars.wrong], collapse = ", "), ".", call. = FALSE)
+ # remove rules with warning for ipf and catall
+
+ vars.with.rules <- varnames[rules != ""]
+ if (any(method[varnames %in% vars.with.rules] %in% c("catall","ipf"))){
+   cat("\nRules cannot be used for variables synthesised by ipf or catall")
+   cat("\nbut values can be restricted by defining structural zero cells\nwith ipf.structzero or catall.structzero parameter.\n")
+   rules[method %in% c("catall","ipf")] <-  rvalues[method %in% c("catall","ipf")] <- ""
+   cat("\nRules defined for variable(s) ",
+       paste0(varnames[method %in% c("catall","ipf") & varnames %in% vars.with.rules], collapse = ", "),
+       " have been deleted.\n\n", sep = "")
+   setup$rules <- rules
+   setup$rvalues <- rvalues
+   if (all(rules == "")) {
+     return(setup)
+   }
+ }
  
  if (any(char.wrong)) {
    cat("One of rules may not be correct. If this is the case compare your rules and Error below.\nOtherwise rules have been applied.\n") 

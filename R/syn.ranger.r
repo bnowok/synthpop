@@ -21,7 +21,7 @@ syn.ranger <- function(y, x, xp, smoothing, proper = FALSE, ...)
   rf.fit <- ranger(y ~ ., data = cbind.data.frame(y,x), ...)
   nodessyn <- predict(rf.fit, data = xp, type = "terminalNodes")$predictions
   nodesobs <- predict(rf.fit, data = x, type = "terminalNodes")$predictions
-  
+  ntree <- rf.fit$num.trees
   ndonors <- vector("list", nrow(xp))
   n0      <- vector("list", ntree)
   for (j in 1:nrow(xp)) {

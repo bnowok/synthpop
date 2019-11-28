@@ -649,6 +649,7 @@ syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
 # bagging when mtry = ncol(x) - using all predictors
 syn.rf <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...) 
 { 
+  #browser()
   #nodesize <- max(1, nodesize)  # safety
   #if (proper == TRUE) {
   #  s <- sample(length(y), replace = T); y <- y[s]

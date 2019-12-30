@@ -2,23 +2,33 @@
 # bagging when mtry = ncol(x) - using all predictors
 syn.ranger <- function(y, x, xp, smoothing, proper = FALSE, ...) 
 { 
-  #nodesize <- max(1, nodesize)  # safety
-  #if (proper == TRUE) {
-  #  s <- sample(length(y), replace = T); y <- y[s]
-  #  x <- x[s, , drop = FALSE]
-  #}  
+  dots <- list(...)
+  dots[c("formula", "data")] <- NULL
+  if("min.node.size" %in% names(dots)){
+    dots[["min.node.size"]] <- max(1, dots[["min.node.size"]])  # safety
+  }
   
-  for (i in which(sapply(x,class) != sapply(xp,class))) xp[,i] <-
-      eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
+  if (proper == TRUE) {
+    s <- sample(length(y), replace = TRUE)
+    y <- y[s]
+    x <- x[s, , drop = FALSE]
+  }
+  
+  for (i in which(sapply(x,class) != sapply(xp,class))){
+    do.call(paste0("as.", class(x[,i])[1]), unname(xp[i])) # This is much faster than eval(parse())
+  }
   
   if (is.factor(y)) {
     obslevels <- levels(y)
     y <- droplevels(y)
   }
-  
+
   # fit a random forest
-  # regression (mtry=p/3), classification (mtry=sqrt(p))
-  rf.fit <- ranger(y ~ ., data = cbind.data.frame(y,x), ...)
+  Args <- c(list(
+    formula = y ~ .,
+    data = cbind.data.frame(y,x)
+  ), dots)
+  rf.fit <- do.call(ranger, Args)
   nodessyn <- predict(rf.fit, data = xp, type = "terminalNodes")$predictions
   nodesobs <- predict(rf.fit, data = x, type = "terminalNodes")$predictions
   ntree <- rf.fit$num.trees

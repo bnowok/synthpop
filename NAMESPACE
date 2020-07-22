@@ -15,6 +15,7 @@ export(syn,
        syn.sqrtnorm,
        syn.cubertnorm,
        syn.rf,
+       syn.ranger,
        syn.bag,
        syn.nested,
        syn.satcat,
@@ -68,6 +69,7 @@ importFrom(stats, glm)
 importFrom(stats, lm)
 importFrom(polspline, polymars, predict.polymars, polyclass, ppolyclass)
 importFrom(randomForest, randomForest)
+importFrom(ranger, ranger)
 importFrom(classInt, classIntervals)
 #importFrom(glmnet, glmnet, predict.glmnet) not used at the moment
 importFrom(mipfp, Ipfp)

@@ -37,8 +37,9 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
 }
 \value{
   A list with the following components:
-  \item{syn.time}{a vector of length \code{k} with synthetic time values.}
-  \item{syn.event}{a vector of length \code{k} with synthetic event indicator values.}
+    \item{syn.time}{a vector of length \code{k} with synthetic time values.}
+    \item{syn.event}{a vector of length \code{k} with synthetic event indicator values.}
+    \item{fit}{the fitted model which is an item of class \code{ctree.object}.}
 }
 %references{...}
 \seealso{

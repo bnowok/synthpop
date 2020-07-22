@@ -1,6 +1,5 @@
 \name{syn.ctree, syn.cart}
 \alias{syn.cart}
-%\alias{syn.cartbboot}
 \alias{syn.ctree}
 \title{Synthesis with classification and regression trees (CART)}
 \description{
@@ -8,9 +7,10 @@
   regression trees (without or with bootstrap).
 }
 \usage{
-syn.ctree(y, x, xp, smoothing, proper = FALSE, minbucket = 5, mincriterion = 0.9, ...)
-syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)  
-%syn.cartbboot(y, x, xp, minbucket = 5, cp = 1e-08, ...) 
+syn.ctree(y, x, xp, smoothing = "", proper = FALSE, 
+          minbucket = 5, mincriterion = 0.9, ...)
+syn.cart(y, x, xp, smoothing = "", proper = FALSE, 
+         minbucket = 5, cp = 1e-08, ...)  
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -56,9 +56,9 @@ syn.cart(y, x, xp, smoothing, proper = FALSE, minbucket = 5, cp = 1e-08, ...)
   CART models were suggested for generation of synthetic data by 
   Reiter (2005) and then evaluated by Drechsler and Reiter (2011).
 }
-\value{A list with two components
-  \item{res}{A vector of length \code{k} with synthetic values of \code{y}.}
-  \item{fit}{The fitted model which is an item of class \code{rpart.object} 
+\value{A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{the fitted model which is an item of class \code{rpart.object} 
     or \code{ctree.object} that can be printed or plotted.}
 }
 \references{

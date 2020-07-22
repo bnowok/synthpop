@@ -1,6 +1,5 @@
 \name{syn.pmm}
 \alias{syn.pmm}
-%\alias{syn.pmm.proper}
 \title{Synthesis by predictive mean matching}
 \description{
   Generates univariate synthetic data using predictive mean
@@ -34,7 +33,11 @@ syn.pmm(y, x, xp, proper = FALSE, ...)
   estimated in step 1 and use them to calculate predicted
   values for the synthesised covariates.}}
 }
-\value{A numeric vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a data frame with regression coefficients and error estimates.}
+}
 %\references{...}
 \seealso{
   \code{\link{syn}}

@@ -59,14 +59,15 @@ This paper describes the methods used for inference from models fitted to synthe
 The \textbf{synthpop} package for creating synthetic data
 allows the user to produce synthetic version(s) of confidential data and also provides functions (e.g. \verb|glm.synds()|) to make inferences from statistical models fitted to the synthetic data and to compare the results with those from a fit to the original data (e.g. \verb|compare.fit.synds()|). This vignette explains the statistics computed by these functions. 
 
-The main focus of the \textbf{synthpop} package \cite{synthpop_jss} is to produce data for exploratory analysis with results for publication produced when the code developed on the synthetic data is run on the original, confidential data.  This use of \textbf{synthpop} will usually require only a single synthetic data set (\verb|m = 1|) of the same size as the original (\verb|k = n|) that can be analysed as if it were the original data.  In this situation an analysis of the synthetic data set, as if it were the original, is all that is required and no special methods of estimation are needed for the parameters of models fitted to synthetic data.  When \verb|m > 1| the results from the different syntheses need to be combined and when the size of the synthetic data differs from the real data (\verb|k| $ \neq $ \verb|n|) the standard errors of the coefficients from the synthetic fit require adjustment to estimate the results that would be obtained from the real data. The methods implemented in \textbf{synthpop} for these situations are described in Section \ref{sec:notpopinf}. 
+The main focus of the \textbf{synthpop} package \cite{synthpop_jss} is to produce data for exploratory analysis with results for publication produced when the code developed on the synthetic data is run on the original, confidential data.  This use of \textbf{synthpop} will usually require only a single synthetic data set (\verb|m = 1|) with the same number of records (\verb|k|) as the original (\verb|n|), the default setting in \textbf{synthpop}. For a user who simply wants to estimate the reults that would be obtained from the original data, if they were available,an analysis of the synthetic data set, as if it were the original, is all that is required. No special methods of estimation are needed for the parameters of models fitted to synthetic data.  When \verb|m > 1| the results from the different syntheses need to be combined and when the size of the synthetic data differs from the real data (\verb|k| $ \neq $ \verb|n|) the standard errors of the coefficients from the synthetic fit require adjustment to estimate the results that would be obtained from the original data. The methods implemented in \textbf{synthpop} for these situations are described in Section \ref{sec:notpopinf}. 
 
 The other situation is when the user wishes to make inferences to the population parameters directly from the synthetic data. For this case we need to use estimators that include the contributions to the uncertainty of the estimates from two sources: 
 \begin{enumerate}
 	\item{The difference between the parameters estimated from the  synthetic data and from the original data;}
 	\item{The difference between the estimates from the original data and the population parameters.}
 \end{enumerate}
-The contribution from the first source decreases as the number of synthetic data sets increases, while that from the second source is unchanged. Methods for  population inference are dependent on the details of how the synthetic data have been produced, as discussed in \cite{Drechsler_book} and recently developed in  \cite{RaabNowokDibben_2017}.  The functions \verb|glm.synds()| and  \verb|lm.synds()| in \textbf{synthpop}, and their summary function \verb|summary.fit.synds()| implement these methods . If synthesis has used samples from the posterior predictive distribution of the population, given the observed data (parameter \texttt{proper} of the function \verb|syn()|) this will be recognized by  \verb|summary.fit.synds()| and appropriate calculations performed. The user can also specify that methods proposed for partially synthetic data \cite{reiter_partial} should be used to calculate standard errors by (parameter \texttt{incomplete} of  the function \verb|summary.fit.synds()| or \verb|compare.fit.synds()|). Although these are valid methods for any type of synthetic data they have the disadvantage of requiring multiple syntheses and should only be used when required, as discussed below.   Details of how to carry out population inference with \textbf{synthpop} functions are in Section \ref{sec:popinf}.
+The contribution from the first source decreases as the number of synthetic data sets increases, while that from the second source is unchanged. Methods for  population inference are dependent on the details of how the synthetic data have been produced, as discussed in \cite{Drechsler_book} and recently developed in  \cite{RaabNowokDibben_2017}.  The functions \verb|glm.synds()|, \verb|lm.synds()|, \verb|polr.synds()| and \verb|multinom.synds()| in \textbf{synthpop}, and their summary function \verb|summary.fit.synds()| implement these methods . If synthesis has used samples from the posterior predictive distribution of the population, given the observed data (parameter \texttt{proper} of the function \verb|syn()|) this will be recognized by  \verb|summary.fit.synds()| and appropriate calculations performed. If the model being fitted includes some variables that have not been synthesised and have not been used in synthesising models for all other variables (not in the visit.sequence or not at the start of the visit.sequence with \verb|method == ""|), the fitting function will return a component \verb|$incomplete| as TRUE. This causes the functions \verb|summary.fit.synds()| and \verb|compare.fit.synds()|) used on the fit 
+to use methods appropriate to incomplete/partially synthetic data \cite{reiter_partial}. Details of how to carry out population inference with \textbf{synthpop} functions are in Section \ref{sec:popinf}.
 
 To emphasize the difference between inference to the expectation from the real data and inference to the population quantities the estimates and their standard errors are labelled differently in \textbf{synthpop} inference, as follows
 
@@ -117,7 +118,7 @@ summary(glm.synds(smoke ~ sex + age + edu + sex * edu,
   data = s1, family = "binomial"))
 @
 \renewcommand{\baselinestretch}{1.5}
-Running this code shows that the results from \texttt{glm()} and \texttt{glm.synds()} are identical.  This is also the case if the synthesis is carried out using the parameter \texttt{proper = TRUE} of \texttt{syn()} or if methods proposed for partially synthetic data \cite{reiter_partial} are used by setting parameter \texttt{incomplete = TRUE} in \texttt{summary.fit.synds()}. One small advantage of using \texttt{glm.synds()} is that it checks and gives warnings if the model includes unsynthesised variables in such a way that they would invalidate the inference, as in the next example.
+Running this code shows that the results from \texttt{glm()} and \texttt{glm.synds()} are identical.  This is also the case if the synthesis is carried out using the parameter \texttt{proper = TRUE} of \texttt{syn()} or if some of the variables in the model have not been synthesised. One small advantage of using \texttt{glm.synds()} is that it checks and gives warnings if the model includes unsynthesised variables that are not at the start of the visit sequence, which can produce results which are wrong, as in the next example.
 \renewcommand{\baselinestretch}{1.0}
 <<>>=
 s2 <- syn(ods, seed = 1234,visit.sequence=c("smoke","edu","age"))
@@ -133,23 +134,21 @@ The only time when \texttt{glm.synds()} will give different results from \texttt
 \renewcommand{\baselinestretch}{1.0}
 <<>>=
 s3 <- syn(ods, seed = 1234, k = 500)
-# original data
+
+## analysing synthetic data with just glm()
 summary(glm(smoke ~ sex + age + edu + sex * edu, 
-  data = ods, family = "binomial"))
-# synthetic data
-summary(glm(smoke ~ sex + age + edu + sex * edu, 
-  data = s3$syn, family = "binomial"))
-# estimating original from synthetic
+            data = s3$syn, family = "binomial"))
+## using glm.synds()
 summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
-  data = s3, family = "binomial"))
+                  data = s3, family = "binomial"))
 @
 \renewcommand{\baselinestretch}{1.5}
 
-Here \texttt{glm()} fitted to a synthetic sample of size \texttt{k = 500} that is smaller than the original \texttt{n = 5000} gives larger standard errors, with no coefficients appearing significant, whereas \texttt{glm.synds()} estimates what would be found from the original. 
+Here \texttt{glm()} fitted to a synthetic sample of size \texttt{k = 500} that is smaller than the original \texttt{n = 5000} gives larger standard errors, with only a few coefficients appearing significant, whereas \texttt{glm.synds()} estimates what would be found from the original larger sample. 
 If \texttt{m > 1} then using \texttt{glm.synds()} will give you the average of these results for all \texttt{m} syntheses, as well as results from selected  individual syntheses if you specify the parameter \texttt{msel}. Results from individual syntheses are simply what the standard functions \texttt{lm()} or \texttt{glm()} would report. 
 
 \section{Inference to population parameters\label{sec:popinf}}
-The default setting of the parameter \texttt{incomplete} in \texttt{summary.fit.synds()} is \texttt{FALSE} indicating that methods of inference derived for the case when all of the  original data have been replaced by synthesised values are used. This code gets inference to population parameters for our example in this case.
+This code gets inference to population parameters for our example with all variables synthesised.
 
 \renewcommand{\baselinestretch}{1.0}
 <<>>=
@@ -181,26 +180,30 @@ summary(glm.synds(smoke ~ sex + age + edu + sex * edu,
 
 The \textbf{synthpop} package was written with completely synthesised data in mind but, with care, it can also be used for population inference for some incompletely synthesised data, when all values for one or more variable are unchanged. The synthesis must have been conditional on the values of all unsynthesised variables. This can be done by placing them at the start of the visit sequence and setting their parameter \texttt{method = ""}. The functions \texttt{lm.synds()} and \texttt{glm.synds()} check this condition and print warnings, as we saw for the synthesis \texttt{s2} above. 
 
-If only the unchanged variables are all predictor variables in a statistical model then the methods for population inference described above will still apply.  However, if one of the unchanged variables is the dependent variable in a statistical model the results above will not hold because the between-synthesis variance will generally be smaller than it would have been if the variable had been completely synthesised. In this case the between synthesis variance can be estimated from multiple syntheses \cite{reiter_partial} with standard errors calculated as  $\sqrt{b_m/m + \bar{v}_mk/n}$. This standard error estimate requires $m > 1$ and larger values of $m$ such as $m>5$ are recommended for reliable results. This estimate of standard error is valid for any inference from synthetic data, but the requirement for multiple syntheses, and the associated increase in disclosure risk, means it should only be used when it is the only choice. Simulations and theoretical results have confirmed that it is only required for population inference when the dependent variable is not completely synthesised. 
-
-To use the method due to \cite{reiter_partial} the parameter \texttt{incomplete}
-must be set to \texttt{TRUE}. In the next example 
-\texttt{smoke} is not synthesised and the other variables are synthesised from its unchanged values.
+When some of the variables in the formula are unchanged the between synthesis variance can be estimated from multiple syntheses \cite{reiter_partial} with standard errors calculated as  $\sqrt{b_m/m + \bar{v}_mk/n}$. This standard error estimate requires $m > 1$ and larger values of $m$ such as $m > 5$ are recommended for reliable results. 
 \renewcommand{\baselinestretch}{1.0}
+In the next example only one of the variables in the formula has been synthesised.
 <<>>=
-s6 <- syn(ods, seed = 910011, m = 6, 
-  method = c("", "cart", "cart", "cart"), print.flag = FALSE) 
-
-summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
-  data = s6, family = "binomial"), population.inference = TRUE, 
-  incomplete = TRUE)
+s6 <- syn(ods, seed = 910011, m = 12, 
+  method = c("", "", "", "cart"), print.flag = FALSE) 
 
 summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
   data = s6, family = "binomial"), population.inference = TRUE)
+
+@
+\renewcommand{\baselinestretch}{1.5}
+If a user attempts an incomplete fit with \texttt{population.inference = TRUE} from a synthesis with \texttt{m = 1}, the program will detect this and revert to inference from a complete synthesis with a resulting increase in the standard errors as we show here.
+<<>>=
+s7 <- syn(ods, seed = 910011, m = 1, 
+  method = c("", "", "", "cart"), print.flag = FALSE) 
+
+summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
+  data = s7, family = "binomial"), population.inference = TRUE)
+
 @
 \renewcommand{\baselinestretch}{1.5}
 
-The first command here gives the correct estimates for incompletely synthesised data with standard errors calculated from differences between the syntheses. The second one gives the results you would obtain by ignoring the fact that some of the variables have not been synthesised. Differences are very small here because with \texttt{m = 6} the contribution from the first term under the square root is small compared to the second term.
+
 
 In addition to these combined estimates from all the syntheses, the user can choose to print out the results from selected individual syntheses from the \texttt{m} with the parameter \texttt{(msel)}. These are simply what the original functions (\texttt{lm()} or \texttt{glm()}) would report.
 
@@ -212,12 +215,13 @@ summary(glm.synds(smoke ~ sex + age + edu + sex * edu,
 @
 \renewcommand{\baselinestretch}{1.5} 
 
+
 \section{Comparing fits to the original and synthesised data\label{sec:compare}}
 \subsection{Overview of comparisons\label{sec:overview}}
 The inferences from synthetic data, described above, all depend on the synthesising model being correct. If the original data can be accessed then the results of a model fitted to the original and synthetic data can be compared with the function \texttt{compare.fit.synds()} which provides a graphical representation of the differences as well as statistics to evaluate their importance. The methods we implement for evaluating these biases are standardised differences in the coefficients and a combined lack-of-fit test for the differences between the vector of coefficients estimated from the original and the synthetic data.  These can be used to evaluate the specific utility of synthetic data for this analysis and they incorporate statistical tests of the null hypothesis that the synthesising model is the same as the model that is presumed to have generated the original data. Section \ref{sec:bias} explains the details of these methods.  
 
 The graphical output from \texttt{compare.fit.synds()} consists of a comparison of the confidence intervals for the coefficients
-calculated from the original and the synthetic data. Results also include a confidence interval overlap measure for each coefficient: the ratio of the overlap of the intervals to an average of their lengths. Previous use of confidence-interval-overlap measures \cite{WooProp,DandR2011,Drechsler_book} have compared the intervals for population inference with synthetic data to the interval from the original data.  The parameter \texttt{population.inference = TRUE} can be used to plot and calculate these intervals. But in the default case with \texttt{population.inference = FALSE} plots and intervals for the estimate of $\hat{Q}$ expected from synthetic data are calculated. Details of each method are explained in Sections \ref{sec:ci1} and \ref{sec:ci2}.
+calculated from the original and the synthetic data. Results also include a confidence interval overlap measure for each coefficient: the ratio of the overlap of the intervals to an average of their lengths. Previous use of confidence-interval-overlap measures \cite{WooProp,DandR2011,Drechsler_book} have compared the intervals for population inference with synthetic data to the interval from the original data.  The parameter \texttt{population.inference = TRUE} can be used to plot and calculate these intervals. But in our default case with \texttt{population.inference = FALSE} plots and intervals for the estimate of $\hat{Q}$ expected from synthetic data are calculated. Details of each method are explained in Sections \ref{sec:ci1} and \ref{sec:ci2}.
 
 \subsection{Assessing the bias in estimates from synthetic data \label{sec:bias}}
 
@@ -241,12 +245,12 @@ We illustrate these results with three different syntheses and three different l
 \renewcommand{\baselinestretch}{1.0} 
 <<fig=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ] # remove 10 observations with missing "smoke"
-s7 <- syn.strata(ods, m = 5, method = "parametric", strata = "smoke", 
+s8 <- syn.strata(ods, m = 5, method = "parametric", strata = "smoke", 
   seed = 5678, visit.sequence = c("smoke", "sex", "edu", "age"), 
   print.flag = FALSE, tab.strataobs = FALSE)
-f7 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s7, 
+f8 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s8,
   family = "binomial")
-compare(f7, ods, plot.intercept = TRUE, plot = "coef") 
+compare(f8, ods, plot.intercept = TRUE, plot = "coef") 
 @
 \renewcommand{\baselinestretch}{1.5}  	
 
@@ -256,11 +260,11 @@ The second example is more typical of what a user of \textbf{synthpop} might use
 \renewcommand{\baselinestretch}{1.0} 
 <<fig=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ] # remove 10 observationswith missing "smoke"
-s8 <- syn(ods, m = 5, seed = 5678, 
+s9 <- syn(ods, m = 5, seed = 5678, 
   visit.sequence = c("sex", "edu", "age", "smoke"), print.flag = FALSE)
-f8 <- glm.synds(smoke ~ sex  + age + edu + sex * age, data = s8, 
+f9 <- glm.synds(smoke ~ sex  + age + edu + sex * age, data = s9, 
   family = "binomial")
-compare(f8, ods)  
+compare(f9, ods)  
 @
 
 \begin{figure}[!ht]
@@ -275,24 +279,23 @@ The third synthesis uses the method \texttt{"sample"} for all variables, a boots
 
 \renewcommand{\baselinestretch}{1.0}
 <<fig=FALSE>>=
-s9 <- syn(ods, m = 5, seed = 5678, method = "sample", 
+s10 <- syn(ods, m = 5, seed = 5678, method = "sample", 
   visit.sequence = c("sex", "edu", "age", "smoke"), print.flag = FALSE)
-f9 <- glm.synds(smoke ~ sex  + age + edu + sex * edu, data = s9, 
+f10 <- glm.synds(smoke ~ sex  + age + edu + sex * edu, data = s10, 
   family = "binomial")
-compare(f9, ods)
+compare(f10, ods)
 @
 \renewcommand{\baselinestretch}{1.5}
 		 	
-When  the dependent variable is not synthesised  we need to set \texttt{incomplete = TRUE} for correct inference. This leads to the calculation of the variance matrix of the differences as $V_{diff}=B_m/m$. This variance matrix will be singular if the \texttt{m} is smaller than then number of coefficients ($p$) and \texttt{m} considerably larger than $p$ is recommended. In this case the lack-of-fit test needs to use Hotelling's $T^2$ statistic referred to an $F$ distribution with degrees of freedom $p$ and $m - p$. In the next example two variables, including the dependent variable are unsynthesised so \texttt{incomplete = TRUE} is required and $m$ increased to 20.
+When some variables in the model are not synthesised  we need to set \texttt{incomplete = TRUE} for correct inference. This leads to the calculation of the variance matrix of the differences as $V_{diff}=B_m/m$. This variance matrix will be singular if the \texttt{m} is smaller than then number of coefficients ($p$) and \texttt{m} considerably larger than $p$ is recommended. In this case the lack-of-fit test needs to use Hotelling's $T^2$ statistic referred to an $F$ distribution with degrees of freedom $p$ and $m - p$. In the next example two variables are unsynthesised so methods for incomplete/partial synthesis are used and $m$ increased to 20.
 \begin{small}
 \renewcommand{\baselinestretch}{1.0}
 <<fig=FALSE>>=
-s10 <- syn(ods, seed = 910011, m = 20, method = c("", "", "cart", "cart"), 
+s11 <- syn(ods, seed = 910011, m = 20, method = c("", "", "cart", "cart"), 
   print.flag = FALSE) 
-f10 <- glm.synds(smoke ~ sex + age + edu + sex * edu, data = s10, 
+f11 <- glm.synds(smoke ~ sex + age + edu + sex * edu, data = s11, 
   family = "binomial")
-compare(f10, ods)
-compare(f10, ods, incomplete = TRUE)
+compare(f11, ods)
 @
 \renewcommand{\baselinestretch}{1.5}
 \end{small}
@@ -315,18 +318,18 @@ To illustrate these methods we select three different fitted models. In the firs
 \renewcommand{\baselinestretch}{1.0} 
 <<fig=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ]
-s11 <- syn.strata(ods, m = 5, visit.sequence = c(4, 1, 2), 
-  method = "parametric", strata = "smoke", seed = 5678, print.flag = FALSE)
 s12 <- syn.strata(ods, m = 5, visit.sequence = c(4, 1, 2), 
+  method = "parametric", strata = "smoke", seed = 5678, print.flag = FALSE)
+s13 <- syn.strata(ods, m = 5, visit.sequence = c(4, 1, 2), 
   method = "parametric", strata = "smoke", seed = 1234, proper = TRUE, 
   print.flag = FALSE, tab.strataobs = FALSE)
- 
-f11 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s11, 
-  family = "binomial")
-compare(f11, ods, plot.intercept = TRUE, plot = "coef") 
+
 f12 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s12, 
   family = "binomial")
-compare(f12, ods, plot.intercept = TRUE)
+compare(f12, ods, plot.intercept = TRUE, plot = "coef") 
+f13 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s13, 
+  family = "binomial")
+compare(f13, ods, plot.intercept = TRUE)
 @
 \renewcommand{\baselinestretch}{1.5} 
 
@@ -336,17 +339,17 @@ The next example uses parametric models which capture some of the relationships 
 
 \renewcommand{\baselinestretch}{1.0} 
 <<fig=FALSE>>=
-s13 <- syn(ods, m = 5, seed = 9101112, method = "parametric",
+s14 <- syn(ods, m = 5, seed = 9101112, method = "parametric",
   print.flag = FALSE)
-s14 <- syn(ods, m = 5, seed = 1415, method = "parametric", 
+s15 <- syn(ods, m = 5, seed = 1415, method = "parametric", 
   proper = TRUE, print.flag = FALSE)
 
-f13 <- glm.synds(smoke ~ sex  + edu + age + sex * edu, data = s13, 
-  family = "binomial")
-compare(f13, ods, plot.intercept = TRUE, plot = "coef") 
 f14 <- glm.synds(smoke ~ sex  + edu + age + sex * edu, data = s14, 
   family = "binomial")
-compare(f14, ods, plot.intercept = TRUE) 
+compare(f13, ods, plot.intercept = TRUE, plot = "coef") 
+f15 <- glm.synds(smoke ~ sex  + edu + age + sex * edu, data = s15, 
+  family = "binomial")
+compare(f15, ods, plot.intercept = TRUE) 
 @
 \renewcommand{\baselinestretch}{1.5}  
 
@@ -365,12 +368,12 @@ When the intervals are calculated on the original scales (\texttt{plot = "coef"}
 
 \renewcommand{\baselinestretch}{1.0} 
 <<fig=FALSE>>=
-s15 <- syn(ods, proper = TRUE, print.flag = FALSE)
-f15 <- glm.synds(smoke ~ sex  + edu  + sex * edu, data = s15, 
+s16 <- syn(ods, proper = TRUE, print.flag = FALSE)
+f16 <- glm.synds(smoke ~ sex  + edu  + sex * edu, data = s16, 
   family = "binomial")
 
-compare(f15, ods, plot.intercept = TRUE, plot = "coef") 
-compare(f15, ods, plot.intercept = TRUE, population.inference = TRUE, 
+compare(f16, ods, plot.intercept = TRUE, plot = "coef") 
+compare(f16, ods, plot.intercept = TRUE, population.inference = TRUE, 
   plot = "coef")
 @
 \renewcommand{\baselinestretch}{1.5}  

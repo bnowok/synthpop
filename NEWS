@@ -1,3 +1,50 @@
+synthpop 1.5-2
+---------------
+
+NEW FEATURES
+* Incomplete synthesis is detected automatically from the details of
+  the methods used to synthesise a data set. Functions glm.synds(), lm.synds(), 
+  polr.synds() and multinomial.synds() return another component `incomplete` 
+  of their result. The function summary.fit.synds() no longer has the parameter 
+  `incomplete`. In the previous version when a user fitted a model where some 
+  of the variables were not synthesised and `m = 1`, summary.fit.synds() would 
+  stop with an error. In the current version calculations are carried out 
+  as if all variables had been synthesised (`incomplete` is set to `FALSE`)
+  but a warning is printed.
+* New function polr.synds() to fit ordered logistic models to synthetic data 
+  using the polr() function from the package MASS. The compare.fit.synds() 
+  function can be used to compare the results of polr.synds() with those 
+  based on the original data.
+
+CHANGES
+* The vignette on inference has been updated.
+* synthpop website address added in a DESCRIPTION file. 
+* "cart" default method is explicitly defined in the syn() function.
+* Correction of a Value part in the help files for syn.methods.
+* Warning when numeric variables with five or less levels not changed 
+  to factors.
+
+BUG FIXES
+* Method "polr" (ordered logistic regression) is not replaced by "polyreg"
+  (unordered logistic regression) if not necessary. A bug due to passing of an 
+  unnecessary parameter `smoothing` removed. 
+* In cart.syn() when a numeric variable is synthesised and the synthetic values 
+  of the explanatory variables cannot be classified to a final node of a tree
+  they are randomly assigned to one of the final children nodes.
+* In glm.synds() when used with `family = gaussian` the variances are rescaled 
+  with the residual variance estimate.
+* Numeric varaiables with missing values which are not synthesised but used as 
+  predictors for other variables are kept unchanged.
+
+
+synthpop 1.5-1
+---------------
+
+BUG FIXES
+* Not running an example that mostly fails due to too many small categories in 
+  the synthesised data set.
+
+
 synthpop 1.5-0
 ---------------
 

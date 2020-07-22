@@ -10,7 +10,7 @@
   that are transformed from their synthesised Normal deviates.
 }
 \usage{
-syn.normrank(y, x, xp, smoothing, proper = FALSE, ...)
+syn.normrank(y, x, xp, smoothing = "", proper = FALSE, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -34,7 +34,11 @@ syn.normrank(y, x, xp, smoothing, proper = FALSE, ...)
   A Guassian kernel smoothing can be applied by setting smoothing parameter 
   to \code{"density"}. It is recommended as a tool to decrease the disclosure 
   risk.}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a data frame with regression coefficients and error estimates.}
+}
 \seealso{
   \code{\link{syn}}, \code{\link{syn.norm}}, \code{\link{syn.lognorm}}}
 \keyword{datagen}

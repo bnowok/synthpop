@@ -1,6 +1,5 @@
 \name{syn.polr}
 \alias{syn.polr}
-%\alias{syn.polr.proper}
 \title{Synthesis by ordered polytomous regression}
 \description{
   Generates a synthetic categorical variable using
@@ -39,7 +38,12 @@ syn.polr(y, x, xp, proper = FALSE, maxit = 1000, trace = FALSE,
   usually because the data are very sparse, 
   \code{\link[nnet]{multinom}} function is used instead.
 }
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a summary of the model fitted to the observed data and used
+    to produce synthetic values.}
+}
 \references{
   White, I.R., Daniel, R. and Royston, P. (2010). Avoiding bias
   due to perfect prediction in multiple imputation of

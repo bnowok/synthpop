@@ -69,12 +69,14 @@ those not present in the original data, except those defined by \code{structzero
 NOTE that when the function is called by setting elements of
 method in \code{syn} to \code{"ipf"}, the parameters \code{priorn},
 \code{structzero}, \code{gmargins}, \code{othmargins}, \code{maxtable}
-and \code{print.its} must be supplied to syn as e.g. \code{ipf.priorn}.}
-
-\value{A list with two components. The first (\code{res}) is a data frame with 
-\code{k} rows containing the synthesised data. The second (\code{fit}) is a list
-made up of two lists, the margins fitted and the original data for each margin.}
-
+and \code{print.its} must be supplied to syn as e.g. \code{ipf.priorn}.
+}
+\value{
+A list with two components:
+  \item{res}{a data frame with \code{k} rows containing the synthesised data.}
+  \item{fit}{a list made up of two lists: the margins fitted and the original 
+    data for each margin.}
+}
 \examples{
 ods <- SD2011[, c(1, 4, 5, 6, 2, 10, 11)]
 table(ods[, c("placesize", "region")])

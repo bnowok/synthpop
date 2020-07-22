@@ -120,32 +120,35 @@ lm.synds <- function(formula, data, ...)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
+ n <- sum(data$n)
+ if (is.list(data$k)) k <- sum(data$k[[1]]) else k <- sum(data$k)  
  
- # Check validity of inference from vars not in visit sequence or with method ""
- checkinf(vars, formula, data$visit.sequence, data$method)  
-
  call <- match.call()
  fitting.function <- "lm"
  analyses <- as.list(1:data$m)
 
- # do the repated analysis, store the result without data
+ # Do the repeated analysis, store the result without data
  if (data$m == 1) {
-   analyses[[1]] <- summary(lm(formula, data = data$syn,...))
+   analyses[[1]] <- summary(lm(formula, data = data$syn, ...))
  } else {
    for (i in 1:data$m) {
-     analyses[[i]] <- summary(lm(formula, data = data$syn[[i]],...))
+     analyses[[i]] <- summary(lm(formula, data = data$syn[[i]], ...))
    }
  }
+ 
+ # Check validity of inference from vars not in visit sequence or with method ""
+ incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
+ 
+ # Get matrices from coefficients
  allcoefvar <- mcoefvar(analyses = analyses)
       
- # return the complete data analyses as a list of length m
+ # Return the complete data analyses as a list of length m
  object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
-             mvaravg = allcoefvar$mvaravg, analyses = analyses,  
-             fitting.function = fitting.function,
-             n = data$n, k = data$k, proper = data$proper, 
-             m = data$m, method = data$method, 
-             mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
+                mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+                fitting.function = fitting.function,
+                n = n, k = k, proper = data$proper, 
+                m = data$m, method = data$method, incomplete = incomplete,
+                mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
  class(object) <- "fit.synds"
  return(object)
 }
@@ -159,16 +162,14 @@ glm.synds <- function(formula, family = "binomial", data, ...)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
- if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
-
- # Check validity of inference from vars not in visit sequence or with method ""
- checkinf(vars, formula, data$visit.sequence, data$method)  
-
+ n <- sum(data$n)
+ if (is.list(data$k)) k <- sum(data$k[[1]]) else k <- sum(data$k)  
+ 
  call <- match.call()
  fitting.function <- "glm"
  analyses <- as.list(1:data$m)
  
- # do the repated analysis, store the result without data
+ # Do the repeated analysis, store the result without data
  if (data$m == 1) {
    analyses[[1]] <- summary(glm(formula,data = data$syn, family = family, ...))
  } else {
@@ -176,17 +177,63 @@ glm.synds <- function(formula, family = "binomial", data, ...)
      analyses[[i]] <- summary(glm(formula,data = data$syn[[i]], family = family, ...))
    }
  }
- allcoefvar <- mcoefvar(analyses = analyses)
  
- # return the complete data analyses as a list of length m
+ # Check completeness for inference from vars not in visit sequence or with method ""
+ incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
+ 
+ # Get matrices from coefficients
+ allcoefvar <- mcoefvar(analyses = analyses)
+
+ # Return the complete data analyses as a list of length m
  object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
-             mvaravg = allcoefvar$mvaravg, analyses = analyses,  
-             fitting.function = fitting.function,
-             n = data$n, k = data$k, proper = data$proper, 
-             m = data$m, method = data$method, 
-             mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
+                mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+                fitting.function = fitting.function,
+                n = n, k = k, proper = data$proper, 
+                m = data$m, method = data$method, incomplete = incomplete,
+                mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
  class(object) <- "fit.synds"
  return(object)
+}
+
+
+###-----polr.synds-----------------------------------------------------
+
+polr.synds <- function(formula, data, ...)
+{
+  if (!class(data) == "synds") stop("Data must have class 'synds'.\n")
+  if (is.matrix(data$method)) data$method <- data$method[1,]
+  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
+  if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
+  n <- sum(data$n)
+  if (is.list(data$k)) k <- sum(data$k[[1]]) else k <- sum(data$k)  
+  
+  call <- match.call()
+  fitting.function <- "polr"
+  analyses <- as.list(1:data$m)
+  
+  # Do the repeated analysis, store the result without data
+  for (i in 1:data$m) {
+    if (data$m == 1) fit <- polr(formula, data = data$syn, Hess = TRUE, ...)
+    else fit <- polr(formula, data = data$syn[[i]], Hess = TRUE, ...)
+    ss <- summary(fit)
+    analyses[[i]] <- ss
+  }
+
+  # Check validity of inference from vars not in visit sequence or with method ""
+  incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
+  
+  # Get matrices from coefficients
+  allcoefvar <- mcoefvar(analyses = analyses)
+ 
+  # Return the complete data analyses as a list of length m
+  object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
+                 mvaravg = allcoefvar$mvaravg, analyses = analyses,  
+                 fitting.function = fitting.function,
+                 n = n, k = k, proper = data$proper, 
+                 m = data$m, method = data$method, incomplete = incomplete,
+                 mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
+  class(object) <- "fit.synds"
+  return(object)
 }
 
 
@@ -198,16 +245,14 @@ multinom.synds <- function(formula, data, ...)
   if (is.matrix(data$method)) data$method <- data$method[1,]
   if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
   if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
-  if (data$method[names(data$method) == all.vars(formula)[1]] == "" ) cat("\n\nNote: Your response variable is not synthesised. The compare\nmethod for evaluating lack-of-fit and a summary of your model\nwith population.inference = TRUE should use incomplete = TRUE\n(see vignette on inference for details).\n\n")
-  
-  # Check validity of inference from vars not in visit sequence or with method ""
-  checkinf(vars, formula, data$visit.sequence, data$method)  
+  n <- sum(data$n)
+  if (is.list(data$k)) k <- sum(data$k[[1]]) else k <- sum(data$k)  
   
   call <- match.call()
   fitting.function <- "multinom"
   analyses <- as.list(1:data$m)
   
-  # do the repated analysis, store the result without data
+  # Do the repated analysis, store the result without data
   for (i in 1:data$m) {
     if (data$m == 1) fit <- multinom(formula, data = data$syn, Hess = TRUE, ...)
     else fit <- multinom(formula, data = data$syn[[i]], Hess = TRUE, ...)
@@ -220,45 +265,60 @@ multinom.synds <- function(formula, data, ...)
                                                        rep(dd[[1]], length(dd[[2]])), sep = ":"),
                                                        c("Estimate", "se", "z value"))
   }
+
+  # Check validity of inference from vars not in visit sequence or with method ""
+  incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
+  
+  # Get matrices from coefficients
   allcoefvar <- mcoefvar(analyses = analyses)
   
-  # return the complete data analyses as a list of length m
+  # Return the complete data analyses as a list of length m
   object <- list(call = call, mcoefavg = allcoefvar$mcoefavg, 
                  mvaravg = allcoefvar$mvaravg, analyses = analyses,  
                  fitting.function = fitting.function,
-                 n = data$n, k = data$k, proper = data$proper, 
-                 m = data$m, method = data$method, 
+		 n = n, k = k, proper = data$proper, 
+                 m = data$m, method = data$method, incomplete = incomplete,
                  mcoef = allcoefvar$mcoef, mvar = allcoefvar$mvar)
   class(object) <- "fit.synds"
   return(object)
 }
 
-###-----checkinf-----------------------------------------------------------
-# used in glm.synds and lm.synds and multinom.synds 
 
-checkinf <- function(vars, formula, vs, method){
-  inform <- all.vars(formula) # get variables in formula
+###-----checkcomplete------------------------------------------------------
+# Used in lm.synds, glm.synds, multinom.synds, and polr.synds
+
+checkcomplete <- function(vars, formula, vs, method)
+{  
+  inform <- all.vars(formula) # get all variables in formula
   if ("." %in% inform) inform <- vars
-  if (any(!inform %in% vars)) stop("Variable(s) in formula are not in synthetic data: ",
-    paste(inform[!inform %in% vars], collapse = ", "), call. = FALSE)
-  if (any(!inform %in% names(vs))) cat("\nSTERN WARNING: Variable(s) in formula are\nnot in visit sequence:",
-    paste(inform[!inform %in% names(vs)], collapse = ", "),
-"\n******************************************
-This inference will be wrong because these\nvariables will not match synthesised data
-******************************************\n\n")
-  inform <- inform[inform %in% names(vs)]
-  vsin <- vs[names(vs) %in% inform]
+  if (any(!inform %in% vars)) stop("Variable(s) in formula (model to be fitted) are not in synthetic data: ",
+                                   paste(inform[!inform %in% vars], collapse = ", "), call. = FALSE)
   methin <- method[names(method) %in% inform]
-  methin <- methin[match(names(vsin), names(methin))] 
-  blankmeths <- (1:length(methin))[methin == ""]
-  if (!all(blankmeths == (1:length(blankmeths)))) { 
-    cat("\nSTERN WARNING: Variables in formula with\nblank methods are not at start of visit sequence",
-"\n******************************************
-This inference will be wrong because these\nvariables will not match synthesised data
-******************************************\nMethods in synthesis order:\n")
-  print(methin)
-  cat("\n")
-  }
+  if (all(methin == "")) cat("No variables in your formula (model to be fitted) have been synthesised.\nIf the data contain exactly the same observations as the original ones,\nresults will be identical.\n")
+
+  order_vs  <- match(names(vs), names(methin))
+  order_vs  <- order_vs[!is.na(order_vs)]
+  order_oth <- setdiff(1:length(methin), order_vs)
+  methin_order <- methin[c(order_vs, order_oth)] 
+
+  blankmeths <- (1:length(methin_order))[methin_order == ""]
+
+  if (!all(blankmeths == (1:length(blankmeths)))){ 
+cat(
+"**********************************************************",
+"\nWARNING: Some variable(s) in formula (model to be fitted)  
+are not synthesised and not used in synthesising models
+for all other variables:", 
+paste(names(methin_order)[blankmeths][!(blankmeths == (1:length(blankmeths)))], collapse = ", "), 
+"\nMethods in synthesis order are:\n")
+print(methin_order)
+cat("Results may not be correct.
+**********************************************************\n")
+}
+  
+  incomplete <- !all(blankmeths == (1:length(blankmeths)))
+  # incomplete <- length(blankmeths) > 0
+  return(incomplete)
 }
 
 
@@ -266,19 +326,22 @@ This inference will be wrong because these\nvariables will not match synthesised
 
 print.fit.synds <- function(x, msel = NULL, ...)
 {
-  if (!is.null(msel) & !all(msel %in% (1:x$m))) stop("Invalid synthesis number(s).", call. = FALSE)
-  n <- sum(x$n); if (is.list(x$k)) k <- sum(x$k[[1]]) else k <- sum(x$k)
+  if (!is.null(msel) & !all(msel %in% (1:x$m))) stop("Invalid synthesis number(s): `msel` must be selected from 1:", x$m, call. = FALSE, sep = "")
 
-  if (n != k | x$m > 1) cat("Note: To get a summary of results you would expect from the original data, or for population inference use the summary function on your fit.\n") 
-  
+  #if (x$n != x$k | x$m > 1) cat("Note: To get a summary of results you would expect from the original data\nor for population inference use the summary() function on your fit.\nSee vignette on inference to get more details.\n") 
+  if (x$n != x$k | x$m > 1) cat("Note: To get more details of the fit see vignette on inference.\n") 
+
   cat("\nCall:\n")
   print(x$call)
-  if (is.null(msel)) {
-    cat("\nCombined coefficient estimates:\n")
+  if (is.null(msel) & x$m > 1) {
+    cat("\nAverage coefficient estimates from", x$m, "syntheses:\n")
+    print(x$mcoefavg)
+  } else if (x$m == 1) {
+    cat("\nCoefficient estimates from a single synthesis:\n")
     print(x$mcoefavg)
   } else {
     cat("\nCoefficient estimates for selected synthetic data set(s):\n")
-    print(x$mcoef[msel,,drop = FALSE])
+    print(x$mcoef[msel, , drop = FALSE])
   }
   invisible(x)
 }
@@ -287,26 +350,32 @@ print.fit.synds <- function(x, msel = NULL, ...)
 ###-----summary.fit.synds--------------------------------------------------
 
 summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL, 
-                              incomplete = FALSE, real.varcov = NULL, ...)
+                              real.varcov = NULL, ...)
 { # df.residual changed to df[2] because didn't work for lm 
   if (!class(object) == "fit.synds") stop("Object must have class fit.synds\n")
   m <- object$m
-  n <- sum(object$n)                                                     
-  if (is.list(object$k)) k <- sum(object$k[[1]]) else k <- sum(object$k)  
-    
+  n <- object$n
+  k <- object$k
+  incomplete <- object$incomplete
+
   coefficients <- object$mcoefavg  # mean of coefficients (over m syntheses)
   if (!is.null(real.varcov))  vars <- diag(real.varcov)
   else  vars <- object$mvaravg * k/n  # mean of variances (over m syntheses) * adjustment
 
-## Checks and warnings for incomplete method
+## Checks, messages and warnings for population inference
 #---
- if (incomplete == TRUE) {
-   if (population.inference == TRUE & m == 1) {
-     stop("You have selected population inference using a method for incompletely synthesised data with\n m = 1 - standard errors cannot be calculated.\n", call. = FALSE)
-   } else if (population.inference == TRUE & m < 5) {
-     cat("Note: You have selected population inference using a method for incompletely synthesised data with m = ", m, ",\nwhich is smaller than the minimum of 5 recommended. The estimated standard errors of\nyour coefficients may be inaccurate.\n", sep = "")
-   }
- }
+  if (population.inference == TRUE) {
+    if (incomplete == TRUE & m == 1) {
+      cat("Warning: You have selected population inference when some variables in your model are",
+          "\nnot synthesised and when only a single synthetic data set has been created (m = 1).",
+          "\nThe correct method for this case requires m > 1, ideally m > 5.",
+          "\nTo provide some results calculations proceed as if all variables had been synthesised.\n\n")
+      incomplete <- FALSE}
+    else if (incomplete == TRUE & m < 5) {
+      cat("Note: You have selected population inference for incompletely synthesised data with m = ", m,
+          ",\nwhich is smaller than the minimum of 5 recommended. The estimated standard errors of your\ncoefficients may be inaccurate.\n\n", sep = "")
+    }
+  }
 #--- 
 
 ## Inference to Q hat
@@ -323,10 +392,6 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 #---   
  } else { 
   
-  ## check that y variable is synthesised not needed
-  # if (!is.matrix(object$method)) {if ( object$method[names(object$method) == as.character(formula(object)[[2]])] == "" ) cat("\nWarning: If your response variable is not synthesised, the standard errors here are probably too large.\n")}
-  # else if ( object$method[1,][dimnames(object$method)[[2]] == as.character(formula(object)[[2]])] == "" ) cat("\nWarning: If your response variable is not synthesised, the standard errors here are probably too large.\n")
-    
   ## incomplete method  
    if (incomplete == TRUE) {
      bm <- apply(object$mcoef, 2, var)
@@ -363,20 +428,26 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 print.summary.fit.synds <- function(x, ...) {
  
  if (!is.null(x$msel) & !all(x$msel %in% (1:x$m))) stop("Invalid synthesis number(s)", call. = FALSE)
- cat("Warning: Note that all these results depend on the synthesis model being correct.\n")  
+ #cat("\nNote that all these results depend on the synthesis model being correct.\n")  
+ #cat("\nFor details, see package vignette on inference.\n")
 
  if (x$m == 1) {
-   cat("\nFit to synthetic data set with a single synthesis.\n")
+   cat("Fit to synthetic data set with a single synthesis. ")
  } else {
-   cat("\nFit to synthetic data set with ", x$m, " syntheses.\n",sep = "")
+   cat("Fit to synthetic data set with ", x$m, " syntheses. ", sep = "")
  }
 
  if (x$population.inference) {
-   cat("Inference to population coefficients.\n")
+   if (x$incomplete == TRUE) cat("Inference to population coefficients when\nsome variables in the model are not synthesised. Methods for incomplete/partial\nsynthesis are used.\n")
+   else cat("Inference to population\ncoefficients when all variables in the model are synthesised.\n")
  } else {
-   cat("Inference to coefficients and standard errors that\nwould be obtained from the observed data.\n")
+   cat("Inference to coefficients\nand standard errors that would be obtained from the original data.\n")
+   if (x$k != x$n) 
+     cat("\nThe synthetic data have a different size (", x$k, ") from the original data (", x$n, "),",
+         "\nso the standard errors of the coefficients have been adjusted to estimate",
+         "\nthe standard errors from the original data.\n", sep = "")
  }
-   
+
  cat("\nCall:\n")
  print(x$call)
  cat("\nCombined estimates:\n")
@@ -418,7 +489,7 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
   if (print.coef == TRUE) {
     cat("\nEstimates for the observed data set:\n")
     print(x$coef.obs)
-    cat("\nCombined estimates for the synthetised data set(s):\n")
+    cat("\nCombined estimates for the synthesised data set(s):\n")
     print(x$coef.syn)
   }  
     
@@ -431,10 +502,11 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
   }   
   cat("\nMean confidence interval overlap: ", x$mean.ci.overlap)
   cat("\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
-  cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval,3), " for test that synthesis model is compatible ", sep = "")
-  if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep = "")
-  else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep = "") 
-
+  if (!is.null(x$lack.of.fit)){
+    cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval,3), " for test that synthesis model is compatible ", sep = "")
+    if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep = "")
+    else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep = "") 
+  }
   if (!is.null(x$ci.plot)) {
     cat("\nConfidence interval plot:\n")
     print(x$ci.plot)

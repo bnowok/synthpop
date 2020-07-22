@@ -5,7 +5,7 @@
  Generates a random sample from the observed data.
 }
 \usage{
-syn.sample(y, xp, smoothing, cont.na, proper = FALSE, ...)
+syn.sample(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -25,7 +25,9 @@ syn.sample(y, xp, smoothing, cont.na, proper = FALSE, ...)
  as a tool to decrease the disclosure risk.
 }
 \value{
- A vector of length \code{k} with synthetic values.
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a name of the method used for synthesis (\code{"sample"}).}
 }
 \seealso{
   \code{\link{syn}}

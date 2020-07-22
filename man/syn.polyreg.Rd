@@ -43,7 +43,12 @@ syn.polyreg(y, x, xp, proper = FALSE, maxit = 1000, trace = FALSE,
   to \code{"polyreg"}, the parameters \code{maxit}, \code{trace} and \code{MaxNWts}
   can be supplied to \code{syn()} as e.g. \code{polyreg.maxit}.
 }
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a summary of the model fitted to the observed data and used
+    to produce synthetic values.}
+}
 \references{
   White, I.R., Daniel, R. and Royston, P. (2010). Avoiding bias
   due to perfect prediction in multiple imputation of

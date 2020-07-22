@@ -16,7 +16,7 @@
 \method{compare}{fit.synds}(object, data, plot = "Z", 
   print.coef = FALSE, return.plot = TRUE, plot.intercept = FALSE, 
   lwd = 1, lty = 1, lcol = c("#1A3C5A","#4187BF"), 
-  dodge.height = .5, point.size = 2.5, incomplete = FALSE, 
+  dodge.height = .5, point.size = 2.5,
   population.inference = FALSE, ci.level = 0.95, ...)
 
 \method{print}{compare.fit.synds}(x, print.coef = x$print.coef, \dots)
@@ -41,10 +41,6 @@
    prevent overlaping.} 
   \item{point.size}{size of plotting symbols used to plot point estimates of 
    coefficients.}
-  \item{incomplete}{a logical value indicating whether the method of Reiter 
-   (2003) for what he terms partially synthetic data should be used for 
-   inference. It requires multiple syntheses with \code{m} greater than the 
-   number of coefficients, ideally at least 5 more.} 
   \item{population.inference}{a logical value indicating whether intervals for 
    inference to population quantities, as decribed by Karr et al. (2006), 
    should be calculated and plotted. This option suppresses the lack-of-fit test 
@@ -96,19 +92,20 @@ vignette on inference.
  \item{mean.ci.overlap}{Mean confidence interval overlap (over all 
    coefficients).}    
  \item{lack.of.fit}{lack-of-fit measure from all \code{m} synthetic data 
-   sets combined, calculated as follows, when \code{incomplete.method = FALSE}. 
+   sets combined, calculated as follows, when \code{object$incomplete = FALSE}. 
    The vector of mean differences (\code{diff}) between the coefficients 
    calculated from the synthetic and original data provides 
    a standardised \code{lack-of-fit = t(diff) \%*\% V^(-1) t(diff)}, where 
    \code{\%*\%} represents the matrix product and \code{V^(-1)} is the 
    inverse of the variance-covariance matrix for the mean coefficients 
-   from the synthetic data. If the model used to synthesize the data is 
+   from the original data. If the model used to synthesize the data is 
    correct this quantity, which is a Mahalanobis distance measure, will 
    follow a chi-squared distribution with degrees of freedom, and thus 
    expectation, equal to the number of parameters (\code{p}) in the fitted 
-   model. When \code{incomplete.method = TRUE} the function above follows 
-   a Hotelling's \code{T*2} distribution and the lack-of-fit statistic is 
-   referred to an \code{F(p, m - p)}.}
+   model. When \code{object$incomplete = TRUE} the variance-covariance matrix
+   of the coefficients is estimated from the differences between the m 
+   estimates and the lack-of-fit statistic follows  a Hotelling's \code{T*2} 
+   distribution and the lack-of-fit statistic is referred to an \code{F(p, m - p)}.}
  \item{lof.pvalue}{p-value for the combined lack-of-fit test of the NULL 
    hypothesis that the method used for synthesis retains all relationships 
    between variables that influence the parameters of the fit.}  

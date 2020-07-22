@@ -6,7 +6,7 @@
   sample is created from the original values of \code{y} within each category 
   of \code{xp} (the synthesised values of the grouping variable).}
 \usage{
-syn.nested(y, x, xp, smoothing, cont.na,  ...) 
+syn.nested(y, x, xp, smoothing = "", cont.na = NA,  ...) 
 }
 \arguments{
   \item{y}{an original data vector of length \code{n} for the nested variable.}
@@ -29,5 +29,9 @@ syn.nested(y, x, xp, smoothing, cont.na,  ...)
   \code{syn.nested()} is also used for the final synthesis of variables in 
   \code{syn()} when the option \code{numtocat} is used to synthesise numerical 
   variables as groups.}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{a name of the method used for synthesis (\code{"nested"}).}
+}
 \keyword{datagen}

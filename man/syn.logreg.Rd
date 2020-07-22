@@ -37,10 +37,12 @@ syn.logreg(y, x, xp, denom = NULL, denomp = NULL, proper = FALSE, ...)
   is handled by the data augmentation method.
 }
 \value{
-  A vector of length \code{k} with synthetic values (\code{0} or \code{1}) 
-  of \code{y}.
+  A list with two components:
+    \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+    \item{fit}{a summary of the model fitted to the observed data and used
+      to produce synthetic values.}
 }
 \seealso{
-  \code{\link{syn}}, \code{\link[stats]{glm}}, \code{\link[stats]{glm.fit}}
+  \code{\link{syn}}, \code{\link[stats]{glm}}
 }
 \keyword{datagen}

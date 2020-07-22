@@ -4,7 +4,7 @@
 # Structure and some functions based on code from MICE package
 # by S. van Buuren and K. Groothuis-Oudshoorn
 
-syn <- function(data, method = vector("character", length = ncol(data)),
+syn <- function(data, method = "cart",
                 visit.sequence = (1:ncol(data)),
                 predictor.matrix = NULL,  
                 m = 1, k = nrow(data), proper = FALSE, 
@@ -29,7 +29,7 @@ obs.vars <- names(data)
 #if (k == 0) m <- 0 #!BN-12/08/2016
 
 # set default method for everything to cart and to blank (which will get defaults) if method is "parametric"
-if (all(method == "")) method = "cart"  # change to "ctree"?
+# if (all(method == "")) method = "cart"  # change to "ctree"?
 # else if (length(method)==1 && method=="parametric") method=rep("",dim(data)[2])
 
 if (!is.null(attr(data,"filetype")) && attr(data,"filetype") == "sav") {
@@ -909,16 +909,22 @@ check.rules.syn <- function(setup, data) {
        "have been changed from character to factor.\n", sep = " ")
    for (j in (1:nvar)[chartofac]) data[,j] <- as.factor(data[,j]) 
  }
- 
- 
+
  # Changing numeric variables with fewer than 'minnumlevels' into factors
- #  Default for this now set to 5, 20 too many as picked up months
+ #  Default for this now set to -1 (no changes are made) 
+ #  Warning if numeric vars with < 5 levels (20 too many as picks up months)
  #  Also only need to do this if variable in predictionMatrix
  #  and any inappropriate methods are changed to the default for factors
  nlevel      <- sapply(data, function(x) length(table(x)))
  ifnum       <- sapply(data, is.numeric)
- innumtocat  <-  rep(FALSE,length(data)) #GRBN
+ innumtocat  <- rep(FALSE,length(data)) #GRBN
  
+ if (minnumlevels < 5 & any(nlevel > minnumlevels & nlevel <= 5 & ifnum & inpred & notevent)) {
+   cat("Warning: In your synthesis there are numeric variables with 5 or less levels:\n",
+       paste0(varnames[nlevel > minnumlevels & nlevel <= 5 & ifnum & inpred & notevent], collapse = ", "), ".",
+       " Consider changing them to factors.\nYou can do it using parameter `minnumlevels`.\n\n", sep = "")  
+ }
+
  vartofactor <- which(nlevel <= minnumlevels & ifnum & inpred & notevent)
  for (j in vartofactor) data[,j] <- as.factor(data[,j])
  if (length(vartofactor) > 0) {

@@ -632,23 +632,23 @@ syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
 # bagging when mtry = ncol(x) - using all predictors
 syn.rf <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...) 
 { 
-  #browser()
+
   #nodesize <- max(1, nodesize)  # safety
   #if (proper == TRUE) {
   #  s <- sample(length(y), replace = T); y <- y[s]
   #  x <- x[s, , drop = FALSE]
   #}  
 
-  for (i in which(sapply(x,class) != sapply(xp,class))) xp[,i] <-
-  eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
-  
+  for (i in which(sapply(x,class) != sapply(xp, class))) xp[,i] <-
+    do.call(paste0("as.", class(x[,i])[1]), unname(xp[, i]))
+
   if (is.factor(y)) {
     obslevels <- levels(y)
     y <- droplevels(y)
   }
 
   # fit a random forest
-  # regression (mtry=p/3), classification (mtry=sqrt(p))
+  # regression (mtry = p/3), classification (mtry = sqrt(p))
   rf.fit <- randomForest(y ~ ., data = cbind.data.frame(y,x), ntree = ntree, ...)
   nodessyn <- attr(predict(rf.fit, newdata = xp, nodes = T), "nodes")
   nodesobs <- attr(predict(rf.fit, newdata = x, nodes = T), "nodes")
@@ -672,6 +672,57 @@ syn.rf <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
 }
 
 
+###-----syn.ranger---------------------------------------------------------
+# bagging when mtry = ncol(x) - using all predictors
+# contributed by Caspar J. van Lissa
+
+syn.ranger <- function(y, x, xp, smoothing = "", proper = FALSE, ...) 
+{ 
+  dots <- list(...)
+  dots[c("formula", "data")] <- NULL
+  if("min.node.size" %in% names(dots)){
+    dots[["min.node.size"]] <- max(1, dots[["min.node.size"]])  # safety
+  }
+  
+  if (proper == TRUE) {
+    s <- sample(length(y), replace = TRUE)
+    y <- y[s]
+    x <- x[s, , drop = FALSE]
+  }
+  
+  for (i in which(sapply(x,class) != sapply(xp, class))) xp[,i] <-
+    do.call(paste0("as.", class(x[,i])[1]), unname(xp[, i]))
+  
+  if (is.factor(y)) {
+    obslevels <- levels(y)
+    y <- droplevels(y)
+  }
+  
+  # fit a random forest
+  Args     <- c(list(formula = y ~ ., data = cbind.data.frame(y,x)), dots)
+  rf.fit   <- do.call(ranger, Args)
+  nodessyn <- predict(rf.fit, data = xp, type = "terminalNodes")$predictions
+  nodesobs <- predict(rf.fit, data = x, type = "terminalNodes")$predictions
+  ntree    <- rf.fit$num.trees
+  ndonors  <- vector("list", nrow(xp))
+  n0       <- vector("list", ntree)
+  for (j in 1:nrow(xp)) {
+    for (i in 1:ntree) {
+      n0[[i]] <- y[nodesobs[,i] == nodessyn[j,i]]
+    }
+    empty <- sapply(n0, length)
+    ndonors[[j]] <- unlist(n0[empty != 0])
+  }
+  
+  yhat <- sapply(ndonors, sample, size = 1)          
+  
+  if (is.factor(y)) yhat <- factor(yhat, levels = obslevels) 
+  if (!is.factor(y) & smoothing == "density") yhat <- syn.smooth(yhat,y)
+  
+  return(list(res = yhat, fit = rf.fit))
+}
+
+
 ###-----syn.bag-------------------------------------------------------------
 # bagging when mtry = ncol(x) - using all predictors
 syn.bag <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...) 
@@ -682,8 +733,8 @@ syn.bag <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
   #  x <- x[s, , drop = FALSE]
   #}  
 
-  for (i in which(sapply(x,class) != sapply(xp,class))) xp[,i] <-
-  eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
+  for (i in which(sapply(x,class) != sapply(xp, class))) xp[,i] <-
+    do.call(paste0("as.", class(x[,i])[1]), unname(xp[, i]))
   
   if (is.factor(y)) {
     obslevels <- levels(y)
@@ -691,7 +742,7 @@ syn.bag <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
   }
 
   # fit a random forest
-  # regression (mtry=p/3), classification (mtry=sqrt(p))
+  # regression (mtry = p/3), classification (mtry = sqrt(p))
   rf.fit <- randomForest(y ~ ., data = cbind.data.frame(y,x), 
                          ntree = ntree, mtry = ncol(x), ...)
   nodessyn <- attr(predict(rf.fit, newdata = xp, nodes = T), "nodes")

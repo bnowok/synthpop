@@ -30,7 +30,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
     # augment the data with a column for the original continuous variable with 
     # missing values replaced by zeros and a column for a new factor for 
     # missing values 
-      nonmiscode <- 10^(nchar(round(max(data[,j], na.rm = TRUE))) + 1) - 1               #BN13/11
+      nonmiscode <- 10^(nchar(round(max(data[,j], na.rm = TRUE))) + 1) - 1               
       y.0  <- ifelse(data[,j] %in% c(cont.na[[j]], rvalues[[j]]), 0, data[,j])
       y.NA <- ifelse(data[,j] %in% c(cont.na[[j]], rvalues[[j]]), data[,j], nonmiscode) #BN13/11 0 changed with nonmiscode
       y.NA <- addNA(y.NA, ifany = TRUE) 
@@ -54,12 +54,10 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
     # add methods for new variables
       method[ncol(data) - 1] <- method[j]
-      if (method[j] %in% c("ctree","ctree.proper","cart","cart.proper","rf","bag","")) {
+      if (method[j] %in% c("ctree", "ctree.proper", "cart", "cart.proper",
+                           "rf", "ranger", "bag",
+                           "sample", "")) {
         method[ncol(data)] <- method[j] 
-      #} else if (method[j] %in% c("rf","bag")) {   
-      #  method[ncol(data)] <- "cart" 
-      } else if (method[j] == "sample") {   
-        method[ncol(data)] <- "sample"                                          
       } else {
         method[ncol(data)] <- ifelse(nlevels(data[,ncol(data)]) == 2,
                                      default.method[2], default.method[3])
@@ -75,7 +73,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
       cont.na[j]              <- NA  
     
     # pass denom and event for new variable and remove from original one
-      denom[ncol(data) - 1] <- denom[j]    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! check if correct
+      denom[ncol(data) - 1] <- denom[j]    #!!!!!!!!!!!!!! check if correct
       denom[ncol(data)]     <- 0 
       denom[j]              <- 0
       event[ncol(data) - 1] <- event[j]    
@@ -107,7 +105,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
     }
   }
    
-  varnames <- dimnames(data)[[2]]  # now includes new names
+  varnames <- dimnames(data)[[2]]  
   dimnames(predictor.matrix) <- list(varnames,varnames)
   names(method) <- varnames
   names(visit.sequence) <- varnames[visit.sequence]

@@ -188,13 +188,13 @@ syn.strata(data, strata = NULL,
  automatically, if necessary, to methods for categorical variables. 
  Methods for variables not in a visit sequence will be changed into blank.
 
- The built-in elementary synthesising methods  defined by conditional 
+ The built-in elementary synthesising methods defined by conditional 
  distributions include:
  \describe{
    \item{ctree, cart}{classification and regression trees (CART), 
      see \code{\link{syn.cart}}}
-   \item{bagging, random forests}{methods using ensembles of CART trees, 
-     see \code{\link{syn.bag}} and \code{\link{syn.rf}}}
+   \item{bagging, random forests, ranger}{methods using ensembles of CART trees, 
+     see \code{\link{syn.bag}}, \code{\link{syn.rf}}, and \code{\link{syn.ranger}}}
    \item{survctree}{classification and regression trees (CART)
      for duration time data (parametric methods for survival data are 
      not implemented yet),  see \code{\link{syn.survctree}}}

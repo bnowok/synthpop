@@ -58,7 +58,7 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
 }
 \value{A list with two components:
   \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
-  \item{fit}{the fitted model which is an item of class \code{rpart.object} 
+  \item{fit}{the fitted model which is an object of class \code{rpart.object} 
     or \code{ctree.object} that can be printed or plotted.}
 }
 \references{

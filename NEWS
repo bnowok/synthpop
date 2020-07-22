@@ -15,6 +15,8 @@ NEW FEATURES
   using the polr() function from the package MASS. The compare.fit.synds() 
   function can be used to compare the results of polr.synds() with those 
   based on the original data.
+* New synthesising function syn.ranger() which uses a fast implementation 
+  of random forests (contributed by Caspar van Lissa).  
 
 CHANGES
 * The vignette on inference has been updated.

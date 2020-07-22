@@ -19,7 +19,7 @@ synthetic data (\code{\link{lm.synds}}, \code{\link{glm.synds}}) and compare the
 with those for the observed data (\code{\link{compare.fit.synds}}). More extensive 
 documentation with illustrative examples is provided in the package vignette.}
 \author{
-Beata Nowok, Gillian M Raab, Joshua Snoke and Chris Dibben based on package \pkg{mice} 
+Beata Nowok, Gillian M Raab, and Chris Dibben based on package \pkg{mice} 
 (2.18) by Stef van Buuren and Karin Groothuis-Oudshoorn
 
 Maintainer: Beata Nowok <beata.nowok@gmail.com>

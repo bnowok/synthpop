@@ -12,7 +12,7 @@
 glm.synds(formula, family = "binomial", data,  ...)
 lm.synds(formula, data, ...)
 
-\method{print}{fit.synds}(x, msel = NULL, \dots)
+\method{print}{fit.synds}(x, msel = NULL, \dots) 
 }
 \arguments{
   \item{formula}{a symbolic description of the model to be estimated. 
@@ -34,6 +34,10 @@ lm.synds(formula, data, ...)
     (average) coefficient estimates are printed.}  
 }
 \value{
+  The \code{\link{summary}} function (\code{\link{summary.fit.synds}}) can be used 
+  to obtain the combined results of models fitted to each of the \code{m} synthetic  
+  data sets.
+
   An object of class \code{fit.synds}. It is a list with the following 
   components:
   \item{call}{the original call to \code{glm.synds} or \code{lm.synds}.}
@@ -49,12 +53,15 @@ lm.synds(formula, data, ...)
   \item{m}{the number of synthetic versions of the observed data.}
   \item{method}{a vector of synthesising methods applied to each variable
     in the saved synthesised data.}
+  \item{incomplete}{a logical value indicating whether any of the variables in 
+    the model were not synthesised.} 
   \item{mcoef}{a matrix of coefficients estimates from all \code{m} syntheses.}
   \item{mvar}{a matrix of variance estimates from all \code{m} syntheses.}
 }
 \seealso{
-  \code{\link[stats]{glm}},\code{\link[stats]{lm}}, 
-  \code{\link[synthpop]{multinom.synds}}, \code{\link[synthpop]{compare}}
+  \code{\link[stats]{glm}}, \code{\link[stats]{lm}},  
+  \code{\link[synthpop]{multinom.synds}}, \code{\link[synthpop]{polr.synds}}, 
+  \code{\link[synthpop]{compare.fit.synds}}, \code{\link[synthpop]{summary.fit.synds}}
 }
 \examples{
 ### Logit model 

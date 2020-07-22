@@ -5,7 +5,7 @@
 
 ###-----.norm.fix.syn------------------------------------------------------
 
-.norm.fix.syn <- function(y, x, ridge=0.00001, ...)
+.norm.fix.syn <- function(y, x, ridge = 0.00001, ...)
 {
 # Calculates regression coefficients + error estimate
 
@@ -24,7 +24,7 @@
 
 ###-----.norm.draw.syn-----------------------------------------------------
 
-.norm.draw.syn <- function(y, x, ridge=0.00001, ...)
+.norm.draw.syn <- function(y, x, ridge = 0.00001, ...)
 {
 # Draws values of beta and sigma for Bayesian linear regression synthesis 
 # of y given x according to Rubin p.167
@@ -131,7 +131,7 @@ syn.cubertnorm <- function(y, x, xp, proper = FALSE, ...)
 
 ###-----syn.normrank-------------------------------------------------------
 
-syn.normrank <- function(y, x, xp, smoothing, proper = FALSE, ...)
+syn.normrank <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
 {
   # Regression synthesis of y given x, with a fixed regression
   # line, and with random draws of the residuals around the line.
@@ -184,47 +184,9 @@ syn.normrank <- function(y, x, xp, smoothing, proper = FALSE, ...)
 }
 
 
-###-----syn.ranknorm-------------------------------------------------------
-# check if this function is needed
-syn.ranknorm <- function(y, x, xp, proper = FALSE, ...)
-{
-# Regression synthesis of y given x, with a fixed regression
-# line, and with random draws of the residuals around the line.
-# Adapted from norm to get ranks in real data
-#
-# First get approx rank position of vector in one of another length
-# so that result returned has correct length for xp 
-# matters for sub-samples and missing data
-
-  newrank <- function(pred,oldn) {
-    newn <- length(pred)
-    res  <- round((1:newn)*(oldn/newn))
-    res[res < 1] <- 1
-    res[res > oldn] <- oldn
-    res[rank(pred)]
-  }
-
-  x  <- cbind(1, as.matrix(x))
-  xp <- cbind(1, as.matrix(xp))
-
-  if (proper == FALSE) {
-    parm <- .norm.fix.syn(y, x, ...)
-  } else {
-    parm <- .norm.draw.syn(y, x, ...)
-  }
-  
-  pred <- (xp %*% parm$beta + rnorm(nrow(xp)) * parm$sigma)
-  if (nrow(x) == nrow(xp)) rankpred <- rank(pred)
-  else rankpred <- newrank(pred,length(y))
-  res  <- sort(sample(y, replace = TRUE))[rankpred]  ##  note bootstrap added
-  
-  return(list(res = res, fit = parm))
-}
-
-
 ###-----.pmm.match---------------------------------------------------------
 
-.pmm.match <- function(z, yhat=yhat, y=y, donors=3, ...)
+.pmm.match <- function(z, yhat = yhat, y = y, donors = 3, ...)
 {
 # Auxilary function for syn.pmm.
 # z    = target predicted value (scalar)
@@ -439,8 +401,9 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
     cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
     cat("\nbecause the variable is sparse. Check results for this variable carefully.")
     cat("\n****************************************************************************************\n")
-}
-  return(list(res = res, fit = summary(fit)))   # fit = "polyreg"
+} 
+  fitted <- summary(fit)
+  return(list(res = res, fit = fitted))   # fit = "polyreg"
 }
 
 
@@ -468,14 +431,16 @@ syn.polr <- function(y, x, xp, proper = FALSE, maxit = 1000,
   xfy <- cbind.data.frame(yf, xf)
 
   ## polr may fail on sparse data. We revert to multinom in such cases. 
-  fit <- try(suppressWarnings(polr(formula(xfy), data = xfy, weights = wf, ...)), silent = TRUE)
+  fit <- try(suppressWarnings(polr(formula(xfy), data = xfy, Hess = TRUE, weights = wf, ...)), silent = TRUE)
+
   if (inherits(fit, "try-error")) {
     fit <- multinom(formula(xfy), data = xfy, weights = wf,
-                    maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
+                    maxit = maxit, trace = trace, Hess = TRUE, MaxNWts = MaxNWts, ...)
     cat("\tMethod changed to multinomial")
     if (fit$convergence == 1) cat("\nReached max number of iterations for a multinomial model\nRerun with polyreg.maxit increased (default 100)\n")
   }
   post  <- predict(fit, xp, type = "probs")
+
   if (length(y) == 1) post <- matrix(post, nrow = 1, ncol = length(post))
   y     <- as.factor(y)
   nc    <- length(levels(yf))                       
@@ -485,16 +450,15 @@ syn.polr <- function(y, x, xp, proper = FALSE, maxit = 1000,
   idx   <- 1 + apply(draws, 2, sum)
 # this slightly clumsy code needed to ensure y retains its labels and levels
 #  y[1:length(y)]<-(levels(y)[idx])
-
   res <- levels(yf)[idx]
-
-  return(list(res = res, fit = summary(fit))) 
+  fitted <- summary(fit)
+  return(list(res = res, fit = fitted)) 
 }
 
 
 ###-----syn.sample---------------------------------------------------
 
-syn.sample <- function(y, xp, smoothing, cont.na, proper = FALSE, ...) 
+syn.sample <- function(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...) 
 {
   # Generates random sample from the observed y's
   # with bootstrap if proper == TRUE
@@ -520,7 +484,7 @@ syn.passive <- function(data, func)
 
 ###-----syn.cart-----------------------------------------------------------
 
-syn.cart <- function(y, x, xp, smoothing, proper = FALSE, 
+syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE, 
                      minbucket = 5, cp = 1e-08, ...)
 {
   if (proper == TRUE) {
@@ -546,10 +510,28 @@ syn.cart <- function(y, x, xp, smoothing, proper = FALSE,
     fit$frame$yval <- as.numeric(row.names(fit$frame))
     # predict leaf number
     nodes       <- predict(object = fit, newdata = xp)
+    # BN:16/06/20
+    # node numbering: node * 2 + 0:1    
+    notleaf <- setdiff(nodes, leafnr)
+    # if (length(notleaf) > 0) {
+    #   for (i in notleaf){
+    #     nodes[which(nodes == i)] <- 2 * i + sample(0:1, 1)
+    #   }
+    # }
+    if (length(notleaf) > 0) {
+      for (i in notleaf){
+        j <- i
+        while(!(j %in% leafnr)){
+          j <- 2 * j + sample(0:1, 1)
+        }
+        nodes[which(nodes == i)] <- j
+      }
+    }
+    # BN:end
     uniquenodes <- unique(nodes)
     new  <- vector("numeric",nrow(xp))
     for (j in uniquenodes) {
-      donors        <- y[leafnr == j] # values of y in a leaf
+      donors <- y[leafnr == j] # values of y in a leaf
       new[nodes == j] <- resample(donors, size = sum(nodes == j), 
                                   replace = TRUE)
     }
@@ -557,6 +539,7 @@ syn.cart <- function(y, x, xp, smoothing, proper = FALSE,
     #donor <- lapply(nodes, function(s) y[leafnr == s])
     #new   <- sapply(1:length(donor),function(s) resample(donor[[s]], 1))
   } else {
+    y     <- factor(y)
     fit   <- rpart(y ~ ., data = as.data.frame(cbind(y, x)), method = "class",
                    minbucket = minbucket, cp = cp, ...)
     nodes <- predict(object = fit, newdata = xp)
@@ -575,7 +558,7 @@ syn.cart <- function(y, x, xp, smoothing, proper = FALSE,
 
 ###-----syn.ctree----------------------------------------------------------
 
-syn.ctree <- function(y, x, xp, smoothing, proper = FALSE, minbucket = 5, 
+syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5, 
                       mincriterion = 0.9, ... )
 { 
   if (proper == TRUE) {
@@ -647,7 +630,7 @@ syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
 
 ###-----syn.rf-------------------------------------------------------------
 # bagging when mtry = ncol(x) - using all predictors
-syn.rf <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...) 
+syn.rf <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...) 
 { 
   #nodesize <- max(1, nodesize)  # safety
   #if (proper == TRUE) {
@@ -690,7 +673,7 @@ syn.rf <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...)
 
 ###-----syn.bag-------------------------------------------------------------
 # bagging when mtry = ncol(x) - using all predictors
-syn.bag <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...) 
+syn.bag <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...) 
 { 
   #nodesize <- max(1, nodesize)  # safety
   #if (proper == TRUE) {
@@ -732,56 +715,10 @@ syn.bag <- function(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...)
 }
 
 
-###-----syn.cartbboot-----------------------------------------------------
-
-syn.cartbboot <- function(y, x, xp, proper = FALSE, 
-                           minbucket = 5, cp = 1e-08, ...) 
-{
-  if (proper == TRUE) {
-    s <- sample(length(y), replace = TRUE)
-    y <- y[s]
-    x <- x[s, , drop = FALSE]
-  }
-  
-  minbucket <- max(1, minbucket) 
-  if (!is.factor(y)) {
-    fit <- rpart(y ~ ., data = as.data.frame(cbind(y, x)), method = "anova",
-                 minbucket = minbucket, cp = cp, ...)
-    leafnr   <- floor(as.numeric(row.names(fit$frame[fit$where,])))
-    fit$frame$yval <- as.numeric(row.names(fit$frame))
-    nodes    <- predict(object = fit, newdata = xp)
-    donor    <- lapply(nodes, function(s) y[leafnr == s])
-    bboot.p  <- lapply(unique(nodes), 
-      function(s) diff(c(0,sort(runif(length(y[leafnr == s]) - 1)), 1)))
-    names(bboot.p) <- unique(nodes)
-    donor.p  <- lapply(nodes,function(s) bboot.p[[which(unique(nodes) == s)]])
-    new      <- sapply(1:length(donor), 
-      function(s) resample(donor[[s]], 1, p = donor.p[[s]]))
-  } else {
-    fit <- rpart(y ~ ., data = as.data.frame(cbind(y, x)), method = "class",
-                 minbucket = minbucket, cp = cp, ...)
-    fit$frame$yval <- as.numeric(row.names(fit$frame))
-    pred.cc    <- predict(object = fit, newdata = xp, type = "matrix")[,2:(nlevels(y) + 1)]   # cc - class counts
-    pred.nodes <- predict(object = fit, newdata = xp, type = "vector")
-    donor      <- sapply(rownames(pred.cc), function(s) rep(levels(y),pred.cc[s,]))
-    bboot.p    <- lapply(unique(pred.nodes), 
-      function(s) diff(c(0, sort(runif(fit$frame$n[which(rownames(fit$frame) == s)] - 1)), 1)))
-    names(bboot.p) <- unique(pred.nodes)
-    donor.p    <- sapply(1:nrow(pred.cc), 
-      function(s) bboot.p[[as.character(pred.nodes[s])]])
-    names(donor.p) <- names(donor)
-    new        <- sapply(1:length(donor), function(s) resample(donor[[s]], 1, p = donor.p[[s]]))
-    new        <- factor(new, levels = levels(y))
-  }
-
-  return(list(res = new, fit = fit))
-}
-
-
 ###-----syn.nested---------------------------------------------------------
 # function for allocating to subcategories (random sampling within groups)
 
-syn.nested <- function(y, x, xp, smoothing, cont.na, ...)
+syn.nested <- function(y, x, xp, smoothing = "", cont.na = NA, ...)
 {
   xr   <- x[,1]
   xpr  <- xp[,1]
@@ -805,9 +742,9 @@ syn.nested <- function(y, x, xp, smoothing, cont.na, ...)
 
 syn.satcat <- function(y, x, xp, proper = FALSE, ...)
 {
-  # fits a saturated model to combinations of variables
-  # method fails if the predictor variables generate
-  # a combination of variables not found in the original data
+  # Fits a saturated model to combinations of variables.
+  # Method fails if the predictor variables generate
+  # a combination of variables not found in the original data.
   if (proper == TRUE) {
     s <- sample(length(y), replace = TRUE)
     y <- y[s]
@@ -997,7 +934,6 @@ the same proportion in each level.
  fit <- list(margins = margins, margins.data = margins.data)
  return(list(res = res, fit = fit))
 }
-
 
 
 # O T H E R   A U X I L I A R Y   F U N C T I O N S  

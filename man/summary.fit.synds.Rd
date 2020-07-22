@@ -6,15 +6,15 @@
   synthetic data sets.}
 \usage{
 \method{summary}{fit.synds}(object, population.inference = FALSE, msel = NULL,
-  incomplete = FALSE, real.varcov = NULL, \dots)
+  real.varcov = NULL, \dots)
 
 \method{print}{summary.fit.synds}(x, \dots)
 }
 
 \arguments{
  \item{object}{an object of class \code{fit.synds} created by fitting a model to 
-   synthesised data set using function \code{\link{glm.synds}} or
-   \code{\link{lm.synds}}.}
+   synthesised data set using function \code{\link{glm.synds}}, 
+   \code{\link{lm.synds}},\code{\link{multinom.synds}} or \code{\link{polr.synds}}.}
  \item{population.inference}{a logical value indicating whether inference 
    should be made to population quantities. If \code{FALSE} inference is made
    to the results that would be expected from an analysis of the original data. 
@@ -25,15 +25,9 @@
    In both cases the inference will depend on the synthesising model being correct,
    but this can be checked by running the same analysis on the real data,
    see \code{\link{compare.fit.synds}}.}
- \item{msel}{index or indices of the synthetic datasets (\code{1},\code{...}, \code{m}), 
+ \item{msel}{index or indices of the synthetic datasets (\code{1}, \code{...}, \code{m}), 
    for which summaries of fitted models are to be produced. If \code{NULL} (default) 
    only the summary of combined estimates is produced.} 
- \item{incomplete}{a logical value indicating whether inference is to use the 
-   method proposed by Reiter (2003) for what he terms partially synthetic data. 
-   This method is valid for any synthesis, but requires multiple syntheses. 
-   It is only necessary, when the dependent variable in a model is not completely 
-   synthesised and it only makes any difference to the results when 
-   \code{population.inference = TRUE}.}
  \item{real.varcov}{the estimated variance-covariance matrix of the fit of the model 
    to the original data. This parameter is used in the function \code{compare.fit.synds} 
    which has the original data as one of its parameters.}
@@ -58,8 +52,16 @@ simple or proper synthesis (for details see Raab et al. (2017)).}
   \item{population.inference}{a logical value indicating whether inference 
     is made to population coefficients or to the results that would be expected 
     from an analysis of the original data (see above).} 
-  \item{incomplete}{a logical value indicating whether inference is to use 
-    the method proposed by Reiter (2003) for what he terms partially synthetic data.} 
+  \item{incomplete}{a logical value indicating whether any of the variables in 
+    the model were not synthesised. It is derived in the synthpop implementation 
+    of the fitting functions (\code{\link{lm.synds}}, \code{\link{glm.synds}},
+    \code{\link{multinom.synds}} and \code{\link{polr.synds}}) and saved with the 
+    fitted object. When \code{TRUE} inference with \code{population.inference = TRUE}
+    uses the method proposed by Reiter (2003) for what he terms partially synthetic 
+    data. This method requires multiple syntheses (\code{m > 1}). If \code{m = 1},
+    \code{incomplete = TRUE} and \code{population.inference = TRUE} the results will
+    be still calculated and returned with warning. This will usually give standard 
+    errors that are larger than they should be.} 
   \item{fitting.function}{function used to fit the model.} 
   \item{m}{the number of synthetic versions of the original (observed) data.} 
   \item{coefficients}{a matrix with combined estimates. If inference is required

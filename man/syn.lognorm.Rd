@@ -27,8 +27,13 @@ syn.cubertnorm(y, x, xp, proper = FALSE, ...)
   fitted linear regression line of transformed \code{y} given \code{x}.
   For proper synthesis first the regression coefficients are drawn
   from normal distribution with mean and variance from the fitted model.
-  The synthetic values are transformed back to the original scale.}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+  The synthetic values are transformed back to the original scale.
+}
+\value{
+  A list with two components:
+   \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+   \item{fit}{a data frame with regression coefficients and error estimates.}
+}
 \seealso{
   \code{\link{syn}}, \code{\link{syn.norm}}, \code{\link{syn.normrank}}}
 \keyword{datagen}

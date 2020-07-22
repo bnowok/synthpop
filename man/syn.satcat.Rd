@@ -20,19 +20,24 @@ syn.satcat(y, x, xp, proper = FALSE, ...)
   \item{\dots}{additional parameters.}
 }
 \details{It is intended that the variables in \code{x} are categorical (factor) 
-variables. If  \code{y} is also a categorical variable \code{syn.satcat} will 
+variables. If \code{y} is also a categorical variable \code{syn.satcat} will 
 give the same results as fitting a saturated polychotomous regression model but 
 will usually be much faster. \code{syn.satcat} will fail with an error message 
 if previous syntheses have generated a combination of variables in \code{xp} 
 that was not present in \code{x}. Use of the \code{syn.catall} method for 
 grouped variables can overcome this.}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a data frame of dimension \code{k x p} containing the synthesised data.}
+  \item{fit}{the cross-tabulation of the original predictor variables.}
+}
 \examples{
 ods <- SD2011[, c("region", "sex", "agegr", "placesize")]
 
 s1 <- syn(ods, method = c("sample", "cart", "satcat", "cart"))
 
+\dontrun{
 ### mostly fails because too many small categories
-s2 <- syn(ods, method = c("sample", "cart", "cart", "satcat"))  
+s2 <- syn(ods, method = c("sample", "cart", "cart", "satcat"))}
 }
 \keyword{datagen}

@@ -4,13 +4,13 @@
 \title{Synthetic data object summaries}
 \description{
 Produces summaries of the synthesised variables. When more than one 
-synthetic data set has been generated (object$m>1), by default summaries 
+synthetic data set has been generated (object$m > 1), by default summaries 
 are calculated by averaging summary values for all synthetic data copies
 (see \code{msel} argument).  
 }
 \usage{
 \method{summary}{synds}(object, msel = NULL, maxsum = 7, 
-digits = max(3, getOption("digits")-3), \dots)
+  digits = max(3, getOption("digits")-3), \dots)
 
 \method{print}{summary.synds}(x, \dots)
 }

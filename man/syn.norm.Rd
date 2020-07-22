@@ -21,8 +21,13 @@ syn.norm(y, x, xp, proper = FALSE, ...)
   fitted linear regression line of \code{y} given \code{x}.
   For proper synthesis first the regression coefficients 
   are drawn from normal distribution with mean and variance
-  from the fitted model.}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+  from the fitted model.
+}
+\value{
+  A list with two components:
+   \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+   \item{fit}{a data frame with regression coefficients and error estimates.}
+}
 \seealso{
   \code{\link{syn}}, \code{\link{syn.normrank}}, \code{\link{syn.lognorm}}}
 \keyword{datagen}

@@ -7,7 +7,7 @@ Generates univariate synthetic data using bagging. It uses
 number of sampled predictors equal to number of all predictors. 
 }
 \usage{
-syn.bag(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...)
+syn.bag(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -20,7 +20,12 @@ syn.bag(y, x, xp, smoothing, proper = FALSE, ntree = 10, ...)
     \code{\link[randomForest]{randomForest}}.}    % !!! check and update 
 }
 \details{...}
-\value{A vector of length \code{k} with synthetic values of \code{y}.}
+\value{
+A list with two components:
+  \item{res}{a vector of length \code{k} with synthetic values of \code{y}.}
+  \item{fit}{the model fitted to the observed data that was used to produce 
+    synthetic values.}
+}
 \references{...}
 \seealso{
   \code{\link{syn}}, \code{\link{syn.rf}}, \code{\link{syn.cart}},

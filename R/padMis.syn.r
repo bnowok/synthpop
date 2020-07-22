@@ -54,7 +54,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
     # add methods for new variables
       method[ncol(data) - 1] <- method[j]
-      if (method[j] %in% c("ctree","ctree.proper","cart","cart.proper","rf","bag")) {
+      if (method[j] %in% c("ctree","ctree.proper","cart","cart.proper","rf","bag","")) {
         method[ncol(data)] <- method[j] 
       #} else if (method[j] %in% c("rf","bag")) {   
       #  method[ncol(data)] <- "cart" 

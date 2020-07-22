@@ -4,13 +4,13 @@
 \alias{print.synds}
 \title{Generating synthetic data sets}
 \description{
-  Generates synthetic version(s) of a data set. \code{syn.strata} performs 
+  Generates synthetic version(s) of a data set. Function \code{syn.strata()} performs 
   stratified synthesis.
 }
 
 \usage{
-syn(data, method = vector("character", length = ncol(data)), 
-    visit.sequence = (1:ncol(data)), predictor.matrix = NULL,  
+syn(data, method = "cart", visit.sequence = (1:ncol(data)),
+    predictor.matrix = NULL,  
     m = 1, k = nrow(data), proper = FALSE, 
     minnumlevels = -1, maxfaclevels = 60, 
     rules = NULL, rvalues = NULL, 
@@ -24,8 +24,8 @@ syn(data, method = vector("character", length = ncol(data)),
 syn.strata(data, strata = NULL, 
     minstratumsize = 10 + 10 * length(visit.sequence),  
     tab.strataobs = TRUE, tab.stratasyn = FALSE,
-    method = vector("character", length = ncol(data)),
-    visit.sequence = (1:ncol(data)), predictor.matrix = NULL,
+    method = "cart", visit.sequence = (1:ncol(data)),
+    predictor.matrix = NULL,
     m = 1, k = nrow(data), proper = FALSE, 
     minnumlevels = -1, maxfaclevels = 60, 
     rules = NULL, rvalues = NULL,
@@ -36,7 +36,7 @@ syn.strata(data, strata = NULL,
     numtocat = NULL, catgroups = rep(5,length(numtocat)), 
     models = FALSE, print.flag = TRUE, seed = "sample", ...)    
    
-\method{print}{synds}(x, \dots)   
+\method{print}{synds}(x, \dots)
 }
 
 \arguments{
@@ -103,12 +103,12 @@ syn.strata(data, strata = NULL,
   \item{smoothing}{a named list specifying smoothing method (\code{"density"} 
      or \code{""}) to be used for selected variables. Smoothing can only be 
      applied to continuous variables synthesised using \code{sample}, 
-     \code{ctree}, \code{cart}, \code{normrank} or \code{nested} method. The names 
-     of the list elements must correspond to the names of the variables whose values 
-     are to be smoothed. Smoothing is applied to the synthesised values.
-     For \code{"density"} smoothing a Gaussian kernel density estimator is 
-     applied with bandwidth selected using the Sheather-Jones 
-     'solve-the-equation' method (see \code{\link{bw.SJ}}).}  
+     \code{ctree}, \code{cart}, \code{rf}, \code{bag}, \code{normrank} or 
+     \code{nested} method. The names of the list elements must correspond to 
+     the names of the variables whose values are to be smoothed. Smoothing is 
+     applied to the synthesised values. For \code{"density"} smoothing a Gaussian 
+     kernel density estimator is applied with bandwidth selected using the 
+     Sheather-Jones 'solve-the-equation' method (see \code{\link{bw.SJ}}).}  
   \item{event}{a named list specifying for survival data the names of 
      corresponding event indicators. The names of the list elements 
      must correspond to the names of the survival variables.}
@@ -135,7 +135,7 @@ syn.strata(data, strata = NULL,
     same position in the synthetic data as in the original. 
     The categorised variables are not stored in the synthetic data.
     If you want to keep the categorised values you should change
-    the relevant variables in \code{data} before running \code{syn}
+    the relevant variables in \code{data} before running \code{syn()}
     with the function \code{numtocat.syn()}}
   \item{catgroups}{An integer or a vector of integers of the same length as
     \code{numtocat} giving the target number of groups into which of the
@@ -161,7 +161,7 @@ syn.strata(data, strata = NULL,
   \item{tab.stratasyn}{a logical value indicating whether a frequency table of
      the number of observations in strata in the synthetic data set(s) should 
      be printed.}           
-  \item{x}{an object of class \code{synds}; a result of a call to \code{syn}.}
+  \item{x}{an object of class \code{synds}; a result of a call to \code{syn()}.}
 }
 
 \details{
@@ -233,7 +233,7 @@ syn.strata(data, strata = NULL,
  For instance a function corresponding to \code{ctree} function is called
  \code{syn.ctree}. A new synthesising method can be introduced by writing 
  a function named \code{syn.newmethod} and then specifying \code{method} 
- parameter of \code{syn} function as \code{"newmethod"}.
+ parameter of \code{syn()} function as \code{"newmethod"}.
  
  In order to use \code{"nested"} sampling, \code{method} parameter of \code{syn} 
  function has to be specified as \code{"nested.varname"}, where \code{"varname"}
@@ -254,10 +254,13 @@ syn.strata(data, strata = NULL,
 }
 
 \value{
+  The \code{\link{summary}} function (\code{\link{summary.synds}}) can be used  
+  to obtain a summary of the synthesised variables.
+
   An object of class \code{synds}, which stands for 'synthesised 
   data set'. It is a list with the following components:
 
-  \item{call}{an original call to \code{syn}.}
+  \item{call}{an original call to \code{syn()}.}
   \item{m}{number of synthetic versions of the original (observed) data.}
   \item{syn}{a data frame (for \code{m = 1}) or a list of \code{m} data frames 
     (for \code{m > 1}) with synthetic data set(s).}
@@ -301,11 +304,20 @@ syn.strata(data, strata = NULL,
   \item{seed}{an integer used as a \code{set.seed()} argument.}   
   \item{var.lab}{a vector of variable labels for data imported from SPSS using 
      \code{read.obs()}.}   
-  \item{val.lab}{a list value labels for factors for data imported from SPSS 
+  \item{val.lab}{a list of value labels for factors for data imported from SPSS 
      using \code{read.obs()}.}       
   \item{obs.vars}{a vector of all variable names in the observed data set.}
 
+When \code{syn.strata()} is used there are two additiona components:
+
+  \item{strata.syn}{a factor variable or a list of factor variables containing 
+     stratum values for all observation units in \code{syn}.}
+  \item{strata.lab}{a character vector of strata labels.}
+
+Note also that when \code{syn.strata} is used most values of the items are matrices 
+with each row corresponding to a stratum or lists with one element per stratum.
 }
+
 \note{See package vignette for additional information.}
 
 \references{

@@ -53,13 +53,13 @@ those defined by the combinations of variables in \code{structzero}.
 
 NOTE that when the function is called by setting elements of method in 
 \code{syn()} to \code{"catall"}, the parameters \code{priorn}, \code{structzero} 
-and \code{maxtable} must be supplied to \code{syn} as e.g. \code{catall.priorn}.}
-
+and \code{maxtable} must be supplied to \code{syn} as e.g. \code{catall.priorn}.
+}
 \value{
-A list with two components. The first is a data frame (\code{res}) of dimension
-\code{k x p} containing the synthesised data and the second (\code{fit}) is the 
-cross-tabulation of all the original variables used.}
-
+A list with two components:
+  \item{res}{a data frame of dimension \code{k x p} containing the synthesised data.}
+  \item{fit}{the cross-tabulation of all the original variables used.}
+}
 \examples{
 ods <- SD2011[, c(1, 4, 5, 6, 2, 10, 11)]
 table(ods[, c("placesize", "region")])

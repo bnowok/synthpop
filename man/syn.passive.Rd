@@ -26,7 +26,7 @@ A list with two components:
   \code{mice}: Multivariate Imputation by Chained Equations
   in \code{R}. \emph{Journal of Statistical Software},
   \bold{45}(3), 1-67.
-  \url{http://www.jstatsoft.org/v45/i03/}
+  \url{https://www.jstatsoft.org/v45/i03/}
 }
 \author{Stef van Buuren, Karin Groothuis-Oudshoorn, 2000}
 \seealso{

@@ -46,6 +46,7 @@
 % \VignetteIndexEntry{Inference in synthpop}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 <<echo=false>>=
 options(prompt="R> ", width=77, digits=4, useFancyQuotes=FALSE)

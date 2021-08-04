@@ -2,18 +2,19 @@
 \alias{numtocat.syn}
 \title{Group numeric variables before synthesis}
 \description{
-Make a new data frame with selected numeric variables grouped into factors with 
-ranges selected from the data.}
+Selected numeric variables are grouped into factors with ranges selected from 
+the data.
+}
 \usage{
 numtocat.syn(data, numtocat = NULL, print.flag = TRUE, cont.na = NULL, 
-             catgroups = 5, style.groups = "fisher") 
+             catgroups = 5, style.groups = "quantile") 
 }
 \arguments{
   \item{data}{a data frame.}
   \item{numtocat}{a vector of numbers or variable names of numeric variables 
     to be grouped into factors. If \code{NULL} all the numeric variables in data 
     will be grouped.}
-  \item{print.flag}{if TRUE a list of grouped variables is printed}
+  \item{print.flag}{if TRUE a list of grouped variables is printed.}
   \item{cont.na}{a named list that gives the values of the named variables to be 
     treated as separate categories, often missing values like \code{-8}. See the 
     corresponding parameter of \code{syn()}.}
@@ -23,9 +24,12 @@ numtocat.syn(data, numtocat = NULL, print.flag = TRUE, cont.na = NULL,
     different if, for example there are fewer than \code{ngroups} distinct values.}
   \item{style.groups}{parameter of the function \code{classInt()} that determines 
     how the breaks used to categorise each variable are chosen. See the help file 
-    for \code{classInt()} for details}
+    for \code{classInt()} for details. The default setting \code{"quantile"} makes 
+    groups of approximately equal size. To divide into approximately equal ranges 
+    we suggest using \code{"fisher"}.}
   }
-\value{a list with the following components:
+\value{
+A list with the following components:
   \item{data}{a data frame with the numeric variables replaced by factors grouped 
     into ranges.}
   \item{breaks}{a named list of the breaks used to divide each numeric variable 

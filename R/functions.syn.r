@@ -66,7 +66,7 @@ syn.norm <- function(y, x, xp, proper = FALSE, ...)
 syn.lognorm <- function(y, x, xp, proper = FALSE, ...) 
 {
   addbit <- FALSE
-  if (any(y < 0)) stop("Log transformation not appropriate for negative values.\n")
+  if (any(y < 0)) stop("Log transformation not appropriate for negative values.\n", call. = FALSE)
   if (any(y == 0)) {y <- y + .5*min(y[y != 0]); y <- log(y); addbit <- TRUE}  ##  warning about this and above should be in check model
   else y <- log(y)
   x   <- cbind(1, as.matrix(x))
@@ -90,7 +90,7 @@ syn.lognorm <- function(y, x, xp, proper = FALSE, ...)
 syn.sqrtnorm <- function(y, x, xp, proper = FALSE, ...) 
 {
   addbit <- FALSE
-  if (any(y < 0)) stop("Square root transformation not appropriate for negative values.\n")   ##  needs check in checkmodel
+  if (any(y < 0)) stop("Square root transformation not appropriate for negative values.\n", call. = FALSE)   ##  needs check in checkmodel
   else y <- sqrt(y)
   x   <- cbind(1, as.matrix(x))
   xp  <- cbind(1, as.matrix(xp))
@@ -112,7 +112,7 @@ syn.sqrtnorm <- function(y, x, xp, proper = FALSE, ...)
 syn.cubertnorm <- function(y, x, xp, proper = FALSE, ...) 
 {
   addbit <- FALSE
-  if (any(y < 0)) stop("Cube root transformation not appropriate for negative values.\n")   ##  needs check in checkmodel
+  if (any(y < 0)) stop("Cube root transformation not appropriate for negative values.\n", call. = FALSE)   ##  needs check in checkmodel
   else y <- y^(1/3)
   x   <- cbind(1, as.matrix(x))
   xp  <- cbind(1, as.matrix(xp))
@@ -292,7 +292,10 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
   # 3. Compute predicted scores for m.d., i.e. logit-1(X BETA)
   # 4. Compare the score to a random (0,1) deviate, and synthesise.
 
-  #browser()
+  xmeans <- lapply(x, mean)                      ## x matrix centred
+  x  <- mapply(function(x, y) x - y, x, xmeans)
+  xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
+
   if (is.null(denom)) {
     aug <- augment.syn(y, x, ...)
     # when no missing data must set xf to augmented version
@@ -476,8 +479,8 @@ syn.sample <- function(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
 syn.passive <- function(data, func)
 {
   # Special elementary synthesis method for transformed data.
-  res <- suppressWarnings(model.frame(as.formula(func), data, na.action = na.pass))	#BN 25/08 added suppressWarnings to avoid NAs by coersion for NAtemp
- 
+  res <- suppressWarnings(model.frame(as.formula(func), data, na.action = na.pass))	# SuppressWarnings to avoid message 'NAs by coercion for NAtemp
+
   return(list(res = res, fit = "passive"))
 }
 
@@ -487,6 +490,8 @@ syn.passive <- function(data, func)
 syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE, 
                      minbucket = 5, cp = 1e-08, ...)
 {
+  ylogical <- is.logical(y)
+  
   if (proper == TRUE) {
     s <- sample(length(y), replace = TRUE)
     x <- x[s,,drop = FALSE]
@@ -527,7 +532,7 @@ syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE,
         nodes[which(nodes == i)] <- j
       }
     }
-    # BN:end
+    
     uniquenodes <- unique(nodes)
     new  <- vector("numeric",nrow(xp))
     for (j in uniquenodes) {
@@ -545,7 +550,7 @@ syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE,
     nodes <- predict(object = fit, newdata = xp)
     new   <- apply(nodes, MARGIN = 1, FUN = function(s) resample(colnames(nodes), 
                                                         size = 1, prob = s))
-    if (is.logical(y)) {
+    if (ylogical) {
       new   <- as.logical(new)
     } else {
       new   <- factor(new, levels = levels(y)) 
@@ -559,7 +564,9 @@ syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE,
 ###-----syn.ctree----------------------------------------------------------
 
 syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5, 
-                      mincriterion = 0.9, ... )
+                      mincriterion = 0.9, 
+                      # teststat = "max", testtype = "Univariate", 
+                      ...)
 { 
   if (proper == TRUE) {
     s <- sample(length(y), replace = truehist())
@@ -571,7 +578,9 @@ syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5,
   eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
   # Fit a tree
   datact     <- ctree(y ~ ., data = as.data.frame(cbind(y,x)), 
-    controls = ctree_control(minbucket = minbucket, mincriterion = mincriterion, ...))
+    controls = ctree_control(minbucket = minbucket, mincriterion = mincriterion, 
+                             # teststat = teststat, testtype = testtype, 
+                             ...))
   fit.nodes  <- where(datact)
   nodes      <- unique(fit.nodes)
   no.nodes   <- length(nodes)
@@ -603,10 +612,19 @@ syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
     x <- x[s, , drop = FALSE]                        
     yevent <- yevent[s]
   }
-  browser()
-  # Fit a tree
-  datact     <- ctree(Surv(y,yevent) ~ ., 
-                      data = as.data.frame(cbind(y, yevent, x)),
+
+  for (i in which(sapply(x, class) != sapply(xp,class))) xp[,i] <-
+      eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
+
+  if (is.factor(yevent)) {
+    yevent0 <- as.numeric(yevent) - 1
+  } else {
+    yevent0 <- yevent 
+  }
+
+  # Fit a tree  
+  datact     <- ctree(Surv(y, yevent0) ~ ., 
+                      data = as.data.frame(cbind(y, yevent0, x)),
                       controls = ctree_control(minbucket = minbucket, ...))
   fit.nodes  <- where(datact)
   nodes      <- unique(fit.nodes)
@@ -946,7 +964,7 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
    }
  } else {
    if (!is.null(othmargins)) margins <- othmargins
-   else stop("Need to specify some margins.\n")
+   else stop("Need to specify some margins.\n", call. = FALSE)
  }
  
  umar <- unique(unlist(margins))
@@ -1030,7 +1048,7 @@ addXfac <- function(x,...)
 {
   df  <- cbind.data.frame(x,...)
   if (any(sapply(df,is.factor) + sapply(df,is.numeric) != 1)) 
-    stop("All arguments must be factors or numeric")
+    stop("All arguments must be factors or numeric", call. = FALSE)
   fn  <- function(f){
     if (is.factor(f)) f <- as.numeric(levels(f))[f]
     else f <- f

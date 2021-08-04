@@ -7,14 +7,16 @@ compare.default <- function(object, ...)
 
 
 ###-----compare.synds------------------------------------------------------
-compare.synds <- function(object, data, vars = NULL, 
-  msel = NULL, breaks = 20, nrow = 2, ncol = 2, rel.size.x = 1,
-  cols = c("#1A3C5A","#4187BF"), stat = "percents", ...){ 
+compare.synds <- function(object, data, vars = NULL, msel = NULL,  
+                          stat = "percents", breaks = 20, 
+                          nrow = 2, ncol = 2, rel.size.x = 1,
+                          cols = c("#1A3C5A","#4187BF"),  
+                          plot = TRUE, table = FALSE, ...){    
                                                                          
- if (is.null(data)) stop("Requires parameter data to give name of the real data\n", call. = FALSE)
- if (!is.data.frame(data)) stop("Argument data must be a data frame\n", call. = FALSE)          
- #if (class(object)! = "synds") stop("Object must have class synds\n", call. = FALSE )                                                                    
- if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s)", call. = FALSE)                                                                        
+ if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
+ if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE)          
+ if (class(object) != "synds") stop("Object must have class synds.\n", call. = FALSE )                                                                    
+ if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)                                                                        
 
  if (!(length(stat) == 1 & stat %in% c("percents", "counts"))) { 
    cat('Parameter stat must be "percents" or "counts".\n' )
@@ -64,6 +66,15 @@ compare.synds <- function(object, data, vars = NULL,
    df.syn <- vector("list",length(msel))
    for (i in 1:length(msel)) df.syn[[i]] <- synds[[i]][, commonnames, drop = FALSE]
  }
+ 
+ # change any numeric variables with < 6 distinct values to factors
+ for (i in 1:length(commonnames)) {
+   if (is.numeric(df.obs[,i]) && length(table(df.obs[,i])) < 6){
+     df.obs[,i] <- as.factor(df.obs[,i])
+     df.synall[,i] <- as.factor(df.synall[,i])
+   }
+ }
+
  num <- sapply(df.synall, is.numeric) | sapply(df.synall, is.integer)  
  fac <- sapply(df.synall, function(x) is.factor(x) | is.logical(x))  
 
@@ -75,14 +86,14 @@ compare.synds <- function(object, data, vars = NULL,
      per.syn.facall <- ggfac(df.synall[, fac, drop = FALSE], 
      name = "synthetic", anyna = any.fac.na, stat = stat)
      if (stat == "counts") {
-       per.syn.facall$perdf$Count <- per.syn.facall$perdf$Count/object$m        #BN:16/08/2018
-       per.syn.facall$perlist <- lapply(per.syn.facall$perlist,"/",object$m)    #BN:16/08/2018
+       per.syn.facall$perdf$Count <- per.syn.facall$perdf$Count/object$m
+       per.syn.facall$perlist <- lapply(per.syn.facall$perlist,"/",object$m)
      }
    }
    if (length(msel) > 1) {
      per.syn.fac <- vector("list",length(msel))
      for (i in 1:length(msel)) per.syn.fac[[i]] <- ggfac(df.syn[[i]][, fac, drop = FALSE], 
-       name = paste0("syn=", msel[i]), anyna = any.fac.na, stat = stat)   
+       name = paste0("syn=", msel[i]), anyna = any.fac.na, stat = stat)  
    }
  } else {                                       
    per.obs.fac    <- NULL
@@ -92,11 +103,12 @@ compare.synds <- function(object, data, vars = NULL,
  # frequency tables for numeric variables
  if (sum(num) > 0) {
    cont.index <- match(colnames(df.obs[, num, drop = FALSE]), colnames(syndsall))    
-   na <- object$cont.na[cont.index]  
+   na <- object$cont.na[cont.index] 
   # to exclude from summaries if no missing in data
    any.na <- unlist(apply(df.obs[, num, drop = FALSE], 2, function(x) any(is.na(x))))  
-   
-   lbreaks    <- as.list(rep(breaks, length(na)))                   
+
+   lbreaks    <- as.list(rep(breaks, length(na)))  
+
   ## get limits(=breaks) from both observed and synthetic
   #--
    df.both  <- rbind.data.frame(df.obs, df.synall)                
@@ -111,8 +123,8 @@ compare.synds <- function(object, data, vars = NULL,
        name = "synthetic", na = na, breaks = per.both$hbreaks, 
        anyna = any.na, stat = stat) 
        if (stat == "counts") {
-         per.syn.numall$perdf$Count <- per.syn.numall$perdf$Count/object$m        #BN:16/08/2018
-         per.syn.numall$perlist <- lapply(per.syn.numall$perlist,"/",object$m)    #BN:16/08/2018
+         per.syn.numall$perdf$Count <- per.syn.numall$perdf$Count/object$m
+         per.syn.numall$perlist <- lapply(per.syn.numall$perlist,"/",object$m)
        }
    } 
    if (length(msel) > 1) {
@@ -166,7 +178,7 @@ compare.synds <- function(object, data, vars = NULL,
  } else {
    for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed",paste0("syn=", msel))
  }
- Value <- Percent <- Count <- Data <- NULL                               ## otherwise 'no visible binding for global variables'
+ Value <- Percent <- Count <- Data <- NULL    ## otherwise 'no visible binding for global variables'
  # sorts the factor labels in the right order for numeric vars
  per.fac$Value <- as.character(per.fac$Value)
  vals <- unique(per.fac$Value)
@@ -214,10 +226,51 @@ compare.synds <- function(object, data, vars = NULL,
    tables <- tables[[1]]
    plots  <- plots[[1]]
  }  
- #browser()
- res <- list(tables = tables, plots = plots, stat = stat) ##GR stat added
+
+ res <- list(tables = tables, plots = plots, stat = stat, plot = plot, table = table) 
+ 
  class(res) <- "compare.synds"
  return(res)
+}
+
+
+###-----compare.data.frame---compare.list----------------------------------    
+compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.na = NULL,         
+                                               msel = NULL, stat = "percents", breaks = 20, 
+                                               nrow = 2, ncol = 2, rel.size.x = 1,
+                                               cols = c("#1A3C5A","#4187BF"),   
+                                               plot = TRUE, table = FALSE, ...){
+  
+  if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n\n",  call. = FALSE)
+  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data.\n\n",  call. = FALSE)   
+  
+  if (is.list(object) & !is.data.frame(object)) m <- length(object)
+  else if (is.data.frame(object)) m <- 1
+  else stop("object must be a data frame or a list of data frames.\n", call. = FALSE)
+ 
+  # sort out cont.na to make it into a complete named list
+  cna <- cont.na
+  cont.na <- as.list(rep(NA, length(data)))
+  names(cont.na) <- names(data)
+  if (!is.null(cna)) {
+    if (!is.list(cna) | any(names(cna) == "") | is.null(names(cna))) 
+      stop("Argument 'cont.na' must be a named list with names of selected variables.", call. = FALSE)  
+    if (any(!names(cna) %in% names(data))) stop("Names of the list cont.na must be variables in data.\n", call. = FALSE)
+    for (i in 1:length(cna)) {
+      j <- (1:length(data))[names(cna)[i] == names(data)]
+      cont.na[[j]] <- unique(c(NA,cna[[i]]))
+    }
+  }
+
+  object <- list(syn = object, m = m, cont.na = cont.na)
+  class(object ) <- "synds"
+  
+  res <- compare.synds(object = object, data = data, vars = vars, 
+                       msel = msel, stat = stat, breaks = breaks, 
+                       nrow = nrow, ncol = ncol, rel.size.x = rel.size.x,
+                       cols = cols, plot = plot, table = table, ...) 
+  res$call <- match.call()
+  return(res)
 }
 
 
@@ -486,7 +539,7 @@ compare.fit.synds <- function(object, data, plot = "Z",
    lack.of.fit = lack.of.fit, lof.pvalue = lof.pvalue, 
    ci.plot = p, print.coef = print.coef,       
    m = object$m, ncoef = ncoef,
-   incomplete = incomplete, 
+   incomplete = incomplete,
    population.inference = population.inference)  
 
  class(res) <- "compare.fit.synds"

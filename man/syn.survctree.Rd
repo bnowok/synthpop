@@ -31,18 +31,65 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   value of \code{yevent} and \code{y} from that draw as the 
   synthetic values.}    
   
-  NOTE that when the function is called by setting elements of method in 
-  \code{syn()} to \code{"survctree"}, the parameter \code{minbucket}
-  can be supplied to \code{syn()} as e.g. \code{survctree.minbucket}.
+  The function is used in \code{syn()} to generate survival times 
+  by setting elements of method in \code{syn()} to \code{"survctree"}.
+  Additional parameters, e.g. \code{minbucket} can be supplied to \code{syn()}
+  as \code{survctree.minbucket}.
+  
+  Where the survival variable is censored this information must be supplied 
+  to \code{syn()} as a named list (event) that gives the name of the variable 
+  for each event indicator. Event variables can be a numeric variable with 
+  values 1/0 (1 = event), TRUE/FALSE (TRUE = event) or a factor with 2 levels 
+  (level 2 = event). The event variable(s) will be synthesised along with the 
+  survival time(s).
 }
+
 \value{
   A list with the following components:
     \item{syn.time}{a vector of length \code{k} with synthetic time values.}
-    \item{syn.event}{a vector of length \code{k} with synthetic event indicator values.}
+    \item{syn.event}{a vector of length \code{k} with synthetic event indicator
+      values.}
     \item{fit}{the fitted model which is an item of class \code{ctree.object}.}
 }
-%references{...}
+
 \seealso{
   \code{\link{syn}}, \code{\link{syn.ctree}}
 }
+
+\examples{
+### This example uses the data set 'mgus2' from the survival package.
+### It has a follow-up time variable 'futime' and an event indicator 'death'.
+library(survival)
+
+### first exclude the 'id' variable and run a dummy synthesis to get 
+### a method vector
+ods <- mgus2[-1]
+s0 <- syn(ods)
+
+### create new method vector including 'survctree' for 'futime' and create 
+### an event list for it; the names of the list element must correspond to 
+### the name of the follow-up variable for which the event indicator
+### need to be specified.
+meth <- s0$method
+meth[names(meth) == "futime"] <- "survctree"
+evlist <- list(futime = "death")
+
+s1 <- syn(ods, method = meth, event = evlist)
+
+### evaluate outputs
+## compare selected variables
+compare(s1, ods, vars = c("futime", "death", "sex", "creat"))
+
+## compare original and synthetic follow up time by an event indicator
+multi.compare(s1, ods, var = "futime", by = "death")
+
+## compare survival curves for original and synthetic data
+par(mfrow = c(2,1))
+plot(survfit(Surv(futime, death) ~ sex, data = ods), 
+     col = 1:2, xlim = c(0,450), main = "Original data")
+legend("topright", levels(ods$sex), col = 1:2, lwd = 1, bty = "n")
+plot(survfit(Surv(futime, death) ~ sex, data = s1$syn), 
+     col = 1:2, xlim = c(0,450), main = "Synthetic data")
+}
+
 \keyword{datagen}

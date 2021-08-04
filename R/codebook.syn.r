@@ -18,22 +18,22 @@ codebook.syn <- function(data, maxlevs = 3)
  fortab2 <- details <- rep("", length(nmiss))
  
  for (i in 1:p) {
-   if (class(data[,i]) == "character") details[i] <- paste("Max length: ", 
+   if (any(class(data[,i]) == "character")) details[i] <- paste("Max length: ", 
                                             max(nchar(data[,i])), sep = "")
-   if (class(data[,i]) == "numeric") details[i] <- paste("Range: ", 
+   if (any(class(data[,i]) == "numeric")) details[i] <- paste("Range: ", 
      min(data[!is.na(data[,i]), i]), " - ", max(data[!is.na(data[,i]),i]), 
      sep = "")
-   if (class(data[,i]) == "factor" & ndistinct[i] > maxlevs ) { 
+   if (any(class(data[,i]) == "factor") & ndistinct[i] > maxlevs ) { 
      details[i] <- "See table in labs"
      fortab2[i] <- paste("'", paste(names(table(data[,i])), collapse = "' '"), 
                          "'", sep = "")
    }
-   if (class(data[,i]) == "factor" & ndistinct[i] <= maxlevs ) details[i] <-
+   if (any(class(data[,i]) == "factor") & ndistinct[i] <= maxlevs ) details[i] <-
      paste("'", paste(names(table(data[,i])), collapse = "' '"),"'", sep = "")
  }
 
- if (any(sapply(data, class) == "factor" & ndistinct >= maxlevs )) {
-   vnum <- (1:p)[sapply(data, class) == "factor" & ndistinct >= maxlevs]
+ if (any(grepl("factor", sapply(data, class)) & ndistinct > maxlevs )) {
+   vnum <- (1:p)[grepl("factor", sapply(data, class)) & ndistinct > maxlevs]
    tabs2 <- vector("list", length(vnum))
    names(tabs2) <- names(data)[vnum]
    for (i in 1:length(vnum)) {
@@ -41,7 +41,7 @@ codebook.syn <- function(data, maxlevs = 3)
    }
  } else tabs2 <- NULL
 
- result <- data.frame(variable = names(data), class = dfclass, 
+ result <- data.frame(variable = names(data), class = sapply(dfclass, paste, collapse = "-"), 
                       nmiss = nmiss, perctmiss = perctmiss, 
                       ndistinct = ndistinct, details = details)
  rownames(result) <- 1:p

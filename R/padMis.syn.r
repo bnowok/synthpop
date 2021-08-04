@@ -4,7 +4,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
  # Function called by syn to make dummy/factor variable for missing values
  # in continuous variables. Data is augmented by columns for dummy/factor 
- # variables when they are used in sythesis. 
+ # variables when they are used in synthesis. 
 
  # Check presence of missing values not covered by missing rules
  # (missing values for non-numeric variables are not counted)   
@@ -24,9 +24,9 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
  for (j in 1:nvar) {
     # if (No.NA[j] & is.numeric(data[,j]) & inpred[j]==TRUE){
-    if (No.NA[j] & is.numeric(data[,j]) & inpred[j] == TRUE & 
-        !method[j] %in% c("nested", "ipf", "catall")) {    #!GRipf nested added
- 
+    if (No.NA[j] & is.numeric(data[,j]) & inpred[j] == TRUE & !is.passive(method[j]) &
+        !method[j] %in% c("nested", "ipf", "catall")) {
+
     # augment the data with a column for the original continuous variable with 
     # missing values replaced by zeros and a column for a new factor for 
     # missing values 
@@ -49,7 +49,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
                                times = 2), ncol = 2))
     # the original variable is removed from predictors (=insert zeros) 
       predictor.matrix[,j] <- 0
-    # the original variable is imputed passively so its predictors can be removed as well
+    # the original variable is synthesised passively so its predictors can be removed as well
       predictor.matrix[j,] <- 0
 
     # add methods for new variables
@@ -104,7 +104,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
       rvalues[[ncol(data)]]        <- rvalues[[j]]
     }
   }
-   
+
   varnames <- dimnames(data)[[2]]  
   dimnames(predictor.matrix) <- list(varnames,varnames)
   names(method) <- varnames

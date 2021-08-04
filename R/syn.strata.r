@@ -20,7 +20,7 @@ syn.strata <- function(data, strata = NULL,
                 method = "cart", visit.sequence = (1:ncol(data)),
                 predictor.matrix = NULL,
                 m = 1, k = nrow(data), proper = FALSE,
-                minnumlevels = -1, maxfaclevels = 60,
+                minnumlevels = 1, maxfaclevels = 60,
                 rules = NULL, rvalues = NULL,
                 cont.na = NULL, semicont = NULL,
                 smoothing = NULL, event = NULL, denom = NULL,
@@ -87,20 +87,22 @@ syn.strata <- function(data, strata = NULL,
  stratasize.warn <- 100 + 10*length(visit.sequence)
 
  smallstrata <- sum(strata.n.obs < stratasize.stop)
- if (smallstrata > 5) stop("In the original data multiple strata do not have enough observations.\nEach should have at least ",
-   stratasize.stop, " observations (minstratumsize which by default is 10 + 10 * no. of variables used in prediction).\n", 
-   sep="", call. = FALSE)
+ if (smallstrata > 5) stop("In the original data multiple strata have fewer than the recommended\nnumber of observations. We advise that each should have at least ",
+   stratasize.stop, " observations\n('minstratumsize' which by default is 10 + 10 * no. of variables used in prediction).\n",
+   "You can override this by setting the parameter 'minstratumsize' to a lower value.\n", 
+   sep = "", call. = FALSE)
  if (smallstrata > 0) stop("In the original data some strata (", 
-   paste(stratalev.lab[strata.n.obs < stratasize.stop], collapse=", "), 
-   ") do not have enough observations.\nEach should have at least ",
-   stratasize.stop, " observations (minstratumsize which by default is 10 + 10 * no. of variables used in prediction).\n", 
-   sep="", call. = FALSE)
+   paste(stratalev.lab[strata.n.obs < stratasize.stop], collapse = ", "), 
+   ") have fewer than the recommended\nnumber of observations. We advise that each should have at least ",
+   stratasize.stop, " observations\n('minstratumsize' which by default is 10 + 10 * no. of variables used in prediction).\n",
+   "You can override this by setting the parameter 'minstratumsize' to a lower value.\n", 
+   sep = "", call. = FALSE)
  if (any(strata.n.obs < stratasize.warn) & print.flag == TRUE) {
    cat("CAUTION: In the original data some strata (", 
    paste(stratalev.lab[strata.n.obs < stratasize.warn], collapse=", "), 
-   ") have limited number of observations.\nThere should be at least ", 
+   ") have limited numbers of observations.\nWe advise that there should be at least ", 
    stratasize.warn, 
-   " observations (100 + 10 * no. of variables used in prediction).\n", sep="")
+   " observations (100 + 10 * no. of variables\nused in prediction).\n", sep = "")
  }
  
  synds.names <- c("call", "m", "syn", "method", "visit.sequence", 

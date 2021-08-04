@@ -22,7 +22,8 @@ export(syn,
        syn.catall,
        syn.ipf)
 
-export(compare, compare.synds, compare.fit.synds,  
+export(compare, compare.synds, compare.fit.synds,
+       compare.data.frame, compare.list,
        print.compare.fit.synds,	multi.compare,
        lm.synds, glm.synds, 
        multinom.synds, polr.synds,
@@ -30,12 +31,35 @@ export(compare, compare.synds, compare.fit.synds,
        summary.synds, print.summary.synds,
        summary.fit.synds, print.summary.fit.synds,
        replicated.uniques, sdc, read.obs, write.syn,
-       utility.gen, utility.tab, codebook.syn, 
-       numtocat.syn)
+       utility.gen, utility.gen.synds, 
+       utility.gen.data.frame, utility.gen.list,
+       utility.tab, utility.tab.synds, 
+       utility.tab.data.frame, utility.tab.list,
+       utility.tables, utility.tables.synds, 
+       utility.tables.data.frame, utility.tables.list,
+       codebook.syn, numtocat.syn)
 
 S3method(compare, default)
 S3method(compare, synds)
 S3method(compare, fit.synds)
+S3method(compare, data.frame)
+S3method(compare, list)
+
+S3method(utility.gen, default)
+S3method(utility.gen, synds)
+S3method(utility.gen, data.frame)
+S3method(utility.gen, list)
+
+S3method(utility.tab, default)
+S3method(utility.tab, synds)
+S3method(utility.tab, data.frame)
+S3method(utility.tab, list)
+
+S3method(utility.tables, default)
+S3method(utility.tables, synds)
+S3method(utility.tables, data.frame)
+S3method(utility.tables, list)
+
 S3method(print, synds)
 S3method(summary, synds)
 S3method(print, summary.synds)
@@ -46,6 +70,7 @@ S3method(print, compare.fit.synds)
 S3method(print, compare.synds)
 S3method(print, utility.gen)
 S3method(print, utility.tab)
+S3method(print, utility.tables)
 
 #exportClasses(synds)
 #exportClasses(fit.synds)
@@ -57,7 +82,8 @@ import(MASS,
        foreign,
        ggplot2,
        plyr,
-       proto)
+       proto,
+       survival)
 
 importFrom(party, ctree)
 importFrom(party, where)
@@ -78,6 +104,7 @@ importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment"
            "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
            "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
            "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", 
-           "smooth.spline", "pf", "printCoefmat","vcov", "rmultinom")
+           "smooth.spline", "pf", "printCoefmat","vcov", "rmultinom", "median")
 importFrom("utils", "head", "read.csv", "read.table", "tail", "combn", 
            "write.csv", "write.table")
+importFrom("stringr", "str_pad")

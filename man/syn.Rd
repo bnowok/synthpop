@@ -4,15 +4,15 @@
 \alias{print.synds}
 \title{Generating synthetic data sets}
 \description{
-  Generates synthetic version(s) of a data set. Function \code{syn.strata()} performs 
-  stratified synthesis.
+  Generates synthetic version(s) of a data set. Function \code{syn.strata()} 
+  performs stratified synthesis.
 }
 
 \usage{
 syn(data, method = "cart", visit.sequence = (1:ncol(data)),
     predictor.matrix = NULL,  
     m = 1, k = nrow(data), proper = FALSE, 
-    minnumlevels = -1, maxfaclevels = 60, 
+    minnumlevels = 1, maxfaclevels = 60, 
     rules = NULL, rvalues = NULL, 
     cont.na = NULL, semicont = NULL, 
     smoothing = NULL, event = NULL, denom = NULL, 
@@ -27,7 +27,7 @@ syn.strata(data, strata = NULL,
     method = "cart", visit.sequence = (1:ncol(data)),
     predictor.matrix = NULL,
     m = 1, k = nrow(data), proper = FALSE, 
-    minnumlevels = -1, maxfaclevels = 60, 
+    minnumlevels = 1, maxfaclevels = 60, 
     rules = NULL, rvalues = NULL,
     cont.na = NULL, semicont = NULL, 
     smoothing = NULL, event = NULL, denom = NULL, 
@@ -79,14 +79,14 @@ syn.strata(data, strata = NULL,
      as in the original (observed) data (\code{k = n}).}
   \item{proper}{a logical value with default set to \code{FALSE}. 
      If \code{TRUE} proper synthesis is conducted.}
-  \item{minnumlevels}{a minimum number of values a numeric variable should
-     have to be treated as numeric. Numeric variables with fewer levels
-     than \code{minnumlevels} are changed into factors. If set to \code{-1}
-     (default) numeric variables are left unchanged regardless of the number
-     of values.}
+  \item{minnumlevels}{a minimum number of values a numeric variable should exceed
+     to be treated as numeric during the synthesis. Numeric variables with only 
+     \code{minnumlevels} or fewer distinct values are changed into factors. 
+     If set to \code{1} (default) numeric variables are left unchanged unless 
+     they have only one non-missing value.}  
   \item{maxfaclevels}{a maximum number of factor levels that can be handled.
-     It can be increased but it may cause computational problems, especially 
-     for parametric methods.}
+     It can be increased to allow the synthesis to run but too large a value may
+     cause computational problems, especially for parametric methods.}
   \item{rules}{a named list of rules for restricted values. Restricted values 
      are those that are determined explicitly by values of other variables.
      The names of the list elements must correspond to the variables names for 
@@ -129,18 +129,18 @@ syn.strata(data, strata = NULL,
      They are used when \code{method} is set to \code{"parametric"} or 
      when there is an inconsistency between variable type and provided method.}
   \item{numtocat}{a vector of numbers or names to indicate columns of \code{data}
-    that are to be categorised into factors before synthesis. 
-    After the categorical variables have been synthesised the  numerical variables
-    are synthesised from them by the method \code{syn.nested} and are placed in the
-    same position in the synthetic data as in the original. 
-    The categorised variables are not stored in the synthetic data.
-    If you want to keep the categorised values you should change
-    the relevant variables in \code{data} before running \code{syn()}
-    with the function \code{numtocat.syn()}}
+    that are to be divided into groups to allow the grouped variables to be 
+    synthesised as factors. The target number of groups for each variable is 
+    specified by \code{catgroups}. After the grouped variables have been synthesised 
+    the  numeric variables are synthesised from them by the method \code{syn.nested} 
+    and are placed in the same position in the synthetic data as in the original. 
+    The grouped variables are not stored in the synthetic data. If you want to keep
+    the categorised values you should change the relevant variables in \code{data} 
+    before running \code{syn()} with the function \code{numtocat.syn()}}
   \item{catgroups}{An integer or a vector of integers of the same length as
     \code{numtocat} giving the target number of groups into which of the
      numeric variables is to be categorised. The function \code{group_var}
-     performs the categorisation.}
+     from the \code{classInt} package performs the categorisation.}
   \item{models}{if \code{TRUE} parameters of models fitted to the original data 
      and used to generate the synthetic values are stored.}
   \item{print.flag}{if \code{TRUE} (default) synthesising history and 
@@ -227,7 +227,7 @@ syn.strata(data, strata = NULL,
      see \code{\link{syn.catall}}}
    \item{ipf}{fit a log-linear model, defined by its margins, by iterative 
    proportional fitting  see \code{\link{syn.ipf}}}
-}
+ }
  The functions corresponding to these methods are called \code{syn.method}, 
  where \code{method} is a string with the name of a synthesising method. 
  For instance a function corresponding to \code{ctree} function is called
@@ -369,8 +369,13 @@ with(s2$syn, table(marital[age < 18 & sex == 'MALE']))
 ### synthesis with ipf for all variables
 s7 <- syn(ods[, 1:3], method = "ipf", numtocat = "age")
 
+### alternatively group the numeric variable before synthesis to save
+### the grouped data rather than the numeric in the synthetic data set
+ods.cat <- numtocat.syn(ods, numtocat = "age", catgroups = 10)$data
+s8 <- syn(ods.cat[, 1:3], method = "ipf")
+
 ### stratified synthesis
-s8 <- syn.strata(ods, strata = "sex")
+s9 <- syn.strata(ods, strata = "sex")
 }
 
 \keyword{datagen}

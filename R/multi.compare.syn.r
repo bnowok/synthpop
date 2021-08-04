@@ -32,7 +32,7 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
  cat("\nPlots of ",var," by ",by,"\nNumbers in each plot (observed data):\n\n")
  print(bytable)
  nplots <- length(bytable) 
- if (nplots > 100) cat("\nCAUTION: You have ",nplots," sections in your plot.\n")
+ if (nplots > 100) cat("\nCAUTION: You have ", nplots, " sections in your plot.\n")
     
  add <- NULL 
  
@@ -49,6 +49,12 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
  }
  obssyn <- rbind(cbind(data, source = "obs"), synall)
  #----
+ 
+ # change any numeric variables with < 6 distinct values to factors
+ if (is.numeric(data[,var]) && length(table(data[,var])) < 6) {
+   obssyn[, var] <- as.factor(obssyn[, var])
+   data[, var] <- as.factor(data[, var])
+ }
  
  ..count.. <- ..density.. <- NULL
  
@@ -67,12 +73,18 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
      p <- ggplot(data = obssyn, aes(x = source, y = eval(parse(text = var))))
      ptype <- geom_boxplot(aes(colour = source), alpha = 0.7)
      plabs <- labs(y = var, x = "", colour = "")
-     if (boxplot.point) add <- geom_jitter(size = 0.2, alpha = 0.2)  #!BN-size was 0.5
+     if (boxplot.point) add <- geom_jitter(size = 0.2, alpha = 0.2)
    }
  } else {
-   p <- ggplot(data = obssyn, aes(x = source))
-   ptype <- geom_bar(aes(fill = eval(parse(text = var))), position = barplot.position)
-   plabs <- labs(x = "", fill = var)
+    if (barplot.position == "dodge") {
+      p <- ggplot(data = obssyn, aes(x = eval(parse(text = var))))
+      ptype <- geom_bar(aes(fill = source), position = barplot.position)
+      plabs <- labs(x = var, fill = "")      
+    } else {
+      p <- ggplot(data = obssyn, aes(x = source))
+      ptype <- geom_bar(aes(fill = eval(parse(text = var))), position = barplot.position)
+      plabs <- labs(x = "", fill = var)
+    }
  }
  
  if (length(by) == 1){
@@ -86,3 +98,4 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
       scale_colour_brewer(palette="Set1")
  return(p)
 }
+

@@ -224,6 +224,12 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
          else if (is.passive(theMethod)) {
            class0 <- class(p$syn[,j])
            synfun <- syn.passive(data = p$syn, func = theMethod) 
+
+           if (is.factor(synfun$res[[1]]) & any(is.na(synfun$res[[1]]))) {
+             synfun$res[[1]] <- addNA(synfun$res[[1]], ifany = TRUE)
+             levels(synfun$res[[1]])[is.na(levels(synfun$res[[1]]))] <- "NAtemp"
+           }
+
            p$syn[, j] <- synfun$res
            class(p$syn[,j]) <- class0
            if (models) fits[[i]][[j]] <- synfun$fit 
@@ -256,7 +262,7 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
        nms <- nms[!pred.not.syn]  # GR save names to use below if data just one column
      }
      # Prevent a single character column being changed to a factor
-     chgetochar <- (sum(!pred.not.syn) == 1 & class(syn[[i]][, 1]) == "character")       
+     chgetochar <- (sum(!pred.not.syn) == 1 & any(class(syn[[i]][, 1]) == "character"))       
      syn[[i]] <- as.data.frame(syn[[i]])
      if (chgetochar) {
        syn[[i]][, 1] <- as.character(syn[[i]][, 1])
@@ -290,7 +296,7 @@ remove.lindep.syn <- function(x, y, eps = 0.00001, maxcor = 0.99999,
                               allow.na = FALSE, ...) 
 {
   if (ncol(x) == 0) return(NULL) 
-  if (eps <= 0) stop("\n Argument 'eps' must be positive.")
+  if (eps <= 0) stop("\n Argument 'eps' must be positive.", call. = FALSE)
   xobs <- sapply(x, as.numeric)                                       
   yobs <- as.numeric(y)
   keep <- unlist(apply(xobs, 2, var) > eps)

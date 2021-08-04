@@ -40,6 +40,9 @@ multi.compare(object, data, var = NULL, by = NULL, msel = NULL,
 \value{
 Plots as specified above. A table of the numbers in the subgroups is printed 
 to the R console.
+
+Numeric variables with fewer than 6 distinct values are changed to factors 
+in order to make plots more readable.
 }
 \seealso{
   \code{\link{compare.synds}}, \code{\link{compare.fit.synds}}

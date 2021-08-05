@@ -33,8 +33,9 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   
   The function is used in \code{syn()} to generate survival times 
   by setting elements of method in \code{syn()} to \code{"survctree"}.
-  Additional parameters, e.g. \code{minbucket} can be supplied to \code{syn()}
-  as \code{survctree.minbucket}.
+  Additional parameters related to \code{\link{ctree}} function, 
+  e.g. \code{minbucket} can be supplied to \code{syn()} as 
+  \code{survctree.minbucket}.
   
   Where the survival variable is censored this information must be supplied 
   to \code{syn()} as a named list (event) that gives the name of the variable 

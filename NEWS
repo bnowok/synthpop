@@ -2,9 +2,9 @@ synthpop 1.7-0
 ---------------
 
 NEW FEATURES
-* New function utility.tables() summarises oneway, two- or three-way tables of 
-  utility by either utility.tab() or utility.gen(). Plots of utility measures 
-  can be produced.
+* New function utility.tables() summarises oneway, two- or three-way tables 
+  of utility by utility.tab(). Plots and tables of utility measures can be 
+  produced.
 * Functions utility.gen(), utility.tab(), and compare.synds() can be used 
   to assess the utility of synthetic data sets that were created NOT using 
   synthpop. They have to be provided as a data.frame or a list.
@@ -15,10 +15,14 @@ NEW FEATURES
   utility.tab(): "G" - the adjusted likelihood ratio chi-squared statistic 
   for comparing tables with original and synthesised values, 
   "JSD" - the Jensen-Shannon distance between the tables with original and 
-  synthesised values, and "pct.correct" - the percentage of each synthetic 
-  data set where the model used to predict  real or synthetic is correct.
-* Parameter `print.flag` is added to utility.gen() to suppress, if desired, 
-  output for simulations. 
+* These additional statistics are computed by utility.tab() and utility.gen(): 
+  "PO50" - the percentage over 50% of each synthetic data set where the model 
+  used to predict real or synthetic is correct; "SPECKS" the Kolmogorov-Smirnov 
+  distance comparing the prpensity scores for the synthetic and original data.
+* Parameter `print.flag` is added to utility.gen() and utility.tab() to 
+  suppress, if desired, output for simulations.
+* compare.synds() produces a table, tab.res, that gives the oneway utility
+  statistics computed by utility.tab with parameter tables = "oneway"
 * New parameters `plot` and `table` in compare.synds() function to indicate,
   respectively, whether plots should be produced and tables printed. By default
   plots are printed and tables are suppressed. 
@@ -34,7 +38,7 @@ CHANGES
   with too many levels.
 * Matrix of predictors x in logreg.syn() is centred and xp made to match to 
   improve comptutation (thanks to Héloïse Gauvin for noting this problem).
-* Improved error messages and help file for survctree.syn().
+* Improved error messages and help file for syn.survctree().
 * In syn() variables changed to factors from character are changed back to
   character in synthetic data.
 * In syn() variables changed to factor from numeric because of only a few 

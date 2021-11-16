@@ -14,51 +14,54 @@
  and \code{cont.na} might need to be provided.
 }
 \usage{
-\method{utility.gen}{synds}(object, data, method = "logit", maxorder = 1, k.syn = FALSE,
-            tree.method = "rpart", resamp.method = NULL, nperms = 50,   
-            cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
+\method{utility.gen}{synds}(object, data, 
+            method = "cart", maxorder = 1, k.syn = FALSE, tree.method = "rpart",
+            max.params = 400, print.stats = c("pMSE", "S_pMSE"), resamp.method = NULL, 
+            nperms = 50, cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
             aggregate = FALSE, maxit = 200, ngroups = NULL, print.flag = TRUE,
             print.every = 10, digits = 6, print.zscores = FALSE, zthresh = 1.6,
-            print.ind.results = TRUE, print.variable.importance = FALSE, \dots)
-            
-\method{utility.gen}{data.frame}(object, data, not.synthesised = NULL, cont.na = NULL, 
-               method = "logit", maxorder = 1, k.syn = FALSE,
-               tree.method = "rpart", resamp.method = NULL, nperms = 50,
-               cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
-               aggregate = FALSE, maxit = 200, ngroups = NULL, print.flag = TRUE,
-               print.every = 10, digits = 6, print.zscores = FALSE, zthresh = 1.6,
-               print.ind.results = TRUE, print.variable.importance = FALSE, \dots)
+            print.ind.results = FALSE, print.variable.importance = FALSE, \dots)
 
-\method{utility.gen}{list}(object, data,  not.synthesised = NULL, cont.na = NULL, 
-               method = "logit", maxorder = 1, k.syn = FALSE,
-               tree.method = "rpart", resamp.method = NULL, nperms = 50,
-               cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
-               aggregate = FALSE, maxit = 200, ngroups = NULL, print.flag = TRUE,
-               print.every = 10, digits = 6, print.zscores = FALSE, zthresh = 1.6,
-               print.ind.results = TRUE, print.variable.importance = FALSE, \dots)
+\method{utility.gen}{data.frame}(object, data, not.synthesised = NULL, cont.na = NULL, 
+            method = "cart", maxorder = 1, k.syn = FALSE, tree.method = "rpart",
+            max.params = 400, print.stats = c("pMSE", "S_pMSE"), resamp.method = NULL, 
+            nperms = 50, cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
+            aggregate = FALSE, maxit = 200, ngroups = NULL, print.flag = TRUE,
+            print.every = 10, digits = 6, print.zscores = FALSE, zthresh = 1.6,
+            print.ind.results = FALSE, print.variable.importance = FALSE, \dots)
+
+\method{utility.gen}{list}(object, data, not.synthesised = NULL, cont.na = NULL, 
+            method = "cart", maxorder = 1, k.syn = FALSE, tree.method = "rpart",
+            max.params = 400, print.stats = c("pMSE", "S_pMSE"), resamp.method = NULL, 
+            nperms = 50, cp = 1e-3, minbucket = 5, mincriterion = 0, vars = NULL, 
+            aggregate = FALSE, maxit = 200, ngroups = NULL, print.flag = TRUE,
+            print.every = 10, digits = 6, print.zscores = FALSE, zthresh = 1.6,
+            print.ind.results = FALSE, print.variable.importance = FALSE, \dots)
 
 
 \method{print}{utility.gen}(x, digits = NULL, zthresh = NULL, 
-                            print.zscores = NULL, 
-                            print.ind.results = NULL,
-                            print.variable.importance = NULL, \dots)
+               print.zscores = NULL, print.stats = NULL,
+               print.ind.results = NULL, print.variable.importance = NULL, \dots)
 }
+
 \arguments{
-  \item{object}{an object of class \code{synds}, which stands for 'synthesised 
-    data set'. It is typically created by function \code{syn()} and it includes 
-    \code{object$m} synthesised data set(s) as \code{object$syn}. This a single 
-    data set when \code{object$m = 1} or a list of length \code{object$m} when 
-    \code{object$m > 1}. Alternatively, when data are synthesised not using 
-    \code{syn()}, it can be a data frame with a synthetic data set or a list 
-    of data frames with synthetic data sets, all created from the same original 
-    data with the same variables and the same method.}
+  \item{object}{it can be an object of class \code{synds}, which stands for 
+    'synthesised data set'. It is typically created by function \code{syn()} 
+    and it includes \code{object$m} synthesised data set(s) as \code{object$syn}. 
+    This a single data set when \code{object$m = 1} or a list of length 
+    \code{object$m} when \code{object$m > 1}. Alternatively, when data are 
+    synthesised not using \code{syn()}, it can be a data frame with a synthetic 
+    data set or a list of data frames with synthetic data sets, all created from 
+    the same original data with the same variables and the same method.}
   \item{data}{the original (observed) data set.}
   \item{not.synthesised}{a vector of variable names for any variables that has 
-    been left unchanged in the synthetic data.}
+    been left unchanged in the synthetic data. Not required if oject is of 
+    class \code{synds}}
   \item{cont.na}{a named list of codes for missing values for continuous
     variables if different from the \code{R} missing data code \code{NA}.
     The names of the list elements must correspond to the variables names for 
-    which the missing data codes need to be specified.}  
+    which the missing data codes need to be specified. Not required if oject is
+    of class \code{synds}}  
   \item{method}{a single string specifying the method for modeling the propensity 
     scores. Method can be selected from \code{"logit"} and \code{"cart"}. } 
   \item{maxorder}{maximum order of interactions to be considered in 
@@ -66,13 +69,21 @@
     provided.}   
   \item{k.syn}{a logical indicator as to whether the sample size itself has 
     been synthesised.}
-  \item{tree.method}{implementation of \code{"cart"} method, can be \code{"rpart"} 
-    or \code{"ctree"}.}
-  \item{resamp.method}{method used for resampling estimate of the null \code{pMSE}, 
-    can be \code{"perm"} or \code{"pairs"}. For \code{pMSEs} calculated with 
-    method \code{"cart"} it defaults to \code{"perm"} if all the variables from 
-    \code{"object"} in \code{"vars"} have been synthesised or to \code{"pairs"} 
-    if some have not (i.e. have \code{method = ""}).}
+  \item{tree.method}{implementation of \code{"cart"} method that is used when 
+    \code{method = "cart"}. It can be \code{"rpart"} or \code{"ctree"}.}
+  \item{max.params}{the maximum number of parameters for a \code{"logit"} model 
+    which alerts the user to possible fitting failure.}
+  \item{print.stats}{statistics to be printed must be a selection from
+    \code{"pMSE"}, \code{"SPECKS"}, \code{"PO50"}, \code{"S_pMSE"}, 
+    \code{"S_SPECKS"}, \code{"S_PO50"}. If \code{print.stats = "all"}, 
+    all of the measures mentioned above will be printed.}
+  \item{resamp.method}{method used for resampling estimates of standardized 
+    measures can be \code{"perm"}, \code{"pairs"} or \code{"none"}.  
+    Defaults to \code{"pairs"} if \code{print.stats} includes \code{"S_SPECKS"} 
+    or \code{"S_PO50"} or synthesis is incomplete else defaults to \code{"perm"}
+    if method is \code{"cart"} or to \code{NULL}, no resampling needed, 
+    if method is \code{"logit"}. \code{"none"} can be used to get results 
+    without standardized measures e.g. in simulations.}
   \item{nperms}{number of permutations for the permutation test to obtain the 
     null distribution of the utility measure when \code{resamp.method = "perm"}.}
   \item{cp}{complexity parameter for classification with tree.method 
@@ -84,8 +95,10 @@
     further. A value of \code{0.95} would be equivalent to a \code{5\%} 
     significance test. Here we set it to \code{0} to effectively disable this 
     test and grow large trees.}
-  \item{vars}{variables to be included in the utility comparison. If none are 
-    specified all the variables in the synthesised data will be included.}
+  \item{vars}{variables to be included in the utility comparison. It can be 
+    a character vector of names of variables or an integer vector of their 
+    column indices. If none are specified all the variables in the synthesised 
+    data will be included.}
   \item{aggregate}{logical flag as to whether the data should be aggregated by 
     collapsing identical rows before computation. This can lead to much faster 
     computation when all the variables are categorical. Only works for 
@@ -96,8 +109,8 @@
   \item{ngroups}{target number of groups for categorisation of each numeric 
     variable: final number may differ if there are many repeated values. If 
     \code{NULL} (default) variables are not categorised into groups.}
-  \item{print.flag}{TRUE/FALSE to indicate if any warning messages should 
-    be printed during calculatiosn. Change to FALSE for simulations.}  
+  \item{print.flag}{TRUE/FALSE to indicate if any messages should 
+    be printed during calculations. Change to FALSE for simulations.}  
   \item{print.every}{controls the printing of progress of resampling when  
     \code{resamp.method} is not \code{NULL}. When \code{print.every = 0} 
     no progress is reported, otherwise the resample number is printed every 
@@ -105,8 +118,7 @@
   \item{\dots}{additional parameters passed to \code{\link{glm}},
     \code{\link{rpart}}, or \code{\link{ctree}}.} 
   \item{x}{an object of class \code{utility.gen}.}
-  \item{digits}{number of digits to print in the default output, excluding 
-    \code{pval} and \code{pct.correct} values.}  
+  \item{digits}{number of digits to print in the default output values.}  
   \item{zthresh}{threshold value to use to suppress the printing of z-scores 
     under \code{+}/\code{-} this value for \code{method = "logit"}. If set to 
     \code{NA} all z-scores are printed.}
@@ -176,18 +188,17 @@
   \item{mincriterion }{see above.}
   \item{nperms}{see above.}
   \item{incomplete}{TRUE/FALSE indicator if any of the variables being compared 
-    are only partially synthesised.}
+    are not synthesised.}
   \item{pMSE}{propensity score mean square error from the utility model or a  
     vector of these values if \code{object$m > 1}.}
-  \item{pMSEExp}{expected value of \code{pMSE} if the generative
-    model is correct, calculated from theoretical results in Snoke et al. (2018), 
-    for \code{logit} models or from permutation tests for cart models.}
-  \item{utilR}{ratio(s) of \code{pMSE} to \code{pMSEExp}.}
-  \item{pct.correct}{percentage of each synthetic data set where the model used
-    correctly predicts whether real or synthetic.}
-  \item{pval}{p-value(s) for the chi-square test(s) for \code{utilR} for logit 
-    models or from the resampling test for cart models. In each case testing the 
-    evidence against the NULL hypothesis that the generative model is correct.}
+  \item{S_pMSE}{ratio(s) of \code{pMSE} to its Null expectation.}
+  \item{PO50}{percentage  over 50\% of each synthetic data set where the model 
+    used correctly predicts whether real or synthetic.}
+  \item{S_PO50}{ratio(s) of \code{PO50} to its Null expectation.}
+  \item{SPECKS}{Kolmogorov-Smirnov statistic to compare the propensity scores  
+    for the original and synthetic records.}
+  \item{S_SPECKS}{ratio(s) of \code{SPECKS} to its Null expectation.}
+  \item{print.stats}{see above.}  
   \item{fit}{the fitted model for the propensity score or a list of fitted 
     models of length \code{m} if \code{m > 0}.}
   \item{nosplits}{for resampling methods and cart models, a list of the number

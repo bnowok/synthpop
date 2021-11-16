@@ -1,5 +1,5 @@
 export(syn,
-       syn.strata, 
+       syn.strata,
        syn.cart,
        syn.ctree,
        syn.logreg,
@@ -25,17 +25,17 @@ export(syn,
 export(compare, compare.synds, compare.fit.synds,
        compare.data.frame, compare.list,
        print.compare.fit.synds,	multi.compare,
-       lm.synds, glm.synds, 
+       lm.synds, glm.synds,
        multinom.synds, polr.synds,
        print.fit.synds, print.synds,
        summary.synds, print.summary.synds,
        summary.fit.synds, print.summary.fit.synds,
        replicated.uniques, sdc, read.obs, write.syn,
-       utility.gen, utility.gen.synds, 
+       utility.gen, utility.gen.synds,
        utility.gen.data.frame, utility.gen.list,
-       utility.tab, utility.tab.synds, 
+       utility.tab, utility.tab.synds,
        utility.tab.data.frame, utility.tab.list,
-       utility.tables, utility.tables.synds, 
+       utility.tables, utility.tables.synds,
        utility.tables.data.frame, utility.tables.list,
        codebook.syn, numtocat.syn)
 
@@ -76,7 +76,7 @@ S3method(print, utility.tables)
 #exportClasses(fit.synds)
 
 import(MASS,
-       methods, 
+       methods,
        nnet,
        lattice,
        foreign,
@@ -89,7 +89,7 @@ importFrom(party, ctree)
 importFrom(party, where)
 importFrom(party, cforest, cforest_unbiased)
 importFrom(party, ctree_control)
-importFrom(rpart, rpart)                 
+importFrom(rpart, rpart)
 importFrom(rpart, rpart.control)
 importFrom(stats, glm)
 importFrom(stats, lm)
@@ -100,11 +100,12 @@ importFrom(classInt, classIntervals)
 #importFrom(glmnet, glmnet, predict.glmnet) not used at the moment
 importFrom(mipfp, Ipfp)
 importFrom("graphics", "hist")
-importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment", 
-           "cor", "density", "formula", "model.frame", "model.matrix", "na.pass", 
-           "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif", 
-           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq", 
-           "smooth.spline", "pf", "printCoefmat","vcov", "rmultinom", "median")
-importFrom("utils", "head", "read.csv", "read.table", "tail", "combn", 
+importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment",
+           "cor", "density", "formula", "model.frame", "model.matrix", "na.pass",
+           "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif",
+           "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq",
+           "smooth.spline", "pf", "printCoefmat","vcov", "rmultinom", "median",
+           "ks.test", "wilcox.test")
+importFrom("utils", "head", "read.csv", "read.table", "tail", "combn",
            "write.csv", "write.table")
 importFrom("stringr", "str_pad")

@@ -57,7 +57,7 @@ summary.synds <- function(object, msel = NULL,
 print.summary.synds <- function(x, ...){
 
  if (x$m == 1) {
-   cat("Synthetic object with one synethesis using methods:\n")
+   cat("Synthetic object with one synthesis using methods:\n")
    print(x$method)
    cat("\n")
    print(x$result)
@@ -504,9 +504,14 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
   cat("\nMean confidence interval overlap: ", x$mean.ci.overlap)
   cat("\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
   if (!is.null(x$lack.of.fit)){
-    cat("\nLack-of-fit: ", x$lack.of.fit,"; p-value ", round(x$lof.pval, 4), " for test that synthesis model is compatible ", sep = "")
-    if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", x$ncoef, " degrees of freedom\n", sep = "")
-    else cat("\nwith an F distribution with ",x$ncoef," and ",x$m - x$ncoef," degrees of freedom\n", sep = "") 
+    cat("\n\nMahalanobis distance ratio for lack-of-fit (target 1.0): ", 
+        round(x$lack.of.fit/x$ncoef, 2), sep = "")
+    cat("\nLack-of-fit test: ", x$lack.of.fit,"; p-value ", round(x$lof.pval, 4), 
+        " for test that synthesis model is compatible ", sep = "")
+    if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", 
+                                   x$ncoef, " degrees of freedom.\n", sep = "")
+    else cat("\nwith an F distribution with ", x$ncoef, " and ", 
+             x$m - x$ncoef, " degrees of freedom.\n", sep = "") 
   }
   if (!is.null(x$ci.plot)) {
     cat("\nConfidence interval plot:\n")
@@ -536,6 +541,11 @@ print.compare.synds <- function(x, ...) {
       }
     }
   }
+  if (!is.null(x$tab.utility)) {
+    cat("\nSelected utility measures:\n")  
+    print(round(x$tab.utility, 6))
+  }
+  #if (x$print.tab.utility) print(x$tab.utility)
  invisible(x)
 }
 
@@ -543,7 +553,7 @@ print.compare.synds <- function(x, ...) {
 ###-----print.utility.gen--------------------------------------------------
 
 print.utility.gen <- function(x, digits = NULL, zthresh = NULL,    
-                              print.zscores = NULL,  
+                              print.zscores = NULL, print.stats = NULL,
                               print.ind.results = NULL,                               
                               print.variable.importance = NULL, ...){
 
@@ -551,72 +561,75 @@ print.utility.gen <- function(x, digits = NULL, zthresh = NULL,
     converged <- ifelse(x$m == 1, x$fit$converged, x$fit[[1]]$converged)
     length.y <- ifelse(x$m == 1, length(x$fit$y)/2, length(x$fit[[1]]$y)/2)
     length.coef <- ifelse(x$m == 1, length(x$fit$coefficients), length(x$fit[[1]]$coefficients)) 
-    if (converged == FALSE)  cat("\nWarning: Logistic model did not converge in ", x$maxit,
+    if (converged == FALSE)  cat("Warning: Logistic model did not converge in ", x$maxit,
     " iterations. Check results.\nThis can be due to cells with small numbers or too complicated a model.
-    In first case utility measures are probably fine but coefficients may be unstable. 
-    In the latter case you may be able to overcome this by increasing the parameter 'maxit'.
-    Your combined data has ", length.y, " observations and your model has ",
+In first case utility measures are probably fine but coefficients may be unstable. 
+In the latter case you may be able to overcome this by increasing the parameter 'maxit'.
+Your combined data has ", length.y, " observations and your model has ",
     length.coef, " parameters.\n", sep = "")
   }
   
-  if (is.null(digits))  digits <- x$digits
+  if (is.null(digits)) digits <- x$digits
+  if (is.null(print.stats)) print.stats <- x$print.stats
   if (is.null(zthresh)) zthresh <- x$zthresh
-  if (is.null(print.zscores))  print.zscores <- x$print.zscores
+  if (is.null(print.zscores)) print.zscores <- x$print.zscores
   if (is.null(print.ind.results)) print.ind.results <- x$print.ind.results   
   if (is.null(print.variable.importance)) print.variable.importance <- x$print.variable.importance
   
   cat("\nUtility score calculated by method: ", x$method, "\n", sep = "")
   cat("\nCall:\n")
   print(x$call)
-  
-  if (!is.null(x$resamp.method)) {
-    if (x$resamp.method == "perm") cat("\nNull pMSE simulated from a permutation test with ", x$nperm," replications.\n", sep = "")
-    else if (x$resamp.method == "pairs") cat("\nNull pMSE simulated from ", x$m*(x$m - 1)/2," pairs of syntheses.\n", sep = "")
+#?  
+  if (!is.null(x$resamp.method) && !x$resamp.method == "none") {
+    if (x$resamp.method == "perm") cat("\nNull utilities simulated from a permutation test with ", x$nperm," replications.\n", sep = "")
+    else if (x$resamp.method == "pairs") cat("\nNull utilities simulated from ", x$m*(x$m - 1)/2," pair(s) of syntheses.\n", sep = "")
     
     if (!is.list(x$nnosplits)) { 
       if (x$nnosplits[1] > 0) cat(
 "\n***************************************************************
-Warning: null pMSE resamples failed to split ", x$nnosplits[1], " times from ", x$nnosplits[2],
+Warning: null pMSE resamples failed to split ", x$nnosplits[1], " time(s) from ", x$nnosplits[2],
 "\n***************************************************************\n", sep = "")
     } else {
       for (ss in 1:x$m) {
         if (x$nnosplits[[ss]][1] > 0) cat("\nSynthesis ", ss, 
-          " null pMSE resamples failed to split ", x$nnosplits[[ss]][1],
-          " times from ", x$nnosplits[[ss]][2], sep = "")
+          "   null pMSE resamples failed to split ", x$nnosplits[[ss]][1],
+          " time(s) from ", x$nnosplits[[ss]][2], sep = "")
       }
       cat("\n")
     }
   }
-  
-  if (x$m > 1) {
-    cat("\nMean utility results from ", x$m, " syntheses:\n", 
-        "pMSE (propensity score mean square error): ", round(mean(x$pMSE), digits),
-        "\nExpected value: ", round(mean(x$pMSEExp), digits), 
-        "\nRatio to expected: ", round(mean(x$utilR), digits),
-        "\nMean of % correct (percentage correctly predicted): ", round(mean(x$pct.correct), 2),
-        "\nMedian of p-values: ", round(median(x$pval), 4), "\n\n", sep = "") 
 
+  if (print.stats[1] == "all") print.stats <- 
+    c("pMSE", "S_pMSE", "SPECKS", "S_SPECKS", "PO50", "S_PO50", "U", "S_U")
+  
+  if (x$m == 1) { 
+    cat("\nSelected utility measures\n")  
+    tabres <- c(round(x$pMSE, digits), round(x$S_pMSE, digits), 
+                round(x$SPECKS, digits), round(x$S_SPECKS, digits),
+                round(x$PO50, digits), round(x$S_PO50, digits),
+                round(x$U, digits), round(x$S_U, digits))
+    names(tabres) <- c("pMSE", "S_pMSE", "SPECKS", "S_SPECKS", "PO50", "S_PO50", "U", "S_U")
+    tabres <- tabres[match(print.stats, names(tabres))]
+    print(tabres)
+  }
+  else {
+    cat("\nMean utility results from ", x$m, " syntheses:\n", sep = "")
+    tabres <- data.frame(round(x$pMSE, digits), round(x$S_pMSE, digits), 
+                round(x$SPECKS, digits), round(x$S_SPECKS, digits),
+                round(x$PO50, digits), round(x$S_PO50, digits),
+                round(x$U, digits), round(x$S_U, digits))
+    names(tabres) <- c("pMSE", "S_pMSE", "SPECKS", "S_SPECKS", "PO50", "S_PO50", "U", "S_U")
+    tabres <- tabres[, match(print.stats, names(tabres)), drop = FALSE]
+    print(round(apply(tabres, 2, mean), digits))
     if (print.ind.results == TRUE) {
-      cat("Individual utility results from ", x$m, " syntheses\n", sep = "")
-      tabres <- data.frame(round(x$pMSE, digits), round(x$pMSEExp, digits),
-                           round(x$utilR, digits), round(x$pval, 4), round(x$pct.correct, 2))  
-      names(tabres) <- c("pMSE", "Expected", "Ratio", "p-value", "% correct")
+      cat("\nIndividual utility results from ", x$m, " syntheses:\n", sep = "")
       print(tabres)
-      cat("\n")
     }
-    
-  } else {
-    cat("\nUtility results:",
-        "\npMSE (propensity score mean square error): ", round(x$pMSE, digits),              
-        "\nExpected value: ", round(x$pMSEExp, digits),  
-        "\nRatio to expected: ", round(x$utilR, digits),
-        "\n% correct (percentage correctly predicted): ", round(x$pct.correct, 2),
-        "\np-value: ", round(x$pval, 4),"\n\n", sep = "")                 
   }
   
   if (print.zscores == TRUE) {
     if (x$method == "cart") {
-      cat("\nz-scores not available for CART models\n")
+      cat("\nz-scores are not available for CART models.\n")
     } else {
       if (x$m > 1) {
         allzscores <- vector("list", x$m) 
@@ -627,7 +640,7 @@ Warning: null pMSE resamples failed to split ", x$nnosplits[1], " times from ", 
         zscores <- apply(allzscores.NA.df, 1, mean, na.rm = TRUE)  
         names(zscores) <- allnames
       } else {
-        zscores <- summary(x$fit)$coefficients[ ,3]
+        zscores <- summary(x$fit)$coefficients[, 3]
       }
       
       if (!is.na(zthresh)) { 
@@ -636,24 +649,24 @@ Warning: null pMSE resamples failed to split ", x$nnosplits[1], " times from ", 
           cat("\nNo z-scores (or mean z-scores if m > 1) above threshold of +/-", zthresh,"\n", sep = "")
         } else {
           cat("\nz-scores (or mean z-scores if m > 1) greater than the threshold of +/- ", zthresh, "\n", sep = "")
-          print(zscores)
+          print(round(zscores, digits))
         }  
       } else {
         cat("\nAll z-scores (or mean z-scores if m > 1)\n")
-        print(zscores)
+        print(round(zscores, digits))
       }
     }
   }
   
   if (print.variable.importance == TRUE) {
     if (x$method != "cart" | x$tree.method != "rpart") {
-      cat("\nVariable importance only available for CART models using function 'rpart'\n")
+      cat("\nVariable importance only available for CART models using function 'rpart' (tree.method).\n")
     } else {
       cat("\nRelative importance of each variable scaled to add to 100\n" )
       if (x$m == 1) {
         variable.importance <- x$fit$variable.importance
         variable.importance <- round(variable.importance/sum(variable.importance)*100, digits)
-        print(variable.importance)
+        print(round(variable.importance), digits)
       } else {
         cat("(results for ", x$m, " syntheses)\n", sep = "")
         variable.importance <- vector("list", x$m)
@@ -667,7 +680,7 @@ Warning: null pMSE resamples failed to split ", x$nnosplits[1], " times from ", 
         all.vars.importance <- do.call(rbind, all.vars)
         colnames(all.vars.importance) <- allnames
         rownames(all.vars.importance) <- 1:x$m
-        print(all.vars.importance)
+        print(round(all.vars.importance, digits))
       }
     }
   }
@@ -689,102 +702,56 @@ print.utility.tab <- function(x, print.tables = NULL,
   if (is.null(digits)) digits <- x$digits
   
   if (print.tables == TRUE) {
-    if (is.table(x$tab.obs)) {
-      if (x$k.syn) cat("\nObserved not adjusted to match the size of the synthetic data since 'k.syn' set to TRUE: \n($tab.obs)\n")
-      else if (sum(x$tab.obs) != x$n & !x$k.syn) { 
-        cat("\nObserved adjusted to match the size of the synthetic data: \n($tab.obs)\n")
-        print(round(x$tab.obs, digits))
-      } else {
-        cat("\nObserved: \n($tab.obs)\n")
-        print(x$tab.obs)
-      }  
+    if (x$k.syn) cat("\nObserved not adjusted to match the size of the synthetic data since 'k.syn' set to TRUE:\n($tab.obs)\n")
+    else if (sum(x$tab.obs) != x$n & !x$k.syn) { 
+      cat("\nObserved adjusted to match the size of the synthetic data:\n($tab.obs)\n")
+      print(round(x$tab.obs, digits))
     } else {
-      #if (sum(x$tabd)/length(x$tabd)!= x$n) 
-      cat("\nMean of ",x$m," observed tables ($tab.obs) adjusted to match the size of synthetic data:\n", sep = "")
-      meantabd <- apply(simplify2array(x$tab.obs), c(1,2), mean)
-      print(round(meantabd, digits))
-    } 
-    
+      cat("\nObserved:\n($tab.obs)\n")
+      print(x$tab.obs)
+    }  
+  
     if (x$m == 1) {
       cat("\nSynthesised: \n($tab.syn)\n")
       print(x$tab.syn) 
     } else {
-      meantab <- apply(simplify2array(x$tab.syn), c(1,2), mean)
+      if (length(dim(simplify2array(x$tab.syn))) == 2) {
+        meantab <- apply(simplify2array(x$tab.syn), 1, mean)
+      } else {
+        meantab <- apply(simplify2array(x$tab.syn), c(1, 2), mean)
+      }
       cat("\nMean of ", x$m, " synthetic tables ($tab.syn):\n", sep = "")
       print(round(meantab, digits))
     }
   }
   
   if (print.zdiff == TRUE) {
-    cat("\nTable of z-scores for differences: \n($tab.zdiff)\n")
     if (x$m == 1) {
+      cat("\nTable of z-scores for differences: \n($tab.zdiff)\n")      
       print(round(x$tab.zdiff, digits)) 
     } else {
-      meanzdiff <- apply(simplify2array(x$tab.zdiff), c(1,2), mean)
-      cat("\nMean of ",x$m," z-score tables:\n", sep = "")
+      if (length(dim(simplify2array(x$tab.zdiff))) == 2) {
+        meanzdiff <- apply(simplify2array(x$tab.zdiff), 1, mean)
+      } else {
+        meanzdiff <- apply(simplify2array(x$tab.zdiff), c(1, 2), mean)
+      }
+      cat("\nMean of ", x$m, " z-score tables for differences ($tab.zdiff):\n", sep = "")
       print(round(as.table(meanzdiff), digits))
     }
   }
-  if (print.stats[1] == "all") print.stats <- c("VW", "FT", "G", "JSD", "pct.correct")
-  if (x$k.syn) celldiff <- 0 else celldiff <- 1
-  
-  if (x$m == 1) {
-    cat("\nNumber of cells in each table: ", 
-        x$df[1] + x$nempty[1] + celldiff,
-        "; Number of cells contributing to utility measures: ", 
-        x$df[1] + celldiff,"\n", sep = "")
-    cat("\nUtility score results\n")
-    if ("VW" %in% print.stats) cat("Voas Williamson (VW): ", round(x$UtabVW, digits), ";",
-      " Ratio to degrees of freedom (df): ", round(x$ratioVW, digits), ";",
-      " p-value: ", round(x$pvalVW, 4), "\n", sep = "")
-    if ("FT" %in% print.stats) cat("Freeman Tukey (FT): ", round(x$UtabFT, digits), ";",
-      " Ratio to degrees of freedom (df): ", round(x$ratioFT, digits), ";",
-      " p-value: ", round(x$pvalFT, 4), "\n", sep = "")
-    if ("G" %in% print.stats) cat("Likelihood ratio (G): ", round(x$UtabG, digits), ";",                                    
-                                  " Ratio to degrees of freedom (df): ", round(x$ratioG, digits), ";",
-                                  " p-value: ", round(x$pvalG, 4), "\n", sep = "")
-    if ("JSD" %in% print.stats) cat("Jensen-Shannon Distance: ", round(x$JSD, digits),"\n", sep = "")  
-    if ("pct.correct" %in% print.stats) cat("Percent correctly predicted (pct.correct): ",  round(x$pct.correct, 1), "\n", sep = "")     
+  if (print.stats[1] == "all") print.stats <- c("VW", "FT", "JSD", 
+    "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
+    "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE", "df", "dfG")
 
-  } else if (x$m > 1) {
-    cat("\nAverage results for ", x$m, " syntheses\n", sep = "")
-    cat("\nNumber of cells in each table: ", 
-        round(mean(x$df[1] + x$nempty[1] + celldiff), digits),
-        "; Number of cells contributing to utility measures: ", 
-        round(mean(x$df + celldiff), digits),"\n", sep = "")
-    cat("\nAverage utility score results\n")
-    if ("VW" %in% print.stats) cat("Voas Williamson (VW): ", round(mean(x$UtabVW), digits), ";",  ## round all pval to 4  
-                                   " Ratio to degrees of freedom (df): ", round(mean(x$ratioVW), digits), ";",
-                                   " Median p-value: ",round(median(x$pvalVW), 4), "\n", sep = "")    
-    if ("FT" %in% print.stats) cat("Freeman Tukey (FT): ", round(mean(x$UtabFT), digits), ";",
-                                   " Ratio to degrees of freedom (df): ", round(mean(x$ratioFT), digits), ";",
-                                   " Median p-value: ", round(median(x$pvalFT), 4), "\n", sep = "")
-    if ("G" %in% print.stats) cat("Likelihood ratio (G): ", round(mean(x$UtabG), digits), ";",                                    
-                                  " Ratio to degrees of freedom (df): ", round(mean(x$ratioG), digits), ";",
-                                  " Median p-value: ", round(median(x$pvalG), 4),"\n", sep = "")
-    if ("JSD" %in% print.stats) cat("Jensen-Shannon Distance: ", round(mean(x$JSD), digits),"\n", sep = "")  
-    if ("pct.correct" %in% print.stats) cat("Mean percent correctly predicted (pct.correct): ",  round(mean(x$pct.correct), 1), "\n", sep = "")  
-    
-    cat("\nResults from individual syntheses\n")
-    tab.res <- cbind.data.frame(
-      round(x$ratioVW, digits), round(x$pvalVW, 4),
-      round(x$ratioFT, digits), round(x$pvalFT, 4),
-      round(x$ratioG, digits),  round(x$pvalG, 4), 
-      round(x$JSD, digits), round(x$pct.correct, 1)) 
-    colnames(tab.res) <- c("VW Ratio", "VW p-value",
-                           "FT Ratio", "FT p-value",
-                           "G Ratio", "G p-value",
-                           "JSD", "% correct")
-    out <- NULL
-    if (!("VW" %in% print.stats)) out <- 1:2               
-    if (!("FT" %in% print.stats)) out <- c(out, 3:4)
-    if (!("G" %in% print.stats)) out <- c(out, 5:6)
-    if (!("JSD" %in% print.stats)) out <- c(out, 7)
-    if (!("pct.correct" %in% print.stats)) out <- c(out, 8)
-    if (!is.null(out)) tab.res <- tab.res[, -out]
-    print(tab.res)
-  }
-  
+  if (x$k.syn) celldiff <- 0 else celldiff <- 1
+  tab.res <- matrix(NA, x$m, length(print.stats))
+  dimnames(tab.res) <- list(1:x$m, print.stats)
+  if (x$m > 1) cat("\nSelected utility measures from ", x$m, " syntheses:\n", sep = "")
+  else cat("\nSelected utility measures:\n")
+  for (i in 1:length(print.stats)) {
+    tab.res[, i] <- unlist(x[match(print.stats[i], names(x))])
+  } 
+  print(round(tab.res, digits))
   invisible(x)
 }
 
@@ -838,7 +805,7 @@ summary.out <- function(z, digits = max(3L, getOption("digits") - 3L), ...)
         z <- unlist(z, use.names = TRUE)
         dim(z) <- c(nr, nv)
         if (anyNA(lw))
-            warning("probably wrong encoding in names(.) of column ",
+            warning("Probably wrong encoding in names(.) of column ",
                 paste(which(is.na(lw)), collapse = ", "))
         blanks <- paste(character(max(lw, na.rm = TRUE) + 2L),
             collapse = " ")

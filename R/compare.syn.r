@@ -10,14 +10,18 @@ compare.default <- function(object, ...)
 compare.synds <- function(object, data, vars = NULL, msel = NULL,  
                           stat = "percents", breaks = 20, 
                           nrow = 2, ncol = 2, rel.size.x = 1,
+                          utility.stats = c("pMSE", "S_pMSE", "df"),
                           cols = c("#1A3C5A","#4187BF"),  
                           plot = TRUE, table = FALSE, ...){    
                                                                          
  if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
  if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE)          
  if (class(object) != "synds") stop("Object must have class synds.\n", call. = FALSE )                                                                    
- if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)                                                                        
-
+ if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)
+ if (!all(utility.stats %in% c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
+                              "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE", "df", "all"))) 
+  stop('utility.stats must be set to "all" or selected from "VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt", "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE" or "df".\n', call. = FALSE)  
+  
  if (!(length(stat) == 1 & stat %in% c("percents", "counts"))) { 
    cat('Parameter stat must be "percents" or "counts".\n' )
    stat <- "percents"
@@ -217,7 +221,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
               legend.position = "top", 
               legend.key = element_rect(colour = cols[1])) 
    p <- p + theme(legend.title = element_blank())
-   if (length(msel) > 1) p <- p + scale_fill_manual(values = c(cols[1],rep(cols[2],length(msel))))
+   if (length(msel) > 1) p <- p + scale_fill_manual(values = c(cols[1], rep(cols[2], length(msel))))
    if (length(msel) <= 1) p <- p + scale_fill_manual(values = cols)
    plots[[i]] <- p
  }
@@ -227,8 +231,33 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    plots  <- plots[[1]]
  }  
 
- res <- list(tables = tables, plots = plots, stat = stat, plot = plot, table = table) 
+ if (is.null(vars)) {
+   if (object$m == 1) vars <- names(object$syn)
+   else vars <- names(object$syn[[1]])
+ }
  
+ if (!is.null(utility.stats)) {
+   utility.list <- as.list(1:length(vars))
+   names(utility.list) <- vars
+   if (utility.stats[1] == "all") utility.stats <- 
+     c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", 
+       "MabsDD", "dBhatt","S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", 
+       "S_pMSE", "df")
+   tab.utility <- matrix(NA, length(vars), length(utility.stats))
+   dimnames(tab.utility) <- list(vars, utility.stats)
+   
+   for (i in 1:length(vars)) {
+     utility.list[[i]] <- utility.tab(object, data, vars = vars[i])
+       if (i == 1) tab.ind <- match(utility.stats, names(utility.list[[i]]))
+       tab.utility[i, ] <- sapply(utility.list[[i]][tab.ind], mean)
+   } 
+ } else {
+   tab.utility <- NULL
+ }
+
+ res <- list(tables = tables, plots = plots, stat = stat, vars = vars,
+             tab.utility = tab.utility, table = table, plot = plot)
+
  class(res) <- "compare.synds"
  return(res)
 }
@@ -238,6 +267,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
 compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.na = NULL,         
                                                msel = NULL, stat = "percents", breaks = 20, 
                                                nrow = 2, ncol = 2, rel.size.x = 1,
+                                               utility.stats = c("pMSE", "S_pMSE", "df"),
                                                cols = c("#1A3C5A","#4187BF"),   
                                                plot = TRUE, table = FALSE, ...){
   
@@ -268,6 +298,7 @@ compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.n
   res <- compare.synds(object = object, data = data, vars = vars, 
                        msel = msel, stat = stat, breaks = breaks, 
                        nrow = nrow, ncol = ncol, rel.size.x = rel.size.x,
+                       utility.stats = utility.stats,
                        cols = cols, plot = plot, table = table, ...) 
   res$call <- match.call()
   return(res)
@@ -459,13 +490,13 @@ compare.fit.synds <- function(object, data, plot = "Z",
        QB[i,] <- object$mcoef[i,] - object$mcoefavg
      }
      lof.varcov <- t(QB) %*% QB/(m - 1)/m
-     lack.of.fit <- t(res.diff[,3]) %*% solve(lof.varcov) %*% res.diff[,3]
+     lack.of.fit <- t(res.diff[,3]) %*% ginv(lof.varcov) %*% res.diff[,3]
      lack.of.fit <- lack.of.fit * (object$m - ncoef)/ncoef/(object$m - 1) # Hotellings T square
      lof.pvalue  <- 1 - pf(lack.of.fit, ncoef, object$m - ncoef)          
    }
  } else {
    lof.varcov <- real.varcov*n/k/m
-   lack.of.fit <- t(res.diff[,3]) %*% solve(lof.varcov) %*% res.diff[,3]  #! multiply by m for combined test
+   lack.of.fit <- t(res.diff[,3]) %*% ginv(lof.varcov) %*% res.diff[,3]  #! multiply by m for combined test
    lof.pvalue  <- 1 - pchisq(lack.of.fit, ncoef)
  }
 

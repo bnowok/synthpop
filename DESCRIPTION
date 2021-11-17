@@ -2,7 +2,7 @@ Package: synthpop
 Type: Package
 Title: Generating Synthetic Versions of Sensitive Microdata for Statistical Disclosure Control
 Version: 1.7-0
-Date: 2021-11-16
+Date: 2021-11-17
 Author: Beata Nowok [aut, cre],
   Gillian M Raab [aut],
   Chris Dibben [ctb],

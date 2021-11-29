@@ -188,7 +188,6 @@ s1 <- syn(ods)
 (t1 <- utility.tables(s1, ods, tab.stats = "all", print.tabs = TRUE))
 ### synthetic data provided as a 'data.frame' object
 (t1 <- utility.tables(s1$syn, ods, tab.stats = "all", print.tabs = TRUE))
-t1$toplot
 
 t2 <- utility.tables(s1, ods, tables = "twoway")
 print(t2, max.scale = 3)
@@ -201,5 +200,4 @@ print(t2, max.scale = 3)
 
 (t5 <- utility.tables(s1, ods,  tab.stats = "all", 
                       print.tabs = TRUE))
-t5$toplot
 }

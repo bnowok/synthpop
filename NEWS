@@ -2,6 +2,14 @@ synthpop 1.7-0
 ---------------
 
 NEW FEATURES
+* An option in compare.synds() to add values of a selected utility measure 
+  to names of a plot facets (`utility.to.plot` argument).
+
+
+synthpop 1.7-0
+---------------
+
+NEW FEATURES
 * New function utility.tables() summarises oneway, two- or three-way tables 
   of utility by utility.tab(). Plots and tables of utility measures can be 
   produced.
@@ -26,7 +34,6 @@ NEW FEATURES
 * New parameters `plot` and `table` in compare.synds() function to indicate,
   respectively, whether plots should be produced and tables printed. By default
   plots are printed and tables are suppressed. 
-
 
 CHANGES
 * Default `minnumlevels` changed from -1 to 1. This permits numeric variables 
@@ -55,7 +62,6 @@ CHANGES
   readable.
 * In multi.compare() if barplot.position = "dodge", source of data 
   (original/sythetic) is mapped to an aesthetic `fill`. 
-
 
 BUG FIXES
 * Problems with checks when a variable has a class attribute that is of 

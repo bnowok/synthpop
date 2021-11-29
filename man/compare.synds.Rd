@@ -18,25 +18,28 @@
 }
 \usage{
 \method{compare}{synds}(object, data, vars = NULL,
-                        msel = NULL, stat = "percents", breaks = 20,
-                        nrow = 2, ncol = 2, rel.size.x = 1,
-                        utility.stats = c("pMSE", "S_pMSE", "df"),
-                        cols = c("#1A3C5A","#4187BF"),
-                        plot = TRUE, table = FALSE, \dots)
+        msel = NULL, stat = "percents", breaks = 20,
+        nrow = 2, ncol = 2, rel.size.x = 1,
+        utility.stats = c("pMSE", "S_pMSE", "df"),
+        utility.for.plot = "S_pMSE",
+        cols = c("#1A3C5A","#4187BF"),
+        plot = TRUE, table = FALSE, \dots)
 
 \method{compare}{data.frame}(object, data, vars = NULL, cont.na = NULL,
-                             msel = NULL, stat = "percents", breaks = 20,
-                             nrow = 2, ncol = 2, rel.size.x = 1,
-                             utility.stats = c("pMSE", "S_pMSE", "df"),
-                             cols = c("#1A3C5A","#4187BF"),
-                             plot = TRUE, table = FALSE, \dots)
+        msel = NULL, stat = "percents", breaks = 20,
+        nrow = 2, ncol = 2, rel.size.x = 1,
+        utility.stats = c("pMSE", "S_pMSE", "df"),
+        utility.for.plot = "S_pMSE",
+        cols = c("#1A3C5A","#4187BF"),
+        plot = TRUE, table = FALSE, \dots)
 
 \method{compare}{list}(object, data, vars = NULL, cont.na = NULL,
-                       msel = NULL, stat = "percents", breaks = 20,
-                       nrow = 2, ncol = 2, rel.size.x = 1,
-                       utility.stats = c("pMSE", "S_pMSE", "df"),
-                       cols = c("#1A3C5A","#4187BF"),
-                       plot = TRUE, table = FALSE, \dots)
+        msel = NULL, stat = "percents", breaks = 20,
+        nrow = 2, ncol = 2, rel.size.x = 1,
+        utility.stats = c("pMSE", "S_pMSE", "df"),
+        utility.for.plot = "S_pMSE",
+        cols = c("#1A3C5A","#4187BF"),
+        plot = TRUE, table = FALSE, \dots)
 
 \method{print}{compare.synds}(x, \dots)
 }
@@ -74,6 +77,9 @@
     \code{"S_WMabsDD"}, \code{"S_G"}, \code{"S_pMSE"}, \code{"df"}. 
     If \code{utility.stats = "all"}, all of these will be printed. For more 
     information see the details section for \code{\link{utility.tab}}.}
+  \item{utility.for.plot}{a single string that determines which utility 
+    measure to print in facet labels of the plot. Set to \code{NULL} to
+    print variable names only.}
   \item{cols}{bar colors.}
   \item{plot}{a logical value with default set to \code{TRUE} indicating
     whether plots should be produced.}

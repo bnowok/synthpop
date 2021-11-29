@@ -507,10 +507,10 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
     cat("\n\nMahalanobis distance ratio for lack-of-fit (target 1.0): ", 
         round(x$lack.of.fit/x$ncoef, 2), sep = "")
     cat("\nLack-of-fit test: ", x$lack.of.fit,"; p-value ", round(x$lof.pval, 4), 
-        " for test that synthesis model is compatible ", sep = "")
-    if (x$incomplete == FALSE) cat("\nwith a chi-squared test with ", 
+        " for test that synthesis model is\ncompatible ", sep = "")
+    if (x$incomplete == FALSE) cat("with a chi-squared test with ", 
                                    x$ncoef, " degrees of freedom.\n", sep = "")
-    else cat("\nwith an F distribution with ", x$ncoef, " and ", 
+    else cat("with an F distribution with ", x$ncoef, " and ", 
              x$m - x$ncoef, " degrees of freedom.\n", sep = "") 
   }
   if (!is.null(x$ci.plot)) {
@@ -524,8 +524,11 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
 ###-----print.compare.synds------------------------------------------------
 
 print.compare.synds <- function(x, ...) {
-  if (x$stat == "counts") cat("\nComparing counts observed with synthetic\n\n") 
-  else cat("\nComparing percentages observed with synthetic\n\n")
+  if (x$table | x$plot) {
+    if (x$stat == "counts") cat("\nComparing counts observed with synthetic\n\n") 
+    else cat("\nComparing percentages observed with synthetic\n\n")
+  }
+  
   if (class(x$plots)[1] == "gg") {
     if (x$table) print(x$tables) 
     if (x$plot) print(x$plots)

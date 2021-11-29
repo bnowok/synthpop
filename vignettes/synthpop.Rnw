@@ -197,22 +197,79 @@ head(ods)
 
 To run a default synthesis only the data to be synthesised have to be provided as a function argument. Here, an additional parameter \code{seed} is used to fix the pseudo random number generator seed and make the results reproducible. To monitor the progress of the synthesising process the function \code{syn()} prints to the console the current synthesis number and the name of a variable that is being synthesised. This output can be suppressed by setting an argument \code{print.flag} to \code{FALSE}.
 
-<<>>=
+<<eval=FALSE>>=
 my.seed <- 17914709
 sds.default <- syn(ods, seed = my.seed)
 @
 
 The resulting object of class `\code{synds}' called here \code{sds.default}, where \code{sds} stands for ``synthesised data set", is a list. The \code{print} method displays its selected components (see below). An element \code{syn} contains a synthesised data set which can be accessed using a standard list referencing (\code{sds.default$syn}). 
 
-<<>>=
+<<eval=FALSE>>=
 sds.default
 @
+\begin{verbatim}
+Call:
+($call) syn(data = ods, seed = my.seed)
+
+Number of synthesised data sets: 
+($m)  1 
+
+First rows of synthesised data set: 
+($syn)
+     sex age                      edu marital income                  ls
+1   MALE  72     PRIMARY/NO EDUCATION MARRIED     NA    MOSTLY SATISFIED
+2   MALE  82     PRIMARY/NO EDUCATION MARRIED    861             PLEASED
+3   MALE  25                SECONDARY  SINGLE   1050 MOSTLY DISSATISFIED
+4   MALE  69     PRIMARY/NO EDUCATION MARRIED    960    MOSTLY SATISFIED
+5 FEMALE  34 POST-SECONDARY OR HIGHER WIDOWED   1000               MIXED
+6 FEMALE  79                SECONDARY MARRIED   1400             PLEASED
+  wkabint
+1      NO
+2      NO
+3      NO
+4      NO
+5      NO
+6      NO
+...
+
+Synthesising methods: 
+($method)
+     sex      age      edu  marital   income       ls  wkabint 
+"sample"   "cart"   "cart"   "cart"   "cart"   "cart"   "cart" 
+
+Order of synthesis: 
+($visit.sequence)
+    sex     age     edu marital  income      ls wkabint 
+      1       2       3       4       5       6       7 
+
+Matrix of predictors: 
+($predictor.matrix)
+        sex age edu marital income ls wkabint
+sex       0   0   0       0      0  0       0
+age       1   0   0       0      0  0       0
+edu       1   1   0       0      0  0       0
+marital   1   1   1       0      0  0       0
+income    1   1   1       1      0  0       0
+ls        1   1   1       1      1  0       0
+wkabint   1   1   1       1      1  1       0
+\end{verbatim}
 
 The remaining (undisplayed) list elements include other \code{syn()} function parameters used in the synthesis. Their names can be listed via the \code{names()} function. For a complete description see the \code{syn()} function help page (\code{?syn}).
 
-<<>>=
+<<eval=FALSE>>=
 names(sds.default)
 @
+\begin{verbatim}
+ [1] "call"             "m"                "syn"             
+ [4] "method"           "visit.sequence"   "predictor.matrix"
+ [7] "smoothing"        "event"            "denom"           
+[10] "proper"           "n"                "k"               
+[13] "rules"            "rvalues"          "cont.na"         
+[16] "semicont"         "drop.not.used"    "drop.pred.only"  
+[19] "models"           "seed"             "var.lab"         
+[22] "val.lab"          "obs.vars"         "numtocat"        
+[25] "catgroups"       
+\end{verbatim}
 
 By default, all variables except for the first one in the visit sequence (\code{visit.sequence}) are synthesised using the \code{"cart"} method. The first variable to be synthesised cannot have predictors that are to be synthesised later on and therefore a random sample (with replacement) is drawn from its observed values. The default visit sequence reflects the order of variables in the original data set - columns are synthesised from left to right. 
 
@@ -220,12 +277,17 @@ The default predictor selection matrix (\code{predictor.matrix}) is defined by t
 
 Synthesising data with default parametric methods is run with the methods listed below. Values of the other \code{syn()} arguments remain the same as for the default synthesis.  
 
-<<results=hide>>=
+<<results=hide, eval=FALSE>>=
 sds.parametric <- syn(ods, method = "parametric", seed = my.seed)
 @
-<<>>=
+<<eval=FALSE>>=
 sds.parametric$method
 @
+\begin{verbatim}
+     sex        age        edu    marital     income         ls    wkabint 
+"sample" "normrank"  "polyreg"  "polyreg" "normrank"  "polyreg"  "polyreg"
+\end{verbatim}
+
 
 \subsection{Extended example}
 \label{subsec:extended}
@@ -235,16 +297,54 @@ To extend the simple example presented in Section~\ref{sec:simex} we change the 
 The default algorithm of synthesising variables in columns from left to right can be changed via the \code{visit.sequence} argument. The vector \code{visit.sequence} should include indices of columns in an order desired by a user. Alternatively, names of variables can be used. If we do not want to synthesise some variables we can exclude them from visit sequence. By default those variables are not used to predict other variables but they are saved in the synthesised
 data. In order to remove their original values from the resulting synthetic data sets an argument \code{drop.not.used} has to be set to \code{TRUE}. To synthesize variables \code{sex}, \code{age}, \code{ls}, \code{marital} and \code{edu} in this order we run the \code{syn()} function with the following specification
 
-<<>>=
+<<eval=FALSE>>=
 sds.selection <- syn(ods, visit.sequence = c(1, 2, 6, 4, 3), 
   seed = my.seed, drop.not.used = TRUE)
 @
 
 An appropriate prediction matrix is created automatically. To avoid having to alter other parameters when the visit sequence is changed and to ensure the synthetic data have the same structure as the original ones, the variables in \code{sds.selection$predictor.matrix} are arranged in the same order as in the original data. The same applies to \code{sds.selection$method} and synthesised data set \code{sds.selection$syn}. As noted above, if the parameter \code{drop.not.used} is set to \code{TRUE} and there are variables that are not used in synthesis, they are not included in the output. In this case the column indices in visit sequence, which align to the synthetic data columns, may not be the same as in the original data.    
 
-<<>>=
+<<eval=FALSE>>=
 sds.selection
 @
+\begin{verbatim}
+Call:
+($call) syn(data = ods, visit.sequence = c(1, 2, 6, 4, 3), drop.not.used = TRUE, 
+    seed = my.seed)
+
+Number of synthesised data sets: 
+($m)  1 
+
+First rows of synthesised data set: 
+($syn)
+     sex age                      edu marital               ls
+1   MALE  72       VOCATIONAL/GRAMMAR MARRIED          PLEASED
+2   MALE  82                SECONDARY MARRIED          PLEASED
+3   MALE  25 POST-SECONDARY OR HIGHER  SINGLE          PLEASED
+4   MALE  69     PRIMARY/NO EDUCATION MARRIED MOSTLY SATISFIED
+5 FEMALE  34 POST-SECONDARY OR HIGHER WIDOWED MOSTLY SATISFIED
+6 FEMALE  79     PRIMARY/NO EDUCATION WIDOWED            MIXED
+...
+
+Synthesising methods: 
+($method)
+     sex      age      edu  marital       ls 
+"sample"   "cart"   "cart"   "cart"   "cart" 
+
+Order of synthesis: 
+($visit.sequence)
+    sex     age      ls marital     edu 
+      1       2       5       4       3 
+
+Matrix of predictors: 
+($predictor.matrix)
+        sex age edu marital ls
+sex       0   0   0       0  0
+age       1   0   0       0  0
+edu       1   1   0       1  1
+marital   1   1   0       0  1
+ls        1   1   0       0  0
+\end{verbatim}
 
 Note that a user-defined \code{method} vector (setting method for each variable separately) and a specified \code{predictor.matrix} both have to include information for all variables present in the original observed data set regardless of whether they are in \code{visit.sequence} or not. This allows changes in \code{visit.sequence} without adjustments to other arguments. For variables not to be synthesised but still to be used as predictors, which needs to be reflected in a \code{predictor.matrix}, an empty \code{method} (\code{""}) should be set. By default the original observed values of those variables are included in the synthesised data sets but it can be changed using an argument \code{drop.pred.only}. 
 
@@ -270,7 +370,7 @@ predictor.matrix.corrected <- sds.ini$predictor.matrix
 predictor.matrix.corrected["marital", "ls"] <- 0
 predictor.matrix.corrected
 @
-<<results=hide>>=
+<<eval=FALSE>>=
 sds.corrected <- syn(data = ods, visit.sequence = visit.sequence.ini,
   method = method.ini, predictor.matrix = predictor.matrix.corrected,
   seed = my.seed)
@@ -279,7 +379,7 @@ sds.corrected <- syn(data = ods, visit.sequence = visit.sequence.ini,
 \subsubsection{Handling missing values in continuous variables}
 Data can be missing for a number of reasons (e.g. refusal, inapplicability, lack of knowledge) and multiple missing data codes are used to represent this variety. By default, numeric missing data codes for a continuous variable are treated as non-missing values. This may lead to erroneous synthetic values, especially when standard parametric models are used or when synthetic values are smoothed to decrease disclosure risk. The problem refers not only to the variable in question, but also to variables predicted from it. The parameter \code{cont.na} of the \code{syn()} function allows to define missing-data codes for continuous variables in order to model them separately (see Section~\ref{sec:basicfun}). In our simple example a continuous variable \code{income} has two types of missing values (\code{NA} and \code{-8}) and they should be provided in a list element named \code{"income"}. The following code shows the recommended settings for synthesis of income variable, which includes smoothing and separate synthesis of missing values   
 
-<<results=hide>>=
+<<eval=FALSE>>=
 sds.income <- syn(ods, cont.na = list(income = c(NA, -8)), 
   smoothing = list(income = "density"), seed = NA)
 @ 
@@ -287,7 +387,7 @@ sds.income <- syn(ods, cont.na = list(income = c(NA, -8)),
 \subsubsection{Rules for restricted values}
 To illustrate application of rules for restricted values consider marital status. According to Polish law males have to be at least 18 to get married. Thus, in our synthesised data set all male individuals younger than 18 should have marital status \code{SINGLE} which is the case in the observed data set. Running without rules gives incorrect results with some of the males under 18 classified as \code{MARRIED} (see summary output table below).   
 
-<<>>=
+<<eval=FALSE>>=
 M18.ods <- table(subset(ods,
   age < 18 & sex == "MALE", marital))
 M18.default <- table(subset(sds.default$syn,
@@ -297,9 +397,18 @@ M18.parametric <- table(subset(sds.parametric$syn,
 cbind("Observed data" = M18.ods, CART = M18.default,
   Parametric = M18.parametric)
 @
+\begin{verbatim}
+                   Observed data CART Parametric
+SINGLE                        57   62         54
+MARRIED                        0    1         13
+WIDOWED                        0    0          0
+DIVORCED                       0    0          0
+LEGALLY SEPARATED              0    0          0
+DE FACTO SEPARATED             0    0          0
+\end{verbatim}
 
 Application of a rule, as specified below using named lists, leads to the correct results
-<<results=hide>>=
+<<results=hide, eval=FALSE>>=
 rules.marital <- list(marital = "age < 18 & sex == 'MALE'")
 rvalues.marital <- list(marital = "SINGLE")
 sds.rmarital <- syn(ods, rules = rules.marital,
@@ -308,7 +417,7 @@ sds.rmarital.param <- syn(ods, rules = rules.marital,
   rvalues = rvalues.marital, method = "parametric", seed = my.seed)
 @
 A summary table can be produced using the following code 
-<<>>=
+<<eval=FALSE>>=
 rM18.default <- table(subset(sds.rmarital$syn,
   age < 18 & sex == "MALE", marital))
 rM18.parametric <- table(subset(sds.rmarital.param$syn,
@@ -316,6 +425,16 @@ rM18.parametric <- table(subset(sds.rmarital.param$syn,
 cbind("Observed data" = M18.ods, CART = rM18.default,
   Parametric = rM18.parametric)
 @
+\begin{verbatim}
+                   Observed data CART Parametric
+SINGLE                        57   64         68
+MARRIED                        0    0          0
+WIDOWED                        0    0          0
+DIVORCED                       0    0          0
+LEGALLY SEPARATED              0    0          0
+DE FACTO SEPARATED             0    0          0
+\end{verbatim}
+
 
 \subsection{Synthetic data analysis}
 
@@ -331,7 +450,7 @@ ods$income[ods$income == -8] <- NA
 
 We generate five synthetic data sets. 
  
-<<results=hide>>=
+<<eval=FALSE>>=
 sds <- syn(ods, method = "ctree", m = 5, seed = my.seed)
 @
 
@@ -343,22 +462,56 @@ summary(ods)
 
 The \code{summary()} function with the \code{synds} object as an argument gives summary statistics of the variables in the synthesised data set. If more than one synthetic data set has been generated, as default summaries are calculated by averaging summary values for all synthetic data copies. 
 
-<<>>=                                              
+<<eval=FALSE>>=                                              
 summary(sds)
 @
+\begin{verbatim}
+Synthetic object with 5 syntheses using methods:
+     sex      age      edu  marital   income       ls  wkabint 
+"sample"  "ctree"  "ctree"  "ctree"  "ctree"  "ctree"  "ctree" 
+
+Summary (average) for all synthetic data sets:
+     sex            age                             edu      
+ MALE  :2168   Min.   :16.0   PRIMARY/NO EDUCATION    : 965  
+ FEMALE:2832   1st Qu.:31.8   VOCATIONAL/GRAMMAR      :1620  
+               Median :48.6   SECONDARY               :1491  
+               Mean   :47.6   POST-SECONDARY OR HIGHER: 919  
+               3rd Qu.:61.6   NA's                    :   6  
+               Max.   :96.4                                  
+                                                             
+               marital           income                        ls        
+ SINGLE            :1275.2   Min.   :  100   PLEASED            :1935.8  
+ MARRIED           :2957.2   1st Qu.:  952   MOSTLY SATISFIED   :1703.2  
+ WIDOWED           : 531.6   Median : 1334   MIXED              : 829.6  
+ DIVORCED          : 201.2   Mean   : 1632   MOSTLY DISSATISFIED: 273.6  
+ LEGALLY SEPARATED :   7.0   3rd Qu.: 1980   DELIGHTED          : 186.4  
+ DE FACTO SEPARATED:  22.0   Max.   :15800   (Other)            :  64.0  
+ NA's              :   5.8   NA's   : 1285   NA's               :   7.4  
+ wkabint      
+ NO  :4656.6  
+ YES : 309.8  
+ NA's:  33.6
+\end{verbatim}
 
 Summary of individual data sets can be displayed by supplying the \code{msel} parameter, which can be a single number or a vector with selected synthesis numbers. An example code is presented below but the corresponding output is suppressed for space reasons.
 
-<<results=hide>>=                       
+<<eval=FALSE>>=                       
 summary(sds, msel = 2)
 summary(sds, msel = 1:5)
 @                                                
 
 To compare the synthesised variables with the original ones more easily, the synthesiser can use a \code{compare()} function. It is a generic function for comparison of various aspects of synthesised and observed data. The function invokes particular methods depending on the class of the first argument. If a synthetic data object and a data frame with original data are provided it compares relative frequency distributions of each variable in tabular and graphic form. The number of plots per page can be specified via \code{nrow} and \code{ncol} arguments. Alternatively, the function can be used for a subset of variables specified by a \code{vars} argument. Output for \code{income} is presented below and in Figure~\ref{fig:income}. For quantitative variables, such as \code{income}, missing data categories are plotted on the same plot as non-missing values and they are indicated by \code{miss.} suffix. If a synthetic data object contains multiple data sets by default pooled synthetic data are used for comparison.  
 
-<<fig=FALSE>>=  
+<<fig=FALSE, eval=FALSE>>=  
 compare(sds, ods, vars = "income")  
 @
+\begin{verbatim}
+Comparing percentages observed with synthetic
+
+Selected utility measures:
+          pMSE S_pMSE df
+income 8.8e-05  1.416  5
+\end{verbatim}
 
 \begin{figure}[!t]
  \centering
@@ -369,9 +522,16 @@ compare(sds, ods, vars = "income")
 
 An argument \code{msel} can be used to compare the observed data with a single or multiple individual synthetic data sets, which is illustrated below and in Figure~\ref{fig:ls} for a life satisfaction factor variable (\code{ls}).  
 
-<<fig=FALSE>>=  
+<<fig=FALSE, eval=FALSE>>=  
 compare(sds, ods, vars = "ls", msel = 1:3)
 @
+\begin{verbatim}
+Comparing percentages observed with synthetic
+
+Selected utility measures:
+      pMSE S_pMSE df
+ls 7.5e-05 0.8612  7
+\end{verbatim}
 
 \begin{figure}[!ht]
  \centering
@@ -386,25 +546,104 @@ Returning to the logistic regression model for \code{wkabint}, we estimate the o
 model.ods <- glm(wkabint ~ sex + age + edu + log(income), 
   family = "binomial", data = ods) 
 model.ods
-                             
+@
+<<eval=FALSE>>=
 model.sds <- glm.synds(wkabint ~ sex + age + edu + log(income), 
   family = "binomial", data = sds) 
 model.sds
 @
+\begin{verbatim}
+Note: To get more details of the fit see vignette on inference.
+
+Call:
+glm.synds(formula = wkabint ~ sex + age + edu + log(income), 
+    family = "binomial", data = sds)
+
+Average coefficient estimates from 5 syntheses:
+                (Intercept)                   sexFEMALE 
+                   -1.06343                    -0.66178 
+                        age       eduVOCATIONAL/GRAMMAR 
+                   -0.05138                     0.17467 
+               eduSECONDARY eduPOST-SECONDARY OR HIGHER 
+                    0.13112                    -0.01006 
+                log(income) 
+                    0.09112 
+\end{verbatim}
+
 
 The \code{summary()} function of a \code{fit.synds} object can be used by the analyst to combine estimates based on all the synthesised data sets. By default inference is made to original data quantities. In order to make inference to population quantities the parameter \code{population.inference} has to be set to \code{TRUE}. The function's result provides point estimates of coefficients (\code{B.syn}), their standard errors (\code{se(B.syn)}) and $ Z $ scores (\code{Z.syn}) for population and observed data quantities respectively. For inference to original data quantities it contains in addition estimates of the actual standard errors based on synthetic data (\code{se(Beta).syn}) and standard errors of $ Z $ scores (\code{se(Z.syn)}). Note that not all these quantities are printed automatically.
 
 The mean of the estimates from each of the \code{m} synthetic data sets yields unbiased estimates of the coefficients if the data conform to the model used for synthesis. The variance is estimated differently depending whether inference is made to the original data quantities or the population parameters and whether synthetic data were produced using simple or proper synthesis (for details see \citealt{synthpop_RSS}; expressions used to calculate variance for different cases are presented in Table 1). By default a simple synthesis is conducted and inference is made to original data quantities.
 
-<<>>= 
+<<eval=FALSE>>= 
 summary(model.sds)
 @
+\begin{verbatim}
+Fit to synthetic data set with 5 syntheses. Inference to coefficients
+and standard errors that would be obtained from the original data.
+
+Call:
+glm.synds(formula = wkabint ~ sex + age + edu + log(income), 
+    family = "binomial", data = sds)
+
+Combined estimates:
+                            xpct(Beta) xpct(se.Beta) xpct(z) Pr(>|xpct(z)|)
+(Intercept)                   -1.06343       0.98644   -1.08           0.28
+sexFEMALE                     -0.66178       0.16326   -4.05          5e-05
+age                           -0.05138       0.00547   -9.40         <2e-16
+eduVOCATIONAL/GRAMMAR          0.17467       0.29220    0.60           0.55
+eduSECONDARY                   0.13112       0.30020    0.44           0.66
+eduPOST-SECONDARY OR HIGHER   -0.01006       0.33359   -0.03           0.98
+log(income)                    0.09112       0.13231    0.69           0.49
+                               
+(Intercept)                    
+sexFEMALE                   ***
+age                         ***
+eduVOCATIONAL/GRAMMAR          
+eduSECONDARY                   
+eduPOST-SECONDARY OR HIGHER    
+log(income)                    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
 
 Function \code{compare()} allows the synthesiser to compare the estimates based on the synthesised data sets with those based on the original data and presents the results in both tabular and graphical form (see Figure~\ref{fig:Z}). 
 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 compare(model.sds, ods)
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = wkabint ~ sex + age + edu + log(income), 
+    family = "binomial", data = sds)
+
+Differences between results based on synthetic and observed data:
+                            Synthetic Observed      Diff Std. coef diff
+(Intercept)                  -1.06343 -0.21052 -0.852916        -0.9570
+sexFEMALE                    -0.66178 -0.47387 -0.187908        -1.1612
+age                          -0.05138 -0.05384  0.002455         0.4416
+eduVOCATIONAL/GRAMMAR         0.17467  0.62753 -0.452859        -1.4723
+eduSECONDARY                  0.13112  0.36839 -0.237265        -0.7386
+eduPOST-SECONDARY OR HIGHER  -0.01006 -0.18697  0.176902         0.4821
+log(income)                   0.09112 -0.04610  0.137224         1.1226
+                            CI overlap
+(Intercept)                     0.7559
+sexFEMALE                       0.7038
+age                             0.8873
+eduVOCATIONAL/GRAMMAR           0.6244
+eduSECONDARY                    0.8116
+eduPOST-SECONDARY OR HIGHER     0.8770
+log(income)                     0.7136
+
+Measures for 5 syntheses and 7 coefficients
+Mean confidence interval overlap:  0.7677
+Mean absolute std. coef diff:  0.9108
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 10.21
+Lack-of-fit test: 71.5; p-value 0 for test that synthesis model is compatible 
+with a chi-squared test with 7 degrees of freedom.
+\end{verbatim}
+
 
 \begin{figure}[!t]
  \centering

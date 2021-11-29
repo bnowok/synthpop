@@ -256,12 +256,13 @@ utility.tables.synds <- function(object, data,
    geom_raster(aes(fill = val)) + 
    scale_fill_gradient(low = "grey92", high = "#E41A1C", limits = c(0, max.scale)) + 
    labs(x = "", y = "", title = plot.title) +
-   theme_minimal() + theme(axis.text.x = element_text(size = 10, angle = 90), # vjust = 0.7),
-                      axis.text.y = element_text(size = 10),
-                      title = element_text(size = 11),
-                      legend.title = element_blank(),
-                      panel.grid.major = element_blank(), 
-                      panel.grid.minor = element_blank())
+   theme_minimal() + 
+   theme(axis.text.x = element_text(size = 10, angle = 90, hjust = 0.9, vjust = 0.2), 
+         axis.text.y = element_text(size = 10, margin = margin(r = 0)),
+         title = element_text(size = 11),
+         legend.title = element_blank(),
+         panel.grid.major = element_blank(), 
+         panel.grid.minor = element_blank())
  
  res <- list(tabs = tabs,
              plot.stat = plot.stat, 

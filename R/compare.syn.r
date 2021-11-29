@@ -11,7 +11,8 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
                           stat = "percents", breaks = 20, 
                           nrow = 2, ncol = 2, rel.size.x = 1,
                           utility.stats = c("pMSE", "S_pMSE", "df"),
-                          cols = c("#1A3C5A","#4187BF"),  
+                          utility.for.plot = "S_pMSE",  
+                          cols = c("#1A3C5A","#4187BF"),
                           plot = TRUE, table = FALSE, ...){    
                                                                          
  if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
@@ -21,7 +22,14 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
  if (!all(utility.stats %in% c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
                               "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE", "df", "all"))) 
   stop('utility.stats must be set to "all" or selected from "VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt", "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE" or "df".\n', call. = FALSE)  
-  
+ 
+  if (!is.null(utility.for.plot) &&
+    !(length(utility.for.plot) == 1 & utility.for.plot %in% c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
+                                "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE"))) 
+    stop('utility.for.plot must be one of "VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt", "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G" or "S_pMSE" .\n', call. = FALSE)  
+  if (!is.null(utility.for.plot) && !utility.for.plot %in% utility.stats ) cat(utility.for.plot, "used on plots added to table of results.\n")   
+  utility.stats <- unique(c(utility.stats, utility.for.plot))
+   
  if (!(length(stat) == 1 & stat %in% c("percents", "counts"))) { 
    cat('Parameter stat must be "percents" or "counts".\n' )
    stat <- "percents"
@@ -82,6 +90,31 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
  num <- sapply(df.synall, is.numeric) | sapply(df.synall, is.integer)  
  fac <- sapply(df.synall, function(x) is.factor(x) | is.logical(x))  
 
+ if (is.null(vars)) {
+   if (object$m == 1) vars <- names(object$syn)
+   else vars <- names(object$syn[[1]])
+ }
+ 
+ if (!is.null(utility.stats) | !is.null(utility.for.plot)) {
+   utility.list <- as.list(1:length(vars))
+   names(utility.list) <- vars
+   if (utility.stats[1] == "all") utility.stats <- 
+     c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", 
+       "MabsDD", "dBhatt","S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", 
+       "S_pMSE", "df")
+   tab.utility <- matrix(NA, length(vars), length(unique(c(utility.stats, utility.for.plot))))
+   dimnames(tab.utility) <- list(vars, unique(c(utility.stats, utility.for.plot)))
+
+   for (i in 1:length(vars)) {
+     utility.list[[i]] <- utility.tab(object, data, vars = vars[i])
+     if (i == 1) tab.ind <- match(utility.stats, names(utility.list[[i]]))
+     tab.utility[i, ] <- sapply(utility.list[[i]][tab.ind], mean)
+   }
+   if (!is.null(utility.for.plot)) utilvals.for.plot <- tab.utility[, match(utility.for.plot, dimnames(tab.utility)[[2]])]
+ } else {
+   if (is.null(utility.stats)) tab.utility <- NULL
+   if (is.null(utility.for.plot)) utilvals.for.plot <- NULL
+ }
  # frequency tables for factors
  if (sum(fac) > 0) {
    any.fac.na <- unlist(apply(df.obs[,fac,drop = FALSE],2,function(x) any(is.na(x))))    
@@ -180,29 +213,36 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
  if (is.null(msel)) {
    for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed","synthetic")
  } else {
-   for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed",paste0("syn=", msel))
+   for (i in 1:length(os.table)) dimnames(os.table[[i]])[[1]] <- c("observed", paste0("syn=", msel))
  }
  Value <- Percent <- Count <- Data <- NULL    ## otherwise 'no visible binding for global variables'
  # sorts the factor labels in the right order for numeric vars
  per.fac$Value <- as.character(per.fac$Value)
  vals <- unique(per.fac$Value)
  valsnum <- unique(per.fac$Value[per.fac$Variable %in% names(num[num == TRUE])])
- valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals,1,4) != "miss"]))
- valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals,1,4) == "miss"])
+ valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals, 1, 4) != "miss"]))
+ valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals, 1, 4) == "miss"])
  vals[vals %in% valsnum] <- c(valsnum.nonmiss,valsnum.miss)
  per.fac$Value <- factor(as.character(per.fac$Value), levels = vals)
+ 
+ if (!is.null(utility.for.plot)){
+   levels(per.fac$Variable) <- paste0(levels(per.fac$Variable), ": ", utility.for.plot, " = ", round(utilvals.for.plot, 2))
+   commonnames_lab <- paste0(commonnames, ": ", utility.for.plot, " = ", round(utilvals.for.plot, 2))
+ } else {
+   commonnames_lab <- commonnames
+ }
 
  # get different plots in order of data
  nperplot <- nrow*ncol
  nplots   <- ceiling(length(commonnames)/nperplot)
- plots    <- vector("list",nplots)
- tables   <- vector("list",nplots)
+ plots    <- vector("list", nplots)
+ tables   <- vector("list", nplots)
  
  for (i in 1:nplots) {
    min <- (i - 1)*nperplot + 1
-   max <- min(length(commonnames),(i - 1)*nperplot + nperplot)
+   max <- min(length(commonnames), (i - 1)*nperplot + nperplot)
    # tables
-   ttables <- vector("list",(max - min + 1))
+   ttables <- vector("list", (max - min + 1))
    names(ttables) <- commonnames[min:max]
    for (j in commonnames[min:max]) {
      ttables[[j]] <- os.table[[j]]
@@ -210,8 +250,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    tables[[i]] <- ttables
 
   # plots
-   per.fact <- per.fac[per.fac$Variable %in% commonnames[min:max],]
-   # per.fact <- per.fact[order(match(per.fact$Variable,commonnames[min:max])),]
+   per.fact <- per.fac[per.fac$Variable %in% commonnames_lab[min:max],]
    if (stat == "percents") p <- ggplot(data = per.fact, aes(x = Value, y = Percent, fill = Data))
    else p <- ggplot(data = per.fact, aes(x = Value, y = Count, fill = Data))
    p <- p + geom_bar(position = "dodge", colour = cols[1], stat = "identity") + 
@@ -229,30 +268,6 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
  if (length(tables) == 1) {
    tables <- tables[[1]]
    plots  <- plots[[1]]
- }  
-
- if (is.null(vars)) {
-   if (object$m == 1) vars <- names(object$syn)
-   else vars <- names(object$syn[[1]])
- }
- 
- if (!is.null(utility.stats)) {
-   utility.list <- as.list(1:length(vars))
-   names(utility.list) <- vars
-   if (utility.stats[1] == "all") utility.stats <- 
-     c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", 
-       "MabsDD", "dBhatt","S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", 
-       "S_pMSE", "df")
-   tab.utility <- matrix(NA, length(vars), length(utility.stats))
-   dimnames(tab.utility) <- list(vars, utility.stats)
-   
-   for (i in 1:length(vars)) {
-     utility.list[[i]] <- utility.tab(object, data, vars = vars[i])
-       if (i == 1) tab.ind <- match(utility.stats, names(utility.list[[i]]))
-       tab.utility[i, ] <- sapply(utility.list[[i]][tab.ind], mean)
-   } 
- } else {
-   tab.utility <- NULL
  }
 
  res <- list(tables = tables, plots = plots, stat = stat, vars = vars,
@@ -268,6 +283,7 @@ compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.n
                                                msel = NULL, stat = "percents", breaks = 20, 
                                                nrow = 2, ncol = 2, rel.size.x = 1,
                                                utility.stats = c("pMSE", "S_pMSE", "df"),
+                                               utility.for.plot = "S_pMSE",
                                                cols = c("#1A3C5A","#4187BF"),   
                                                plot = TRUE, table = FALSE, ...){
   
@@ -299,6 +315,7 @@ compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.n
                        msel = msel, stat = stat, breaks = breaks, 
                        nrow = nrow, ncol = ncol, rel.size.x = rel.size.x,
                        utility.stats = utility.stats,
+                       utility.for.plot = utility.for.plot,
                        cols = cols, plot = plot, table = table, ...) 
   res$call <- match.call()
   return(res)

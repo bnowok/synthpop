@@ -8,8 +8,8 @@
 \tabular{ll}{
 Package: \tab synthpop\cr
 Type: \tab Package\cr
-Version: \tab 1.7-0\cr
-Date: \tab 2021-11-17\cr
+Version: \tab 1.7-1\cr
+Date: \tab 2021-11-29\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 Synthetic data are generated from the original (observed) data by the function 

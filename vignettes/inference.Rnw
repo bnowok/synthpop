@@ -41,12 +41,9 @@
 \author{Gillian M Raab \& Beata Nowok}
 \renewcommand{\baselinestretch}{1.5} % 1.5 denotes double spacing. Changing it will change the spacing
 
-
-
 % \VignetteIndexEntry{Inference in synthpop}
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 <<echo=false>>=
 options(prompt="R> ", width=77, digits=4, useFancyQuotes=FALSE)
@@ -173,11 +170,33 @@ summary(glm.synds(smoke ~ sex + age + edu + sex * edu,
 \noindent{We see here that inference is possible when only one synthetic data set is produced, but increasing \texttt{m} improves the precision of the estimates as you will see from the smaller \texttt{se(Beta.syn)} values in the example below.}
 
 \renewcommand{\baselinestretch}{1.0} 
-<<>>=
+<<eval=FALSE>>=
 s5 <- syn(ods, seed = 5678, m = 10, proper = TRUE, print.flag = FALSE)
 summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
   data = s5, family = "binomial"), population.inference = TRUE)
 @
+\begin{verbatim}
+Fit to synthetic data set with 10 syntheses. Inference to population
+coefficients when all variables in the model are synthesised.
+
+Call:
+glm.synds(formula = smoke ~ sex + age + edu + sex * edu, family = "binomial", 
+    data = s5)
+
+Combined estimates:
+                  Beta.syn se.Beta.syn z.syn Pr(>|z.syn|)    
+(Intercept)        0.12996     0.17508  0.74       0.4579    
+sexFEMALE          1.02161     0.16885  6.05      1.4e-09 ***
+age                0.00530     0.00213  2.48       0.0130 *  
+eduVOC             0.14992     0.14708  1.02       0.3080    
+eduSEC             0.48663     0.15828  3.07       0.0021 ** 
+eduHIGH            0.98525     0.19689  5.00      5.6e-07 ***
+sexFEMALE:eduVOC  -0.51278     0.20700 -2.48       0.0132 *  
+sexFEMALE:eduSEC  -0.41484     0.21636 -1.92       0.0552 .  
+sexFEMALE:eduHIGH -0.63809     0.25982 -2.46       0.0141 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
 \renewcommand{\baselinestretch}{1.5} 
 
 The \textbf{synthpop} package was written with completely synthesised data in mind but, with care, it can also be used for population inference for some incompletely synthesised data, when all values for one or more variable are unchanged. The synthesis must have been conditional on the values of all unsynthesised variables. This can be done by placing them at the start of the visit sequence and setting their parameter \texttt{method = ""}. The functions \texttt{lm.synds()} and \texttt{glm.synds()} check this condition and print warnings, as we saw for the synthesis \texttt{s2} above. 
@@ -185,16 +204,42 @@ The \textbf{synthpop} package was written with completely synthesised data in mi
 When some of the variables in the formula are unchanged the between synthesis variance can be estimated from multiple syntheses \cite{reiter_partial} with standard errors calculated as  $\sqrt{b_m/m + \bar{v}_mk/n}$. This standard error estimate requires $m > 1$ and larger values of $m$ such as $m > 5$ are recommended for reliable results. 
 \renewcommand{\baselinestretch}{1.0}
 In the next example only one of the variables in the formula has been synthesised.
-<<>>=
+
+\renewcommand{\baselinestretch}{1.0} 
+<<eval=FALSE>>=
 s6 <- syn(ods, seed = 910011, m = 12, 
   method = c("", "", "", "cart"), print.flag = FALSE) 
 
 summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
   data = s6, family = "binomial"), population.inference = TRUE)
-
 @
+\begin{verbatim}
+Fit to synthetic data set with 12 syntheses. Inference to population
+coefficients when all variables in the model are synthesised.
+
+Call:
+glm.synds(formula = smoke ~ sex + age + edu + sex * edu, family = "binomial", 
+    data = s6)
+
+Combined estimates:
+                  Beta.syn se.Beta.syn z.syn Pr(>|z.syn|)    
+(Intercept)        0.08885     0.16709  0.53      0.59491    
+sexFEMALE          1.05974     0.15927  6.65      2.9e-11 ***
+age                0.00582     0.00204  2.86      0.00429 ** 
+eduVOC             0.16052     0.13947  1.15      0.24977    
+eduSEC             0.53571     0.15147  3.54      0.00041 ***
+eduHIGH            1.15776     0.19147  6.05      1.5e-09 ***
+sexFEMALE:eduVOC  -0.56293     0.19543 -2.88      0.00397 ** 
+sexFEMALE:eduSEC  -0.44036     0.20591 -2.14      0.03247 *  
+sexFEMALE:eduHIGH -0.94733     0.24693 -3.84      0.00012 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}
 If a user attempts an incomplete fit with \texttt{population.inference = TRUE} from a synthesis with \texttt{m = 1}, the program will detect this and revert to inference from a complete synthesis with a resulting increase in the standard errors as we show here.
+
+\renewcommand{\baselinestretch}{1.0}
 <<>>=
 s7 <- syn(ods, seed = 910011, m = 1, 
   method = c("", "", "", "cart"), print.flag = FALSE) 
@@ -206,15 +251,62 @@ summary(glm.synds(smoke ~ sex + age + edu + sex * edu,
 \renewcommand{\baselinestretch}{1.5}
 
 
-
 In addition to these combined estimates from all the syntheses, the user can choose to print out the results from selected individual syntheses from the \texttt{m} with the parameter \texttt{(msel)}. These are simply what the original functions (\texttt{lm()} or \texttt{glm()}) would report.
 
 \renewcommand{\baselinestretch}{1.0} 
-<<>>=
+<<eval=FALSE>>=
 summary(glm.synds(smoke ~ sex + age + edu + sex * edu, 
   data = s6, family = "binomial"), population.inference = TRUE, 
   incomplete = TRUE, msel = 1:2)
 @
+\begin{verbatim}
+Fit to synthetic data set with 12 syntheses. Inference to population
+coefficients when all variables in the model are synthesised.
+
+Call:
+glm.synds(formula = smoke ~ sex + age + edu + sex * edu, family = "binomial", 
+    data = s6)
+
+Combined estimates:
+                  Beta.syn se.Beta.syn z.syn Pr(>|z.syn|)    
+(Intercept)        0.08885     0.16709  0.53      0.59491    
+sexFEMALE          1.05974     0.15927  6.65      2.9e-11 ***
+age                0.00582     0.00204  2.86      0.00429 ** 
+eduVOC             0.16052     0.13947  1.15      0.24977    
+eduSEC             0.53571     0.15147  3.54      0.00041 ***
+eduHIGH            1.15776     0.19147  6.05      1.5e-09 ***
+sexFEMALE:eduVOC  -0.56293     0.19543 -2.88      0.00397 ** 
+sexFEMALE:eduSEC  -0.44036     0.20591 -2.14      0.03247 *  
+sexFEMALE:eduHIGH -0.94733     0.24693 -3.84      0.00012 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Estimates for selected syntheses contributing to the combined estimates:
+
+Coefficients:
+                      syn=1     syn=2
+(Intercept)        0.019362  0.062836
+sexFEMALE          1.266456  1.008554
+age                0.005587  0.006237
+eduVOC             0.334849  0.189847
+eduSEC             0.502420  0.501606
+eduHIGH            1.258915  1.085128
+sexFEMALE:eduVOC  -0.959960 -0.645905
+sexFEMALE:eduSEC  -0.585671 -0.222160
+sexFEMALE:eduHIGH -1.105639 -0.773811
+
+z values:
+                    syn=1   syn=2
+(Intercept)        0.1232  0.4002
+sexFEMALE          8.2142  6.7988
+age                2.8658  3.1928
+eduVOC             2.5384  1.4429
+eduSEC             3.5570  3.4912
+eduHIGH            6.9420  6.3346
+sexFEMALE:eduVOC  -5.0669 -3.5127
+sexFEMALE:eduSEC  -2.9878 -1.1305
+sexFEMALE:eduHIGH -4.6306 -3.4075
+\end{verbatim}
 \renewcommand{\baselinestretch}{1.5} 
 
 
@@ -245,7 +337,7 @@ If the synthesis model is correct these $LOF$ measures will have a $\chi^2$ dist
 We illustrate these results with three different syntheses and three different logistic regression models. For the first synthesis \texttt{s7} and the first fit \texttt{f7} the synthesis model is compatible with the model fitted. By using the new function \texttt{syn.strata} the synthesis preserves all the relationships between the stratifying variable, synthesised first, and the within-stratum relationships. Here  stratification is by the dependent variable ``smoke" and within each smoking group education is modelled as a multinomial distribution conditional on sex, giving the correct model for \texttt{f7}. 
  	
 \renewcommand{\baselinestretch}{1.0} 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ] # remove 10 observations with missing "smoke"
 s8 <- syn.strata(ods, m = 5, method = "parametric", strata = "smoke", 
   seed = 5678, visit.sequence = c("smoke", "sex", "edu", "age"), 
@@ -254,13 +346,38 @@ f8 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s8,
   family = "binomial")
 compare(f8, ods, plot.intercept = TRUE, plot = "coef") 
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + sex * edu, family = "binomial", 
+    data = s8)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic Observed     Diff Std. coef diff CI overlap
+(Intercept)         0.45921   0.4078  0.05142        0.47653     0.8784
+sexFEMALE           1.03712   1.0592 -0.02211       -0.14727     0.9624
+eduVOC              0.08504   0.1139 -0.02884       -0.22471     0.9427
+eduSEC              0.44279   0.5074 -0.06457       -0.46064     0.8825
+eduHIGH             0.90379   0.9864 -0.08262       -0.46585     0.8812
+sexFEMALE:eduVOC   -0.59573  -0.6058  0.01004        0.05417     0.9862
+sexFEMALE:eduSEC   -0.36813  -0.4497  0.08159        0.41637     0.8938
+sexFEMALE:eduHIGH  -0.76002  -0.7986  0.03854        0.16529     0.9578
+
+Measures for 5 syntheses and 8 coefficients
+Mean confidence interval overlap:  0.9231
+Mean absolute std. coef diff:  0.3014
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 0.49
+Lack-of-fit test: 3.948; p-value 0.8618 for test that synthesis model is  
+compatible with a chi-squared test with 8 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}  	
 
 \noindent{As expected, there is no evidence of any lack of fit and $|\bar{z}|$ is not out of line with what we expect with \texttt{m = 5}.} 
 The second example is more typical of what a user of \textbf{synthpop} might use with the default method \texttt{cart} for all variables.
 
 \renewcommand{\baselinestretch}{1.0} 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ] # remove 10 observationswith missing "smoke"
 s9 <- syn(ods, m = 5, seed = 5678, 
   visit.sequence = c("sex", "edu", "age", "smoke"), print.flag = FALSE)
@@ -268,6 +385,29 @@ f9 <- glm.synds(smoke ~ sex  + age + edu + sex * age, data = s9,
   family = "binomial")
 compare(f9, ods)  
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + age + edu + sex * age, family = "binomial", 
+    data = s9)
+
+Differences between results based on synthetic and observed data:
+              Synthetic  Observed      Diff Std. coef diff CI overlap
+(Intercept)    0.197102  0.400261 -0.203160        -1.2463     0.6821
+sexFEMALE      0.593279  0.224701  0.368578         2.0424     0.4790
+age            0.008956  0.003104  0.005852         2.2534     0.4252
+eduVOC        -0.030571 -0.050985  0.020414         0.2058     0.9475
+eduSEC         0.448646  0.393783  0.054862         0.5315     0.8644
+eduHIGH        0.659803  0.688391 -0.028588        -0.2374     0.9394
+sexFEMALE:age -0.003031  0.007702 -0.010733        -2.9877     0.2378
+
+Measures for 5 syntheses and 7 coefficients
+Mean confidence interval overlap:  0.6536
+Mean absolute std. coef diff:  1.358
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 10.15
+Lack-of-fit test: 71.02; p-value 0 for test that synthesis model is  
+compatible with a chi-squared test with 7 degrees of freedom.
+\end{verbatim}
 
 \begin{figure}[!ht]
 	\begin{center}
@@ -280,25 +420,77 @@ compare(f9, ods)
 The third synthesis uses the method \texttt{"sample"} for all variables, a bootstrap sample that does not preserve any of the relationships between variables, and the fitted model is clearly wrong with every coefficient giving evidence of a difference and the large absolute effect sizes, with three over \texttt{5}.}
 
 \renewcommand{\baselinestretch}{1.0}
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 s10 <- syn(ods, m = 5, seed = 5678, method = "sample", 
   visit.sequence = c("sex", "edu", "age", "smoke"), print.flag = FALSE)
 f10 <- glm.synds(smoke ~ sex  + age + edu + sex * edu, data = s10, 
   family = "binomial")
 compare(f10, ods)
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + age + edu + sex * edu, family = "binomial", 
+    data = s10)
+
+Differences between results based on synthetic and observed data:
+                   Synthetic  Observed      Diff Std. coef diff CI overlap
+(Intercept)        1.102e+00  0.028147  1.073657          6.757   -0.72377
+sexFEMALE         -1.165e-01  1.033275 -1.149825         -7.641   -0.94926
+age                9.724e-05  0.006355 -0.006258         -3.200    0.18369
+eduVOC            -6.982e-02  0.219490 -0.289315         -2.182    0.44343
+eduSEC             3.337e-02  0.613072 -0.579698         -4.020   -0.02552
+eduHIGH           -2.542e-02  1.078920 -1.104339         -6.137   -0.56569
+sexFEMALE:eduVOC   1.778e-01 -0.576577  0.754354          4.063   -0.03639
+sexFEMALE:eduSEC   1.574e-02 -0.442560  0.458298          2.336    0.40406
+sexFEMALE:eduHIGH  1.463e-01 -0.752495  0.898754          3.844    0.01931
+
+Measures for 5 syntheses and 9 coefficients
+Mean confidence interval overlap:  -0.1389
+Mean absolute std. coef diff:  4.464
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 108.4
+Lack-of-fit test: 975.3; p-value 0 for test that synthesis model is  
+compatible with a chi-squared test with 9 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}
 		 	
 When some variables in the model are not synthesised  we need to set \texttt{incomplete = TRUE} for correct inference. This leads to the calculation of the variance matrix of the differences as $V_{diff}=B_m/m$. This variance matrix will be singular if the \texttt{m} is smaller than then number of coefficients ($p$) and \texttt{m} considerably larger than $p$ is recommended. In this case the lack-of-fit test needs to use Hotelling's $T^2$ statistic referred to an $F$ distribution with degrees of freedom $p$ and $m - p$. In the next example two variables are unsynthesised so methods for incomplete/partial synthesis are used and $m$ increased to 20.
 \begin{small}
 \renewcommand{\baselinestretch}{1.0}
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 s11 <- syn(ods, seed = 910011, m = 20, method = c("", "", "cart", "cart"), 
   print.flag = FALSE) 
 f11 <- glm.synds(smoke ~ sex + age + edu + sex * edu, data = s11, 
   family = "binomial")
 compare(f11, ods)
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + age + edu + sex * edu, family = "binomial", 
+    data = s11)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic  Observed       Diff Std. coef diff CI overlap
+(Intercept)        0.039589  0.028147  1.144e-02        0.07201     0.9816
+sexFEMALE          1.066542  1.033275  3.327e-02        0.22107     0.9436
+age                0.006438  0.006355  8.294e-05        0.04241     0.9892
+eduVOC             0.191791  0.219490 -2.770e-02       -0.20888     0.9467
+eduSEC             0.571649  0.613072 -4.142e-02       -0.28726     0.9267
+eduHIGH            1.148183  1.078920  6.926e-02        0.38493     0.9018
+sexFEMALE:eduVOC  -0.559032 -0.576577  1.754e-02        0.09449     0.9759
+sexFEMALE:eduSEC  -0.462752 -0.442560 -2.019e-02       -0.10292     0.9737
+sexFEMALE:eduHIGH -0.951924 -0.752495 -1.994e-01       -0.85302     0.7824
+
+Measures for 20 syntheses and 9 coefficients
+Mean confidence interval overlap:  0.9357
+Mean absolute std. coef diff:  0.2519
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 3.38
+Lack-of-fit test: 30.42; p-value 4e-04 for test that synthesis model is  
+compatible with a chi-squared test with 9 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}
 \end{small}
 \noindent{This gives a fit that, judged by the values of  $z_j$, (\texttt{Std. coef diff}) and the overlaps is acceptable, but with \texttt{m = 20} there is evidence of lack-of-fit for two coefficients.}  
@@ -318,21 +510,74 @@ The  expected  value of $IO_j$ for 95\% intervals will be $1-\sqrt{2/(m\pi)}/(2 
 To illustrate these methods we select three different fitted models. In the first case the synthesis model is compatible with the model being fitted. A model with smoking predicted from sex, education and its interactions is evaluated. The synthesis is stratified by the dependent variable, smoking, with missing values removed and a parametric model with sex and education is fitted in each stratum, giving a synthesis compatible with the model.
 
 \renewcommand{\baselinestretch}{1.0} 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 ods <- ods[!is.na(ods$smoke), ]
 s12 <- syn.strata(ods, m = 5, visit.sequence = c(4, 1, 2), 
   method = "parametric", strata = "smoke", seed = 5678, print.flag = FALSE)
 s13 <- syn.strata(ods, m = 5, visit.sequence = c(4, 1, 2), 
   method = "parametric", strata = "smoke", seed = 1234, proper = TRUE, 
   print.flag = FALSE, tab.strataobs = FALSE)
-
+@
+<<eval=FALSE>>=
 f12 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s12, 
   family = "binomial")
 compare(f12, ods, plot.intercept = TRUE, plot = "coef") 
+@
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + sex * edu, family = "binomial", 
+    data = s12)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic Observed     Diff Std. coef diff CI overlap
+(Intercept)         0.45676   0.4078  0.04897         0.4538     0.8842
+sexFEMALE           1.01348   1.0592 -0.04574        -0.3047     0.9223
+eduVOC              0.09649   0.1139 -0.01739        -0.1355     0.9654
+eduSEC              0.48782   0.5074 -0.01953        -0.1393     0.9645
+eduHIGH             0.94450   0.9864 -0.04191        -0.2363     0.9397
+sexFEMALE:eduVOC   -0.55190  -0.6058  0.05387         0.2908     0.9258
+sexFEMALE:eduSEC   -0.48621  -0.4497 -0.03649        -0.1862     0.9525
+sexFEMALE:eduHIGH  -0.74999  -0.7986  0.04858         0.2083     0.9469
+
+Measures for 5 syntheses and 8 coefficients
+Mean confidence interval overlap:  0.9377
+Mean absolute std. coef diff:  0.2444
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 0.7
+Lack-of-fit test: 5.57; p-value 0.6953 for test that synthesis model is  
+compatible with a chi-squared test with 8 degrees of freedom.
+\end{verbatim}
+
+<<eval=FALSE>>=
 f13 <- glm.synds(smoke ~ sex  + edu + sex * edu, data = s13, 
   family = "binomial")
 compare(f13, ods, plot.intercept = TRUE)
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + sex * edu, family = "binomial", 
+    data = s13)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic Observed     Diff Std. coef diff CI overlap
+(Intercept)          0.2855   0.4078 -0.12230       -1.13337     0.7109
+sexFEMALE            1.2375   1.0592  0.17828        1.18760     0.6970
+eduVOC               0.2531   0.1139  0.13917        1.08434     0.7234
+eduSEC               0.6540   0.5074  0.14666        1.04631     0.7331
+eduHIGH              0.9508   0.9864 -0.03564       -0.20096     0.9487
+sexFEMALE:eduVOC    -0.8695  -0.6058 -0.26370       -1.42346     0.6369
+sexFEMALE:eduSEC    -0.5814  -0.4497 -0.13170       -0.67214     0.8285
+sexFEMALE:eduHIGH   -0.7774  -0.7986  0.02114        0.09067     0.9769
+
+Measures for 5 syntheses and 8 coefficients
+Mean confidence interval overlap:  0.7819
+Mean absolute std. coef diff:  0.8549
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 2.76
+Lack-of-fit test: 22.12; p-value 0.0047 for test that synthesis model is  
+compatible with a chi-squared test with 8 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5} 
 
 \noindent{The first synthesis gives results in line with what would be expected for standardised differences and overlaps from a correct model with \texttt{m = 5}, and the second with synthesis from the posterior predictive distribution of the parameters gives larger standardised differences and lower overlaps. In neither case does the lack-of-fit test suggest any problem with the synthesising model.}
@@ -340,19 +585,74 @@ compare(f13, ods, plot.intercept = TRUE)
 The next example uses parametric models which capture some of the relationships but largely miss the interaction between education and sex.
 
 \renewcommand{\baselinestretch}{1.0} 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 s14 <- syn(ods, m = 5, seed = 9101112, method = "parametric",
   print.flag = FALSE)
 s15 <- syn(ods, m = 5, seed = 1415, method = "parametric", 
   proper = TRUE, print.flag = FALSE)
-
+@
+<<eval=FALSE>>=
 f14 <- glm.synds(smoke ~ sex  + edu + age + sex * edu, data = s14, 
   family = "binomial")
-compare(f13, ods, plot.intercept = TRUE, plot = "coef") 
+compare(f14, ods, plot.intercept = TRUE, plot = "coef") 
+@
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + age + sex * edu, family = "binomial", 
+    data = s14)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic  Observed      Diff Std. coef diff CI overlap
+(Intercept)        0.085176  0.028147  0.057029        0.35891     0.9084
+sexFEMALE          0.697431  1.033275 -0.335844       -2.23180     0.4307
+eduVOC             0.103703  0.219490 -0.115786       -0.87314     0.7773
+eduSEC             0.609909  0.613072 -0.003163       -0.02193     0.9944
+eduHIGH            0.960800  1.078920 -0.118120       -0.65646     0.8325
+age                0.006173  0.006355 -0.000182       -0.09307     0.9763
+sexFEMALE:eduVOC  -0.051487 -0.576577  0.525089        2.82787     0.2786
+sexFEMALE:eduSEC  -0.091203 -0.442560  0.351357        1.79093     0.5431
+sexFEMALE:eduHIGH -0.161805 -0.752495  0.590690        2.52655     0.3555
+
+Measures for 5 syntheses and 9 coefficients
+Mean confidence interval overlap:  0.6774
+Mean absolute std. coef diff:  1.265
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 8.25
+Lack-of-fit test: 74.28; p-value 0 for test that synthesis model is  
+compatible with a chi-squared test with 9 degrees of freedom.
+\end{verbatim}
+
+<<eval=FALSE>>=
 f15 <- glm.synds(smoke ~ sex  + edu + age + sex * edu, data = s15, 
   family = "binomial")
 compare(f15, ods, plot.intercept = TRUE) 
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + age + sex * edu, family = "binomial", 
+    data = s15)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic  Observed      Diff Std. coef diff CI overlap
+(Intercept)       -0.094687  0.028147 -0.122834        -0.7731     0.8028
+sexFEMALE          0.659187  1.033275 -0.374088        -2.4859     0.3658
+eduVOC             0.233921  0.219490  0.014431         0.1088     0.9722
+eduSEC             0.674266  0.613072  0.061194         0.4244     0.8917
+eduHIGH            0.961463  1.078920 -0.117457        -0.6528     0.8335
+age                0.008807  0.006355  0.002451         1.2534     0.6802
+sexFEMALE:eduVOC  -0.031396 -0.576577  0.545180         2.9361     0.2510
+sexFEMALE:eduSEC  -0.003785 -0.442560  0.438775         2.2365     0.4294
+sexFEMALE:eduHIGH -0.186075 -0.752495  0.566420         2.4227     0.3819
+
+Measures for 5 syntheses and 9 coefficients
+Mean confidence interval overlap:  0.6232
+Mean absolute std. coef diff:  1.477
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 10.71
+Lack-of-fit test: 96.42; p-value 0 for test that synthesis model is 
+compatible with a chi-squared test with 9 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}  
 
 \noindent{Both syntheses identify the problems with the synthesis model, but the first analysis with \texttt{proper = FALSE} shows it more clearly.}
@@ -369,15 +669,68 @@ When the intervals are calculated on the original scales (\texttt{plot = "coef"}
 
 
 \renewcommand{\baselinestretch}{1.0} 
-<<fig=FALSE>>=
+<<eval=FALSE>>=
 s16 <- syn(ods, proper = TRUE, print.flag = FALSE)
 f16 <- glm.synds(smoke ~ sex  + edu  + sex * edu, data = s16, 
   family = "binomial")
-
+@
+<<eval=FALSE>>=
 compare(f16, ods, plot.intercept = TRUE, plot = "coef") 
+@
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + sex * edu, family = "binomial", 
+    data = s16)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic Observed     Diff Std. coef diff CI overlap
+(Intercept)         0.36822   0.4078 -0.03957        -0.3667     0.9064
+sexFEMALE           1.24320   1.0592  0.18397         1.2255     0.6874
+eduVOC              0.01954   0.1139 -0.09434        -0.7350     0.8125
+eduSEC              0.74137   0.5074  0.23401         1.6695     0.5741
+eduHIGH             1.10822   0.9864  0.12182         0.6869     0.8248
+sexFEMALE:eduVOC   -0.56713  -0.6058  0.03863         0.2085     0.9468
+sexFEMALE:eduSEC   -0.81774  -0.4497 -0.36803        -1.8782     0.5208
+sexFEMALE:eduHIGH  -1.18534  -0.7986 -0.38677        -1.6586     0.5769
+
+Measures for one synthesis and 8 coefficients
+Mean confidence interval overlap:  0.7312
+Mean absolute std. coef diff:  1.054
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 1.65
+Lack-of-fit test: 13.18; p-value 0.1058 for test that synthesis model is  
+compatible with a chi-squared test with 8 degrees of freedom.
+\end{verbatim}
+
+<<eval=FALSE>>=
 compare(f16, ods, plot.intercept = TRUE, population.inference = TRUE, 
   plot = "coef")
 @
+\begin{verbatim}
+Call used to fit models to the data:
+glm.synds(formula = smoke ~ sex + edu + sex * edu, family = "binomial", 
+    data = s16)
+
+Differences between results based on synthetic and observed data:
+                  Synthetic Observed     Diff Std. coef diff CI overlap
+(Intercept)         0.36822   0.4078 -0.03957        -0.3667     0.7887
+sexFEMALE           1.24320   1.0592  0.18397         1.2255     0.7887
+eduVOC              0.01954   0.1139 -0.09434        -0.7350     0.7887
+eduSEC              0.74137   0.5074  0.23401         1.6695     0.7414
+eduHIGH             1.10822   0.9864  0.12182         0.6869     0.7887
+sexFEMALE:eduVOC   -0.56713  -0.6058  0.03863         0.2085     0.7887
+sexFEMALE:eduSEC   -0.81774  -0.4497 -0.36803        -1.8782     0.6995
+sexFEMALE:eduHIGH  -1.18534  -0.7986 -0.38677        -1.6586     0.7436
+
+Measures for one synthesis and 8 coefficients
+Mean confidence interval overlap:  0.766
+Mean absolute std. coef diff:  1.054
+
+Mahalanobis distance ratio for lack-of-fit (target 1.0): 1.65
+Lack-of-fit test: 13.18; p-value 0.1058 for test that synthesis model is  
+compatible with a chi-squared test with 8 degrees of freedom.
+\end{verbatim}
+
 \renewcommand{\baselinestretch}{1.5}  
 
 

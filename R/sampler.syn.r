@@ -9,7 +9,8 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
 {
  #--- Assign optional parameters (...) to appropriate synthesising function   
  dots  <- as.list(substitute(list(...)))[-1L]         
- meth.with.opt <- paste(c("cart", "cartbboot", "ctree", "survctree", "polyreg",
+ meth.with.opt <- paste(c("cart", "cartbboot", "ctree", "survctree", "polyreg", 
+                          "norm", "lognorm", "sqrtnorm", "cubertnorm", "normrank", "pmm",
                           "polr", "rf", "ranger", "bag", "ipf", "catall"), collapse = "\\.|")
  meth.check <- grep(meth.with.opt, names(dots), value = TRUE)
  args.err <- !(names(dots) %in% meth.check)

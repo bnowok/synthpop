@@ -33,7 +33,8 @@ multi.compare(object, data, var = NULL, by = NULL, msel = NULL,
     \code{"density"} gives proportions.}
   \item{boxplot.point}{default (\code{TRUE}) adds individual points to boxplots.}
   \item{msel}{numbers of synthetic data sets to be used - must be numbers in 
-    the range \code{1:object$m} - defaults to \code{1:object$m}}
+    the range \code{1:object$m}. If \code{NULL} pooled synthetic data copies are 
+    compared with the original data.}
   \item{binwidth}{sets width of a bin for histograms.}
   \item{\dots}{additional parameters that can be supplied to \code{\link{ggplot}}.}
 }

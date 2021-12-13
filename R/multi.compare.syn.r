@@ -38,16 +38,19 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
  
  # data prep
  #----
- if (is.null(msel) & object$m > 1) msel <- 1:object$m
+ # if (is.null(msel) & object$m > 1) msel <- 1:object$m
  if (object$m == 1) {
    synall <- cbind(object$syn, source = "syn")
  } else if (length(msel) == 1) {
    synall <- cbind(object$syn[[msel]], source = "syn")
+ } else if (is.null(msel) & object$m > 1) {
+   synall <- cbind(do.call(rbind,object$syn), source = "syn")
  } else if (object$m > 1 & length(msel) > 1) {
    synall <- Map(cbind, object$syn[msel], source = paste0("syn=", msel))
    synall <- do.call(rbind, synall)
  }
  obssyn <- rbind(cbind(data, source = "obs"), synall)
+ obssyn$source <- factor(obssyn$source, levels = c("obs", paste0("syn=", msel))) 
  #----
  
  # change any numeric variables with < 6 distinct values to factors
@@ -94,8 +97,13 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
    playaout <- facet_grid(eval(parse(text = form)))
  }
  
- p <- p + add + ptype + playaout + plabs + scale_fill_brewer(palette="Set1") + 
-      scale_colour_brewer(palette="Set1")
+ p <- p + add + ptype + playaout + plabs 
+ 
+ if (length(msel > 5)) {
+   p <- p + theme(axis.text.x = element_text(angle = -30, hjust = 0, vjust = 1))
+ } 
+ # + scale_fill_brewer(palette = "Set1") + scale_colour_brewer(palette = "Set1")
+ 
  return(p)
 }
 

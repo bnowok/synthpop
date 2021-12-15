@@ -10,10 +10,12 @@ CHANGES
   syn.cubertnorm(), syn.normrank(), syn.pmm().
 * In multi.compare() if `msel = NULL`, pooled synthetic data copies are 
   compared with the original data.  
+* Parameter `incomplete` added to summary.fit.synds() function.  
 
 BUG FIXES
 * In multi.compare() default colour and fill scales restored for ggplot() to
-  to allow for more than 9 levels/synthetic data sets to be plotted. 
+  to allow for more than 9 levels/synthetic data sets to be plotted.
+* Automatic detection of incomplete synthesis.
 
 
 synthpop 1.7-0

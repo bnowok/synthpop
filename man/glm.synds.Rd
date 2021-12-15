@@ -34,9 +34,9 @@ lm.synds(formula, data, ...)
     (average) coefficient estimates are printed.}  
 }
 \value{
-  The \code{\link{summary}} function (\code{\link{summary.fit.synds}}) can be used 
-  to obtain the combined results of models fitted to each of the \code{m} synthetic  
-  data sets.
+  The \code{\link{summary}} function (\code{\link{summary.fit.synds}}) can be 
+  used to obtain the combined results of models fitted to each of the \code{m}
+  synthetic data sets.
 
   An object of class \code{fit.synds}. It is a list with the following 
   components:
@@ -53,8 +53,8 @@ lm.synds(formula, data, ...)
   \item{m}{the number of synthetic versions of the observed data.}
   \item{method}{a vector of synthesising methods applied to each variable
     in the saved synthesised data.}
-  \item{incomplete}{a logical value indicating whether any of the variables in 
-    the model were not synthesised.} 
+  \item{incomplete}{a logical value indicating whether the dependent variable 
+    in the model was not synthesised.} 
   \item{mcoef}{a matrix of coefficients estimates from all \code{m} syntheses.}
   \item{mvar}{a matrix of variance estimates from all \code{m} syntheses.}
 }

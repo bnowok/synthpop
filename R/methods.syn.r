@@ -136,7 +136,7 @@ lm.synds <- function(formula, data, ...)
      analyses[[i]] <- summary(lm(formula, data = data$syn[[i]], ...))
    }
  }
- 
+
  # Check validity of inference from vars not in visit sequence or with method ""
  incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
  
@@ -178,7 +178,7 @@ glm.synds <- function(formula, family = "binomial", data, ...)
      analyses[[i]] <- summary(glm(formula,data = data$syn[[i]], family = family, ...))
    }
  }
- 
+
  # Check completeness for inference from vars not in visit sequence or with method ""
  incomplete <- checkcomplete(vars, formula, data$visit.sequence, data$method) 
  
@@ -301,15 +301,14 @@ checkcomplete <- function(vars, formula, vs, method)
   order_vs  <- order_vs[!is.na(order_vs)]
   order_oth <- setdiff(1:length(methin), order_vs)
   methin_order <- methin[c(order_vs, order_oth)] 
-
   blankmeths <- (1:length(methin_order))[methin_order == ""]
 
   if (!all(blankmeths == (1:length(blankmeths)))){ 
 cat(
 "**********************************************************",
 "\nWARNING: Some variable(s) in formula (model to be fitted)  
-are not synthesised and not used in synthesising models
-for all other variables:", 
+are not synthesised, so not used in synthesising models
+for other variables:", 
 paste(names(methin_order)[blankmeths][!(blankmeths == (1:length(blankmeths)))], collapse = ", "), 
 "\nMethods in synthesis order are:\n")
 print(methin_order)
@@ -317,8 +316,7 @@ cat("Results may not be correct.
 **********************************************************\n")
 }
   
-  incomplete <- !all(blankmeths == (1:length(blankmeths)))
-  # incomplete <- length(blankmeths) > 0
+  incomplete <- methin[1] == ""
   return(incomplete)
 }
 
@@ -351,13 +349,13 @@ print.fit.synds <- function(x, msel = NULL, ...)
 ###-----summary.fit.synds--------------------------------------------------
 
 summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL, 
-                              real.varcov = NULL, ...)
+                              real.varcov = NULL, incomplete = NULL, ...)
 { # df.residual changed to df[2] because didn't work for lm 
   if (!class(object) == "fit.synds") stop("Object must have class fit.synds\n", call. = FALSE)
   m <- object$m
   n <- object$n
   k <- object$k
-  incomplete <- object$incomplete
+  if (is.null(incomplete)) incomplete <- object$incomplete
 
   coefficients <- object$mcoefavg  # mean of coefficients (over m syntheses)
   if (!is.null(real.varcov))  vars <- diag(real.varcov)
@@ -367,8 +365,8 @@ summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL,
 #---
   if (population.inference == TRUE) {
     if (incomplete == TRUE & m == 1) {
-      cat("Warning: You have selected population inference when some variables in your model are",
-          "\nnot synthesised and when only a single synthetic data set has been created (m = 1).",
+      cat("Warning: You have selected population inference when your dependent variable is not synthesised",
+          "\nor incomplete is set to TRUE and when only a single synthetic data set has been created (m = 1).",
           "\nThe correct method for this case requires m > 1, ideally m > 5.",
           "\nTo provide some results calculations proceed as if all variables had been synthesised.\n\n")
       incomplete <- FALSE}

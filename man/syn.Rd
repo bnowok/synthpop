@@ -338,7 +338,7 @@ s1 <- syn(ods)
 s1
   
 ### synthesis with default parametric methods
-s2 <- syn(ods, method = "parametric", seed = 1)
+s2 <- syn(ods, method = "parametric", seed = 123)
 s2$method
   
 ### multiple synthesis of selected variables with customised methods
@@ -361,7 +361,7 @@ s5 <- syn(ods, cont.na = list(income = c(NA, -8)))
   
 ### rules for restricted values - marital status of males under 18 should be 'single'
 s6 <- syn(ods, rules = list(marital = "age < 18 & sex == 'MALE'"),
-          rvalues = list(marital = 'SINGLE'), method = "parametric", seed = 1)
+          rvalues = list(marital = 'SINGLE'), method = "parametric", seed = 123)
 with(s6$syn, table(marital[age < 18 & sex == 'MALE']))
 ### results for default parametric synthesis without the rule  
 with(s2$syn, table(marital[age < 18 & sex == 'MALE']))

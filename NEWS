@@ -14,8 +14,10 @@ CHANGES
 
 BUG FIXES
 * In multi.compare() default colour and fill scales restored for ggplot() to
-  to allow for more than 9 levels/synthetic data sets to be plotted.
+  allow for more than 9 levels/synthetic data sets to be plotted.
 * Automatic detection of incomplete synthesis.
+* Method for first variable is NOT changed to "sample" for "norm", "normrank", 
+  "lognorm", "sqrtnorm", and "cubertnorm".
 
 
 synthpop 1.7-0
@@ -56,7 +58,7 @@ CHANGES
 * Improved error messages in syn() to signal small samples or factor variables
   with too many levels.
 * Matrix of predictors x in logreg.syn() is centred and xp made to match to 
-  improve comptutation (thanks to Héloïse Gauvin for noting this problem).
+  improve comptutation (thanks to Heloise Gauvin for noting this problem).
 * Improved error messages and help file for syn.survctree().
 * In syn() variables changed to factors from character are changed back to
   character in synthetic data.

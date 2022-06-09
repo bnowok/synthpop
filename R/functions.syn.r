@@ -55,7 +55,7 @@ syn.norm <- function(y, x, xp, proper = FALSE, ...)
     parm <- .norm.draw.syn(y, x, ...)
   }  
   res <- xp %*% parm$beta + rnorm(nrow(xp)) * parm$sigma
-  res <- round(res,max(sapply(y,decimalplaces)))
+  res <- round(res, max(sapply(y, decimalplaces)))
   
   return(list(res = res, fit = parm))
 }
@@ -79,7 +79,7 @@ syn.lognorm <- function(y, x, xp, proper = FALSE, ...)
   res <- xp %*% parm$beta + rnorm(nrow(xp)) * parm$sigma
   if (addbit) {res <- res - .5 * min(y[y != 0]); res[res <= 0] <- 0}
   res <- exp(res)
-  res <- round(res,max(sapply(y,decimalplaces)))
+  res <- round(res, max(sapply(y, decimalplaces)))
   
   return(list(res = res, fit = parm))
 }
@@ -101,7 +101,7 @@ syn.sqrtnorm <- function(y, x, xp, proper = FALSE, ...)
   }
   res <- xp %*% parm$beta + rnorm(nrow(xp)) * parm$sigma
   res <- res^2
-  res <- round(res,max(sapply(y,decimalplaces)))
+  res <- round(res, max(sapply(y, decimalplaces)))
   
   return(list(res = res, fit = parm))
 }
@@ -123,7 +123,7 @@ syn.cubertnorm <- function(y, x, xp, proper = FALSE, ...)
   }
   res <- xp %*% parm$beta + rnorm(nrow(xp)) * parm$sigma
   res <- res^3
-  res <- round(res,max(sapply(y,decimalplaces)))
+  res <- round(res, max(sapply(y, decimalplaces)))
 
   return(list(res = res, fit = parm))
 }
@@ -292,6 +292,13 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
   # 3. Compute predicted scores for m.d., i.e. logit-1(X BETA)
   # 4. Compare the score to a random (0,1) deviate, and synthesise.
 
+  # insert to allow model with no npredictors GR1.7-1
+  if (dim(x)[2] == 0) {
+    if (proper == TRUE) y <- sample(y, replace = TRUE)
+    yp <- sample(y, size = dim(xp)[1], replace = TRUE)
+    return(list(res = yp, fit = "logreg/sample")) 
+  }
+  else {
   xmeans <- lapply(x, mean)                      ## x matrix centred
   x  <- mapply(function(x, y) x - y, x, xmeans)
   xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
@@ -342,6 +349,7 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
     vec <- rbinom(nrow(p),denomp, p) 
   }
   return(list(res = vec, fit = fit.sum))  # fit = "logreg"
+  }
 }
 
 
@@ -361,7 +369,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
 #
 # This algorithm uses the function multinom from the libraries nnet and MASS
 # (Venables and Ripley).
-  
+
   x   <- as.matrix(x)
   xp  <- as.matrix(xp)
   
@@ -371,6 +379,15 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
     y   <- y[s]  
     y   <- factor(y)
   }
+
+  # to allow model with no predictors #GR1.7-1
+  if (dim(x)[2] == 0) {
+    yp <- sample(y, size = dim(xp)[1], replace = TRUE)
+    return(list(res = yp, fit = "polyreg/sample")) 
+  }
+  else {
+  
+  
   aug <- augment.syn(y, x, ...)
   # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
   xf  <- aug$x
@@ -407,6 +424,7 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
 } 
   fitted <- summary(fit)
   return(list(res = res, fit = fitted))   # fit = "polyreg"
+  }
 }
 
 

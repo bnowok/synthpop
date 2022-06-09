@@ -464,13 +464,11 @@ check.method.syn <- function(setup, data, proper) {
  else has.pred <- rep(0, nvar) 
  
  if (any(method == "parametric")) { # the default argument
-   # set method for first in visit.sequence to "sample"
-   # method[vis[1]] <- "sample"  
-   # change to default methods for variables with predictors
+   # change to default methods 
 
-   if (length(vis) > 1) {
-	   for (j in vis[-1]) {
-	     if (has.pred[j]) {
+   #if (length(vis) > 1) {
+	   for (j in vis) {
+	     #if (has.pred[j]) { #GR removed this and edited below v1.7-1
 	       y <- data[,j]
 	       if (is.numeric(y))        method[j] <- default.method[1]
 	       else if (nlevels(y) == 2) method[j] <- default.method[2]
@@ -479,12 +477,12 @@ check.method.syn <- function(setup, data, proper) {
 	       else if (is.logical(y))   method[j] <- default.method[2]
 	       else if (nlevels(y) != 1) stop("Variable ",j," ",varnames[j],
 		     " type not numeric or factor.", call. = FALSE) # to prevent a constant values failing
-	     } else if (method[j] != "constant") method[j] <- "sample" 
-	   }
-	 }
+	     } #else if (method[j] != "constant") method[j] <- "sample" 
+	   #}
+	 #}
  }
   
- # check whether the elementary syhthesising methods are available
+ # check whether the elementary synthesising methods are available
  # on the search path
  active    <- !is.passive(method) & !(method == "") & !(method == "constant") 
  if (sum(active) > 0) {
@@ -561,8 +559,9 @@ check.method.syn <- function(setup, data, proper) {
  else has.pred <- rep(0, sqrt(length(pred)))            # this needed in case pred now has dimension 1
 
  for (j in vis) {
-   if (!has.pred[j] & substr(method[j],1,6) != "nested" & is.na(any(match(method[j],
-      c("", "constant", "sample", "sample.proper", "catall", "ipf")))))
+   if (!has.pred[j] & substr(method[j], 1, 6) != "nested" & is.na(any(match(method[j],
+      c("", "constant", "sample", "sample.proper", "catall", "ipf",
+        "norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm","logreg","polyreg")))))  #GR for 1.7-1
    {
      if (print.flag == TRUE) cat('\nMethod "',method[j],
      '" is not valid for a variable without predictors (',
@@ -881,7 +880,7 @@ check.rules.syn <- function(setup, data) {
  }
 
  # M E T H O D S
- method <- gsub(" ","",method) # remove any spaces in or around method
+ method <- gsub(" ", "", method) # remove any spaces in or around method
  # # must be the same length as visit.sequence
  # if (length(method) > 1 & length(method) != length(visit.sequence)) 
  #   stop(paste("The length of method (", length(method),
@@ -891,14 +890,15 @@ check.rules.syn <- function(setup, data) {
  if (length(method) == 1) {
    if (is.passive(method)) stop("Cannot have a passive syhthesising method for every column.", call. = FALSE)
    method <- rep(method, nvar)
-   if (!(method[1] %in% c("catall","ipf"))) method[visit.sequence[1]] <- "sample" #GRBN
+   if (!(method[1] %in% c("catall", "ipf", "norm", "normrank", "lognorm", 
+          "sqrtnorm", "cubertnorm","logreg","polyreg"))) method[visit.sequence[1]] <- "sample" #GRBN
    # set method to "" for vars not in visit.sequence
    method[setdiff(1:nvar,visit.sequence)] <- ""
  }
  # if user specifies multiple methods, check the length of the argument
  # methods must be given for all columns in the data
  if (length(method) != nvar) stop(paste("The length of method (", length(method),
-    ") does not match the number of columns in the data (",nvar,").", sep = ""), 
+    ") does not match the number of columns in the data (", nvar, ").", sep = ""), 
     call. = FALSE)
 
 
@@ -1046,7 +1046,8 @@ check.rules.syn <- function(setup, data) {
  rvalues          <- setup$rvalues
  cont.na          <- setup$cont.na
  default.method   <- setup$default.method
- denom            <- setup$denom                       
+ denom            <- setup$denom  
+ 
  ############################################################
 
  method[!(1:length(method) %in% visit.sequence)] <- ""  
@@ -1153,10 +1154,13 @@ check.rules.syn <- function(setup, data) {
      cat("CAUTION: The synthesised data will contain the variable(s) unchanged.\n")
    }
  } 
- #browser()                                                     #  GR condition added
- if (sum(predictor.matrix) > 0) {
-	 
-   pm <- padMis.syn(data, method, predictor.matrix, visit.sequence,
+
+ #browser()                                                     #1.7-1  GR condition added
+ if (sum(predictor.matrix) > 0 | any(method[visit.sequence[1]] %in% 
+                        c("norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm","logreg","polyreg")))
+   {
+
+	  pm <- padMis.syn(data, method, predictor.matrix, visit.sequence,
 			   nvar, rules, rvalues, default.method, cont.na, smoothing, event, denom)
 
 	 # Pad the Syhthesis model with dummy variables for the factors

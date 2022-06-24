@@ -67,13 +67,35 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
        if (print.flag == TRUE) {
          if (length(rest.visit.sequence) > 0  && 
              ncol(data) - length(numtocat) > length(grouped)) {
+
            cat("First ", length(grouped), " variables (", 
                paste(names(grouped), collapse = ", "),
                ") synthesised together by method '", ordmethod[1], "'\n", sep = "")
+           if (ordmethod[1] == "catall" && !is.null(mth.args) && 
+               "epsilon" %in% names(mth.args$catall) && mth.args$catall$epsilon > 0)
+                 cat("Synthesis made differentially private with parameter epsilon of ",
+                     mth.args$catall$epsilon,"\n",
+                     "Note that only these first variables will be made differentially private.\n")
+           if (ordmethod[1] == "ipf" && !is.null(mth.args) && 
+               "epsilon" %in% names(mth.args$ipf) && mth.args$ipf$epsilon > 0) 
+                 cat("Synthesis made differentially private with parameter epsilon of ",
+                     mth.args$ipf$epsilon,"\n",
+                     "Note that only these first variables will be made differentially private.\n")
          } else {
            cat("All ", length(grouped), 
                " variables in the data synthesised together by method '", 
                ordmethod[1], "'\n", sep = "")
+
+           if (ordmethod[1] == "catall" && !is.null(mth.args) && 
+               "epsilon" %in% names(mth.args$catall) && 
+               mth.args$catall$epsilon > 0) 
+                 cat("Synthesis made differentially private with parameter epsilon of ",
+                     mth.args$catall$epsilon,"\n")
+           if (ordmethod[1] == "ipf" && !is.null(mth.args) && 
+               "epsilon" %in% names(mth.args$ipf) && 
+               mth.args$ipf$epsilon > 0) 
+                 cat("Synthesis made differentially private with parameter epsilon of ",
+                     mth.args$ipf$epsilon,"\n")
          }   
        }   
        x <- p$data[, grouped]

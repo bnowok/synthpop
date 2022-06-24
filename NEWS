@@ -4,10 +4,14 @@ synthpop 1.7-1
 NEW FEATURES
 * An option in compare.synds() to add values of a selected utility measure 
   to names of a plot facets (`utility.to.plot` argument).
+* Synthesis with "catall" and "ipf" has new features that permit the creation 
+  of differentialy private (DP) synthetic data. Parameters are `epsilon` and 
+  `rand`.
 
 CHANGES
 * Optional parameters can be set for syn.norm(), syn.lognorm(), syn.sqrtnorm(),
   syn.cubertnorm(), syn.normrank(), syn.pmm().
+* syn.cubertnorm() now allows negative values.
 * In multi.compare() if `msel = NULL`, pooled synthetic data copies are 
   compared with the original data.  
 * Parameter `incomplete` added to summary.fit.synds() function.  

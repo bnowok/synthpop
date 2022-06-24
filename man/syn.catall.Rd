@@ -6,7 +6,7 @@
   all the variables.}
 \usage{
 syn.catall(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-           maxtable = 1e8, ...)}
+           maxtable = 1e8, epsilon = 0, rand = TRUE,  ...)}
 \arguments{
   \item{x}{a data frame (\code{n} x \code{p}) of the set of original variables.}
   \item{k}{a number of rows in each synthetic data set - defaults to \code{n}.}
@@ -27,6 +27,11 @@ syn.catall(x, k, proper = FALSE, priorn = 1, structzero = NULL,
     structural zero cells (see an example below).}
   \item{maxtable}{a number of cells in the cross-tabulation of all the variables
     that will trigger a severe warning.}
+  \item{epsilon}{measures scale of laplace noise to be added under differential 
+    privacy (DP)}
+  \item{rand}{for DP versions determines if multinomial noise is to be added to 
+    DP counts. If it is set to false the DP adjusted counts are simply rounded 
+    to a whole number in a manner that preserves the desired sample size (k).}
   \item{\dots}{additional parameters.}
 }
 \details{
@@ -52,8 +57,9 @@ the synthesised data can include any combination of variables, except
 those defined by the combinations of variables in \code{structzero}.
 
 NOTE that when the function is called by setting elements of method in 
-\code{syn()} to \code{"catall"}, the parameters \code{priorn}, \code{structzero} 
-and \code{maxtable} must be supplied to \code{syn} as e.g. \code{catall.priorn}.
+\code{syn()} to \code{"catall"}, the parameters \code{priorn}, \code{structzero}, 
+\code{maxtable}, \code{epsilon}, and \code{rand} must be supplied to \code{syn} 
+as e.g. \code{catall.priorn}.
 }
 \value{
 A list with two components:

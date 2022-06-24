@@ -7,8 +7,9 @@
   numbers in the margins specified by the margin parameters.}
 \usage{
 syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-        gmargins = "twoway", othmargins = NULL, 
-        maxtable = 1e8, print.its = FALSE,  ...)
+        gmargins = "twoway", othmargins = NULL, tol = 1e-4,
+        max.its = 5000, maxtable = 1e8, print.its = FALSE,
+        epsilon = 0, rand = TRUE, ...)
 }
 \arguments{
   \item{x}{a data frame of the set of original data to be synthesised.}
@@ -19,7 +20,8 @@ syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL,
   \item{priorn}{the sum of the parameters of the Dirichlet prior which can be 
     thought of as a pseudo-count giving the number of observations that inform 
     prior knowledge about the parameters.}
-  \item{structzero}{a named list of lists that defines which cells in the table 
+  \item{structzero}{NOT IMPLEMENTED YET
+    a named list of lists that defines which cells in the table 
     are structural zeros and will remain as zeros in the synthetic data, by 
     leaving their prior as zeros. Each element of the \code{structzero} list is 
     a list that describes a set of cells in the table defined by a combination 
@@ -33,11 +35,19 @@ syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL,
     and 2-way margins from the table.}
   \item{othmargins}{a list of margins that will be fitted. If \code{gmargins} is
     not \code{NULL} \code{othmargins} will be added to them.}
-  \item{maxtable}{the number of cells in the cross-tabulation of all the variables
-    that will trigger a severe warning.}
-  \item{print.its}{if true the iterations from \code{Ipfp} will be printed on 
-    the console. Otherwise only a message as to whether the iterations have 
-    converged will be given at the end of the fitting.}
+  \item{tol}{stopping criterion for \code{\link{Ipfp}}.}
+  \item{max.its}{maximum umber of iterations allowed for \code{\link{Ipfp}}.}
+  \item{maxtable}{the number of cells in the cross-tabulation of all the 
+    variables that will trigger a severe warning.}
+  \item{print.its}{if true the iterations from \code{\link{Ipfp}} will be 
+    printed on the console. Otherwise only a message as to whether the 
+    iterations have converged will be given at the end of the fitting.}
+  \item{epsilon}{epsilon value for overall differential privacy (DP) parameter.
+    This is implemented by dividing the privacy budget equally over all the 
+    margins used to fit the data.}  
+  \item{rand}{when epsilon is > 0 and DP synthetic data are created this 
+    determines whether the data are created by Poisson counts from the expected 
+    fitted counts in the cells of the DP adjusted data.}
   \item{\dots}{additional parameters.}
 }
 \details{
@@ -68,8 +78,9 @@ those not present in the original data, except those defined by \code{structzero
 
 NOTE that when the function is called by setting elements of
 method in \code{syn} to \code{"ipf"}, the parameters \code{priorn},
-\code{structzero}, \code{gmargins}, \code{othmargins}, \code{maxtable}
-and \code{print.its} must be supplied to syn as e.g. \code{ipf.priorn}.
+\code{structzero}, \code{gmargins}, \code{othmargins}, \code{tol}, 
+\code{max.its}, \code{maxtable}, \code{print.its}, \code{epsilon}, 
+and \code{rand} must be supplied to \code{syn} as e.g. \code{ipf.priorn}.
 }
 \value{
 A list with two components:
@@ -81,18 +92,8 @@ A list with two components:
 ods <- SD2011[, c(1, 4, 5, 6, 2, 10, 11)]
 table(ods[, c("placesize", "region")])
 
-# Each \code{placesize_region} sublist: 
-# for each relevant level of \code{placesize} defined in the first element, 
-# the second element defines regions (variable \code{region}) that do not 
-# have places of that size.
-
-struct.zero <- list(
-  placesize_region = list("URBAN 500,000 AND OVER", c(2, 4, 5, 8:13, 16)),
-  placesize_region = list("URBAN 200,000-500,000", c(3, 4, 10:11, 13)),
-  placesize_region = list("URBAN 20,000-100,000", c(1, 3, 5, 6, 8, 9, 14:15)))
-
 synipf <- syn(ods, method = c(rep("ipf", 4), "ctree", "normrank", "ctree"), 
               ipf.gmargins = "twoway", ipf.othmargins = list(c(1, 2, 3)),
-              ipf.priorn = 2, ipf.structzero = struct.zero)
+              ipf.priorn = 2)
 }
 \keyword{datagen}

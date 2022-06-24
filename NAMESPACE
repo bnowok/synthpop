@@ -109,3 +109,4 @@ importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment"
 importFrom("utils", "head", "read.csv", "read.table", "tail", "combn",
            "write.csv", "write.table")
 importFrom("stringr", "str_pad")
+importFrom("rmutil", "rlaplace")

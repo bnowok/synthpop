@@ -24,8 +24,11 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
  for (j in 1:nvar) {
     # if (No.NA[j] & is.numeric(data[,j]) & inpred[j]==TRUE){  #GR1.7-1
-    if (No.NA[j] & is.numeric(data[,j]) & (inpred[j] == TRUE |( method[j] %in% c("norm", "normrank", 
-        "lognorm", "sqrtnorm", "cubertnorm","logreg","polyreg") ) )  & !is.passive(method[j]) & !method[j] %in% c("nested", "ipf", "catall")) {
+    if (No.NA[j] & is.numeric(data[,j]) & 
+        (inpred[j] == TRUE | (method[j] %in% c("norm", "normrank", "lognorm", 
+                                               "sqrtnorm", "cubertnorm",
+                                               "logreg", "polyreg")))  & 
+        !is.passive(method[j]) & !method[j] %in% c("nested", "ipf", "catall")) {
 
     # augment the data with a column for the original continuous variable with 
     # missing values replaced by zeros and a column for a new factor for 
@@ -34,7 +37,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
       y.0  <- ifelse(data[,j] %in% c(cont.na[[j]], rvalues[[j]]), 0, data[,j])
       y.NA <- ifelse(data[,j] %in% c(cont.na[[j]], rvalues[[j]]), data[,j], nonmiscode) #BN13/11 0 changed with nonmiscode
       y.NA <- addNA(y.NA, ifany = TRUE) 
-      levels(y.NA)[is.na(levels(y.NA))] <- "NAtemp"                         #BN25/08 to allow random forest
+      levels(y.NA)[is.na(levels(y.NA))] <- "NAtemp"   # to allow random forest
       data <- cbind(data,y.0,y.NA)           
       name.0  <- paste(attr(data,"names")[j], 0, sep = ".")
       name.NA <- paste(attr(data,"names")[j], NA, sep = ".")
@@ -49,7 +52,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
                                times = 2), ncol = 2))
     # the original variable is removed from predictors (=insert zeros) 
       predictor.matrix[,j] <- 0
-    # the original variable is synthesised passively so its predictors can be removed as well
+    # the original variable is synthesized passively so its predictors can be removed as well
       predictor.matrix[j,] <- 0
 
     # add methods for new variables

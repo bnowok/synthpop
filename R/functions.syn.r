@@ -112,8 +112,7 @@ syn.sqrtnorm <- function(y, x, xp, proper = FALSE, ...)
 syn.cubertnorm <- function(y, x, xp, proper = FALSE, ...) 
 {
   addbit <- FALSE
-  if (any(y < 0)) stop("Cube root transformation not appropriate for negative values.\n", call. = FALSE)   ##  needs check in checkmodel
-  else y <- y^(1/3)
+  y <- sign(y)*abs(y)^(1/3)
   x   <- cbind(1, as.matrix(x))
   xp  <- cbind(1, as.matrix(xp))
   if (proper == FALSE) {
@@ -890,24 +889,23 @@ syn.collinear <- function(y, x, xp, ...)
 
 
 ###-----syn.catall---------------------------------------------------------
-  
-syn.catall <- function(x, k, proper = FALSE, priorn = 1, 
-                       structzero = NULL, maxtable = 1e8, ...)
+
+syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
+                       maxtable = 1e8, epsilon = 0, rand = TRUE, ...)
 {
  # Fits a saturated model to combinations of variables
  # xp just holds number of synthetic records required
- # extra params: addon, structzero
 
- levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))})  # all NAtemp here already
+   levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))})  # all NAtemp here already
  table.size <- prod(levs)   # exp(sum(log(levs)))
  if (table.size > maxtable) stop("Table has more than ", maxtable/1e6,
    " million cells (", round(table.size/1e6, 2),
    " millions),\nwhich may lead to memory problems.\nYou can rerun syn() with catall.maxtable increased (default: ", maxtable/1e6,
    " millions).\nAlternatively use a smaller group of variables for catall.", 
    sep = "", call. = FALSE)
- 
+
  N <- dim(x)[1]
- if (proper == TRUE) x <- x[sample(1:N, replace = TRUE),]
+ if (proper == TRUE) x <- x[sample(1:N, replace = TRUE), ]
  tab <- table(x)
  n <- length(tab) 
  addon <- priorn/n
@@ -924,27 +922,46 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
  if (!is.null(structzero)) tab[sz] <- 0
  dt  <- dim(tab)
  dn  <- dimnames(tab)
- tab <- tab/sum(tab)   # get it as proportions
- tab <- rmultinom(1, k, tab)
+  if (epsilon > 0) {
+    if (rand == TRUE) {
+      if (!is.null(structzero)) tab[sz] <- addlapn(tab[sz], epsilon) 
+      else tab <- addlapn(tab, epsilon) 
+      fit <- tab
+      tab <- tab/sum(tab)   # get it as proportions
+      tab <- rmultinom(1, k, tab)
+    } else {
+      if (!is.null(structzero)) tab[sz] <- addlapn(tab[sz], epsilon) 
+      else tab <- addlapn(tab, epsilon ) #GR2022
+      fit <- tab
+      tab <- roundspec(tab*k/sum(tab))
+    }
+ } else {
+    if (rand == TRUE) {
+      fit <- tab
+      tab <- tab/sum(tab)   # get it as proportions
+      tab <- rmultinom(1, k, tab)
+    }
+    else stop("If you set rand = FALSE when epsilon = 0 synthpop will return the data unchanged", call. = FALSE) 
+ }
  tab <- array(tab, dt)
  dimnames(tab) <- dn
  res <- array.to.frame(tab)
- for (i in 1:dim(res)[2]) res[, i] <- addNA(res[,i], ifany = TRUE)
- res <- res[sample(1:nrow(res)),]
- return(list(res = res, fit = table(x)))
+ for (i in 1:dim(res)[2]) res[, i] <- addNA(res[, i], ifany = TRUE)
+ res <- res[sample(1:nrow(res)), ]
+ return(list(res = res, fit = fit))
 }
 
 
 ###-----syn.ipf------------------------------------------------------------
   
 syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-                    gmargins = "twoway", othmargins = NULL, 
-                    maxtable = 1e8, print.its = FALSE, ...)
+                    gmargins = "twoway", othmargins = NULL, tol = 1e-4, max.its = 5000,
+                    maxtable = 1e8, print.its = FALSE, epsilon= 0, rand = TRUE,...)
 {
  # Fits log-linear model to combinations of variables
  # k just holds number of synthetic records required
- # extra params: structzero, margins
 
+ if (!is.null(structzero)) stop("Stuctural zeros not implemented yet.\n", .call = FALSE)
  levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))}) # all NAtemp here already
  table.size <- prod(levs)   # exp(sum(log(levs))) 
  if (table.size > maxtable) stop("Table has more than ", maxtable/1e6,
@@ -968,7 +985,6 @@ syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL,
 WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero cells.
 ************************************************************************\n", sep = "")
  }
-    
  if (!is.null(gmargins)) {
    if (gmargins == "twoway") {
      n_margins  <- nv*(nv - 1)/2
@@ -976,7 +992,8 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
      margins <- split(mx_margins, col(mx_margins))
    } else if (gmargins == "oneway") {
      margins <- as.list(1:nv)
-   } else stop("Only 'oneway' or 'twoway' are implemented for gmargins.\n", call. = FALSE)
+   } else stop("Only 'oneway' or 'twoway' are implemented for gmargins.\n", 
+               call. = FALSE)
    if (!is.null(othmargins)) for (i in 1:length(othmargins)) {
      margins[[length(margins) + 1]] <- othmargins[[i]]
    }
@@ -987,33 +1004,44 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
  
  umar <- unique(unlist(margins))
  missed <- (1:nv)[!(1:nv %in% umar)]
-    
+  
  if (length(missed) > 0) cat("\n
 **************************************************
 SEVERE WARNING: Margins ", missed, " not fitted.
 This means they will be fitted as having
 the same proportion in each level.
 **************************************************\n", sep = "")
- 
- # Get data for margins
+ if (epsilon > 0) {eps <- epsilon / length(margins)
+   cat("Overall epsilon for DP is ",epsilon," divided equally between ", 
+       length(margins)," margins to give ", eps, " each,\n")
+ } 
+
+# Get data for margins
  margins.data <- vector("list", length(margins))
  for (i in 1:length(margins)) {
    margins.data[[i]] <- table(x[, margins[[i]]], useNA = "ifany")
+    margins.data[[i]] <- margins.data[[i]] + priorn/length(margins.data[[i]])
+    if (epsilon > 0) {
+      margins.data[[i]] <- addlapn(margins.data[[i]],eps,N)
+    }
  }
  start <- array(1, dim(tab))
-    
- results.1 <- suppressWarnings(Ipfp(start, margins, margins.data, print = print.its, tol = 1e-6, ...))  ##  note larger than default to speed things up needs checking
+  
+ results.1 <- suppressWarnings(Ipfp(start, margins, margins.data, 
+                iter = max.its, print = print.its, tol = tol, ...))  # note larger than default to speed things up needs checking
  
  if (results.1$conv == TRUE) cat("\n['ipf' converged in ", 
    length(results.1$evol.stp.crit), " iterations]\n", sep = "")
  else cat("\n['ipf' failed to converge in ", length(results.1$evol.stp.crit),
    " iterations]\n\nYou can try to change parameters of Ipfp() function,\ne.g. syn(..., ipf.iter = 2000).", sep = "")
  
- exp1 <- array(N * results.1$p.hat + addon, dim(tab))
+ exp1 <- array(N * results.1$p.hat , dim(tab))
  if (!is.null(structzero)) exp1[sz] <- 0
  
  exp1 <- exp1 / sum(exp1)   # get it as proportions
- z    <- rmultinom(1, k, exp1)
+ if (epsilon == 0 & rand == FALSE) cat("WARNING: No DP noise or random noise added,\nData returned will be close to NULL expectation for model defined by margins.\n")
+ if (rand == TRUE)  z    <- rmultinom(1, k, exp1)
+ else z <- roundspec(exp1*k/sum(exp1))
  res  <- array(z, dim(exp1))
  dimnames(res) <- dimnames(tab)
  res  <- array.to.frame(res)
@@ -1149,5 +1177,78 @@ array.to.frame <- function(x)
   dimnames(res)[[1]] <- 1:sum(x)
   return(res)
 }
+
+
+###-----roundspec----------------------------------------------------------
+
+roundspec <- function(tab) {  ## special rounding
+  if (abs(round(sum(tab)) - sum(tab)) > 1e-6) 
+    stop("This function assumes sum of tab is a whole number\n", .call= FALSE)
+  diff <- round(sum(tab) - sum(round(tab)))
+
+  if (diff == 0 & all(tab >= 0)) { 
+    cat("roundspec no adjustment required\n")
+    result <- round(tab)
+  } else if (any(round(tab) <= 0)){
+    if (diff < 0 ) {
+      inds <- (1:length(tab))[round(tab) >0]
+      vals <- tab[round(tab) > 0]
+      ordinds <- inds[order(vals)]
+      newtab <- round(tab)
+      newtab[ordinds[1:(-diff)]]<- 0
+    } else {
+      inds <- (1:length(tab))[round(tab) == 0]
+      vals <- tab[round(tab)==0]
+      ordinds <- inds[order(-vals)]
+      newtab <- round(tab)
+      newtab[ordinds[1:diff]]<- 1 
+    }
+    result <- newtab
+  } else {
+    if (abs(diff) > length(tab)) cat("Unexpected problem with rounding.\n
+Please report to maintainer of synthpop with example\n
+including this output\n", tab, "\n")
+    result <- round(tab)
+    inds <- (1:length(result))[order(result)][1:abs(diff)]
+    if (diff >0 ) result[inds] <- result[inds] + 1
+    if (diff <0 ) result[inds] <- result[inds] - 1
+  }
+  return(result)
+}
+
+
+###-----roundspec2---------------------------------------------------------
+
+roundspec2 <- function(tab, N){  ## with neg counts
+  rtab <- round(tab)
+  rtab[rtab < 0] <- 0
+  sumtodrop <- sum(rtab) - N
+  if (!(sumtodrop > 0  )) stop(paste("Check data for roundspec2 N sumtodrop ",  
+                                     N, sumtodrop,"\n\n"))
+  cumtab <- cumsum(sort(rtab))
+  indout <- (1:length(tab))[cumtab == sumtodrop]
+  valout <- tab[order(tab)][indout]
+  rtab[tab <= valout] <- 0
+  newtab <- rtab    
+  newtab
+}
+
+
+###-----addlapn---------------------------------------------------------
+
+addlapn <- function(x, eps, tot = NULL){
+  # add laplace noise with rescaling to a total or sample size
+
+  if (eps <= 0) stop("eps must be > 0\n")
+  res <- x + rlaplace(length(x), 0, 1/eps)
+  res[res< 1e-6] <- 1e-6
+  if (is.null(tot)) N <- sum(x)
+  else N <- tot
+  res <- N *res/sum(res)
+  return(res)
+}
+
+
+
 
 

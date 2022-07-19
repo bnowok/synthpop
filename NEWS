@@ -22,6 +22,9 @@ BUG FIXES
 * Automatic detection of incomplete synthesis.
 * Method for first variable is NOT changed to "sample" for "norm", "normrank", 
   "lognorm", "sqrtnorm", and "cubertnorm".
+* Formatting of labels for ploting numeric variables in compare.synds() that
+  could create duplicated values.
+* Subsetting of columns in data frames that are also tibbles.  
 
 
 synthpop 1.7-0

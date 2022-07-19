@@ -16,7 +16,10 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
                           plot = TRUE, table = FALSE, ...){    
                                                                          
  if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
- if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE)          
+ if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE) 
+  
+ if (any(class(data) %in% c("tbl", "tbl_df"))) data <- as.data.frame(data)  
+  
  if (class(object) != "synds") stop("Object must have class synds.\n", call. = FALSE )                                                                    
  if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)
  if (!all(utility.stats %in% c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
@@ -221,13 +224,17 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
  vals <- unique(per.fac$Value)
  valsnum <- unique(per.fac$Value[per.fac$Variable %in% names(num[num == TRUE])])
  valsnum.nonmiss <- sort(as.numeric(vals[vals %in% valsnum & substr(vals, 1, 4) != "miss"]))
+ valsnum.nonmiss <- format(valsnum.nonmiss, scientific = FALSE,
+                           trim = TRUE, drop0trailing = TRUE)
  valsnum.miss <- sort(vals[vals %in% valsnum & substr(vals, 1, 4) == "miss"])
- vals[vals %in% valsnum] <- c(valsnum.nonmiss,valsnum.miss)
+ vals[vals %in% valsnum] <- c(valsnum.nonmiss, valsnum.miss)
  per.fac$Value <- factor(as.character(per.fac$Value), levels = vals)
  
  if (!is.null(utility.for.plot)){
-   levels(per.fac$Variable) <- paste0(levels(per.fac$Variable), ": ", utility.for.plot, " = ", round(utilvals.for.plot, 2))
-   commonnames_lab <- paste0(commonnames, ": ", utility.for.plot, " = ", round(utilvals.for.plot, 2))
+   levels(per.fac$Variable) <- paste0(levels(per.fac$Variable), ": ", 
+     utility.for.plot, " = ", round(utilvals.for.plot, 2))
+   commonnames_lab <- paste0(commonnames, ": ",
+     utility.for.plot, " = ", round(utilvals.for.plot, 2))
  } else {
    commonnames_lab <- commonnames
  }
@@ -368,7 +375,9 @@ ggnum <- function(data, name = "observed", na = as.list(rep(NA,ncol(data))),
     vardata <- data[!(data[,i] %in% na[[i]]),i]                  
     hh      <- hist(vardata, breaks = breaks[[i]], plot = FALSE)
     counts  <- hh$counts
-    names(counts) <- hh$breaks[-length(hh$breaks)]
+    names(counts) <- format(hh$breaks[-length(hh$breaks)],
+                            scientific = FALSE, trim = TRUE,
+                            drop0trailing = TRUE)
     hbreaks[[i]]  <- hh$breaks
   ## counts for missing values  
     dataNA <- data[data[,i] %in% c(NA,na[[i]]),i]

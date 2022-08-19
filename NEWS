@@ -7,6 +7,10 @@ NEW FEATURES
 * Synthesis with "catall" and "ipf" has new features that permit the creation 
   of differentialy private (DP) synthetic data. Parameters are `epsilon` and 
   `rand`.
+* New smoothing methods (`smoothing` argument): "spline" and "rmean". Now you 
+  can also provide a single string specifying a smoothing method, which will be
+  then used to smooth all numeric variables in the data. You can still provide
+  a named list to smooth selected variables only.
 
 CHANGES
 * Optional parameters can be set for syn.norm(), syn.lognorm(), syn.sqrtnorm(),
@@ -15,13 +19,15 @@ CHANGES
 * In multi.compare() if `msel = NULL`, pooled synthetic data copies are 
   compared with the original data.  
 * Parameter `incomplete` added to summary.fit.synds() function.  
-
+* Method for first variable is NOT changed to "sample" for "norm", "normrank", 
+  "lognorm", "sqrtnorm", and "cubertnorm".
+* In syn.ipf() default value of `tol` parameter changed to 1e-3 in order to 
+  speed up convergence.  
+  
 BUG FIXES
 * In multi.compare() default colour and fill scales restored for ggplot() to
   allow for more than 9 levels/synthetic data sets to be plotted.
 * Automatic detection of incomplete synthesis.
-* Method for first variable is NOT changed to "sample" for "norm", "normrank", 
-  "lognorm", "sqrtnorm", and "cubertnorm".
 * Formatting of labels for ploting numeric variables in compare.synds() that
   could create duplicated values.
 * Subsetting of columns in data frames that are also tibbles.  

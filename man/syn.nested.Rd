@@ -13,8 +13,7 @@ syn.nested(y, x, xp, smoothing = "", cont.na = NA,  ...)
   \item{x}{an original data vector of length \code{n} for the variable within 
     which \code{y} is nested.}
   \item{xp}{a vector of length \code{k} with synthetic values of \code{x}.}
-  \item{smoothing}{if this has the value "density"  then  values of a numeric 
-    \code{y} are smoothed after synthesis with a kernel density smoother.}  
+  \item{smoothing}{smoothing method. See \code{\link{syn.smooth}}.}  
   \item{cont.na}{when y is numeric this can be a list or a vector giving values 
     of \code{y} that indicate missing values.}
   \item{\dots}{additional parameters.}

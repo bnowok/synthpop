@@ -49,6 +49,13 @@ if (is.character(visit.sequence)) {
 } else if (!all(visit.sequence %in% 1:length(data))) stop("Column indices in visit.sequence must be between 1 and ", 
                                                           length(data), sep = "", call. = FALSE)  
 
+# expand user's smoothing method (single string) to all numeric variables
+if (length(smoothing) == 1 & is.character(smoothing)) {
+  numeric.vars <- which(sapply(data, is.numeric))
+  smoothing <- as.list(rep(smoothing,length(numeric.vars)))
+  names(smoothing) <- names(numeric.vars)
+}
+
 size.warn <- 100 + 10*length(visit.sequence)
 if (dim(data)[1] <  size.warn & print.flag == TRUE) {
   cat("CAUTION: Your data set has fewer observations (",  dim(data)[1], 
@@ -561,9 +568,9 @@ check.method.syn <- function(setup, data, proper) {
  for (j in vis) {
    if (!has.pred[j] & substr(method[j], 1, 6) != "nested" & is.na(any(match(method[j],
       c("", "constant", "sample", "sample.proper", "catall", "ipf",
-        "norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm","logreg","polyreg")))))  #GR for 1.7-1
+        "norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm", "logreg", "polyreg")))))  #GR for 1.7-1
    {
-     if (print.flag == TRUE) cat('\nMethod "',method[j],
+     if (print.flag == TRUE) cat('\nMethod "', method[j],
      '" is not valid for a variable without predictors (',
      names(data)[j],')\nMethod has been changed to "sample"\n\n', sep = "")
      method[j] <- "sample"
@@ -825,7 +832,7 @@ check.rules.syn <- function(setup, data) {
                        missval = NA, argname, argdescription = "", 
                        asvector = FALSE){
    if (is.null(x)) {
-     x <- as.list(rep(missval,nvars))
+     x <- as.list(rep(missval, nvars))
    } else if (!is.list(x) | any(names(x) == "") | is.null(names(x))) {
      stop("Argument '", argname,"' must be a named list with names of selected ", 
      argdescription, " variables.", call. = FALSE)  
@@ -886,6 +893,7 @@ check.rules.syn <- function(setup, data) {
  #   stop(paste("The length of method (", length(method),
  #              ") must be the same length as the visit.sequence (",length(visit.sequence),").", sep = ""), 
  #        call. = FALSE) 
+ 
  # expand user's syhthesising method (single string) to all variables
  if (length(method) == 1) {
    if (is.passive(method)) stop("Cannot have a passive syhthesising method for every column.", call. = FALSE)
@@ -937,8 +945,8 @@ check.rules.syn <- function(setup, data) {
    argdescription = "", asvector = TRUE)
  if (any(smoothing != "")) {
    varsmoothind <- which(smoothing != "")
-   varnumind    <- which(sapply(data,is.numeric))
-   smoothnumind <- match(varsmoothind,varnumind)
+   varnumind    <- which(sapply(data, is.numeric))
+   smoothnumind <- match(varsmoothind, varnumind)
    if (any(is.na(smoothnumind)) & print.flag == TRUE)
    cat("\nSmoothing can only be applied to numeric variables.\nNo smoothing will be applied to variable(s): ",
      paste(varnames[varsmoothind[is.na(smoothnumind)]], collapse = ", "), "\n", sep = "")   

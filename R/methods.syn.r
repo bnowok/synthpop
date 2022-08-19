@@ -117,7 +117,7 @@ mcoefvar <- function(analyses, ...) {
 
 lm.synds <- function(formula, data, ...)
 {
- if (!class(data) == "synds") stop("Data must have class synds\n", call. = FALSE)
+ if (!inherits(data, "synds")) stop("Data must have class synds\n", call. = FALSE)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
@@ -159,7 +159,7 @@ lm.synds <- function(formula, data, ...)
 
 glm.synds <- function(formula, family = "binomial", data, ...)
 {
- if (!class(data) == "synds") stop("Data must have class synds\n", call. = FALSE)
+ if (!inherits(data, "synds")) stop("Data must have class synds\n", call. = FALSE)
  if (is.matrix(data$method)) data$method <- data$method[1,]
  if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
  if (data$m > 1) vars <- names(data$syn[[1]])  else  vars <- names(data$syn)  
@@ -201,7 +201,7 @@ glm.synds <- function(formula, family = "binomial", data, ...)
 
 polr.synds <- function(formula, data, ...)
 {
-  if (!class(data) == "synds") stop("Data must have class 'synds'.\n", call. = FALSE)
+  if (!inherits(data, "synds")) stop("Data must have class 'synds'.\n", call. = FALSE)
   if (is.matrix(data$method)) data$method <- data$method[1,]
   if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
   if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
@@ -242,7 +242,7 @@ polr.synds <- function(formula, data, ...)
 
 multinom.synds <- function(formula, data, ...)
 {
-  if (!class(data) == "synds") stop("Data must have class 'synds'.\n", call. = FALSE)
+  if (!inherits(data, "synds")) stop("Data must have class 'synds'.\n", call. = FALSE)
   if (is.matrix(data$method)) data$method <- data$method[1,]
   if (is.matrix(data$visit.sequence)) data$visit.sequence <- data$visit.sequence[1,]
   if (data$m > 1) vars <- names(data$syn[[1]]) else  vars <- names(data$syn)  
@@ -351,7 +351,7 @@ print.fit.synds <- function(x, msel = NULL, ...)
 summary.fit.synds <- function(object, population.inference = FALSE, msel = NULL, 
                               real.varcov = NULL, incomplete = NULL, ...)
 { # df.residual changed to df[2] because didn't work for lm 
-  if (!class(object) == "fit.synds") stop("Object must have class fit.synds\n", call. = FALSE)
+  if (!inherits(object, "fit.synds")) stop("Object must have class fit.synds\n", call. = FALSE)
   m <- object$m
   n <- object$n
   k <- object$k

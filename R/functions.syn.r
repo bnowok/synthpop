@@ -142,10 +142,9 @@ syn.normrank <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
   # so that result returned has correct length for xp
   # matters for sub-samples and missing data
 
-  z    <- qnorm(rank(y)/(length(y) + 1))
-
-  x    <- cbind(1, as.matrix(x))
-  xp   <- cbind(1, as.matrix(xp))
+  z  <- qnorm(rank(y)/(length(y) + 1))
+  x  <- cbind(1, as.matrix(x))
+  xp <- cbind(1, as.matrix(xp))
 
   if (proper == FALSE) {
     parm <- .norm.fix.syn(z, x, ...)
@@ -157,27 +156,32 @@ syn.normrank <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
   res  <- round(pnorm(pred)*(length(y) + 1))
   res[res < 1] <- 1
   res[res > length(y)] <- length(y)
+  res  <- sort(y)[res]
 
-  if (smoothing == "") res  <- sort(y)[res]
-
-  if (smoothing == "density") {
-    ydsamp <- y
-    ys     <- 1:length(y)
-    maxfreq <- which.max(table(y))
-    maxcat  <- as.numeric(names(table(y))[maxfreq])
-    if (table(y)[maxfreq]/sum(table(y)) > .7) ys <- which(y != maxcat)
-    if (10 * table(y)[length(table(y)) - 1] < 
-      tail(table(y), n = 1) - table(y)[length(table(y)) - 1]) {
-      ys <- ys[-which(y == max(y))]  
-      maxy <- max(y)
-    }   
-    densbw <- density(y[ys], width = "SJ")$bw
-    ydsamp[ys] <- rnorm(length(ydsamp[ys]), 
-      mean = sample(ydsamp[ys], length(ydsamp[ys]), replace = TRUE), sd = densbw)
-    if (!exists("maxy")) maxy <- max(y) + densbw
-    ydsamp[ys] <- pmax(pmin(ydsamp[ys],maxy),min(y))
-    res <- sort(ydsamp)[res]
+  if (smoothing != "") {
+    res <- syn.smooth(res, y, smoothing = smoothing)
   }
+
+  # if (smoothing == "") res  <- sort(y)[res]
+  # 
+  # if (smoothing == "density") {
+  #   ydsamp <- y
+  #   ys     <- 1:length(y)
+  #   maxfreq <- which.max(table(y))
+  #   maxcat  <- as.numeric(names(table(y))[maxfreq])
+  #   if (table(y)[maxfreq]/sum(table(y)) > .7) ys <- which(y != maxcat)
+  #   if (10 * table(y)[length(table(y)) - 1] < 
+  #     tail(table(y), n = 1) - table(y)[length(table(y)) - 1]) {
+  #     ys <- ys[-which(y == max(y))]  
+  #     maxy <- max(y)
+  #   }   
+  #   densbw <- density(y[ys], width = "SJ")$bw
+  #   ydsamp[ys] <- rnorm(length(ydsamp[ys]), 
+  #     mean = sample(ydsamp[ys], length(ydsamp[ys]), replace = TRUE), sd = densbw)
+  #   if (!exists("maxy")) maxy <- max(y) + densbw
+  #   ydsamp[ys] <- pmax(pmin(ydsamp[ys],maxy),min(y))
+  #   res <- sort(ydsamp)[res]
+  # }
 
   return(list(res = res, fit = parm))
 }
@@ -197,13 +201,14 @@ syn.normrank <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
 
   d <- abs(yhat - z)
   m <- sample(y[rank(d, ties.method = "random") <= donors], 1)
+  
   return(m)
 }
 
 
 ###-----syn.pmm------------------------------------------------------------
 
-syn.pmm <- function(y, x, xp, proper = FALSE, ...)
+syn.pmm <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
 {
 # Synthesis of y by predictive mean matching
 # Warning: can be slow for large data sets 
@@ -218,6 +223,10 @@ syn.pmm <- function(y, x, xp, proper = FALSE, ...)
   yhatobs <- x  %*% parm$coef
   yhatmis <- xp %*% parm$beta
   res <- apply(as.array(yhatmis), 1, .pmm.match, yhat = yhatobs, y = y, ...)
+  
+  if (smoothing != "") {
+    res <- syn.smooth(res, y, smoothing = smoothing)
+  }
   
   return(list(res = res, fit = parm))
 }
@@ -296,58 +305,57 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
     if (proper == TRUE) y <- sample(y, replace = TRUE)
     yp <- sample(y, size = dim(xp)[1], replace = TRUE)
     return(list(res = yp, fit = "logreg/sample")) 
-  }
-  else {
-  xmeans <- lapply(x, mean)                      ## x matrix centred
-  x  <- mapply(function(x, y) x - y, x, xmeans)
-  xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
-
-  if (is.null(denom)) {
-    aug <- augment.syn(y, x, ...)
-    # when no missing data must set xf to augmented version
-    xf   <- aug$x
-    y    <- aug$y
-    w    <- aug$w
-    xf   <- cbind(1, as.matrix(xf))
-    xp   <- cbind(1, as.matrix(xp))
-    expr <- expression(glm.fit(xf, y, family = binomial(link = logit), weights = w))
-    fit  <- suppressWarnings(eval(expr))
-    fit.sum <- summary.glm(fit)
-    beta <- coef(fit)
-    if (proper == TRUE) {
-      rv   <- t(chol(fit.sum$cov.unscaled))
-      beta <- beta + rv %*% rnorm(ncol(rv))  
-    }
-    p   <- 1/(1 + exp(-(xp %*% beta)))  
-    vec <- (runif(nrow(p)) <= p)
-    if (!is.logical(y)) vec <- as.numeric(vec)          
-    if (is.factor(y)) vec <- factor(vec,c(0,1), labels = levels(y))
   
   } else {
-    aug <- augment.syn(y, x, ...)
-    # when no missing data must set xf to augmented version
-    xf   <- aug$x
-    y    <- aug$y
-    w    <- aug$w
-    xf   <- cbind(1, as.matrix(xf))
-    xp   <- cbind(1, as.matrix(xp))
-    den  <- w
-    denind <- which(den == 1)
-    den[denind] <- denom
-    yy   <- y/den        #GR denom give then average response
-    yy[den < 1]   <- mean(yy[denind]) 
-    expr <- expression(glm.fit(xf, yy, family = binomial(link = logit), weights = den))
-    fit  <- suppressWarnings(eval(expr))
-    fit.sum <- summary.glm(fit)
-    beta <- coef(fit.sum)[,1]
-    if (proper == TRUE) {
-      rv   <- t(chol(fit.sum$cov.unscaled))
-      beta <- beta + rv %*% rnorm(ncol(rv))  
+    xmeans <- lapply(x, mean)                      ## x matrix centred
+    x  <- mapply(function(x, y) x - y, x, xmeans)
+    xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
+  
+    if (is.null(denom)) {
+      aug <- augment.syn(y, x, ...)
+      # when no missing data must set xf to augmented version
+      xf   <- aug$x
+      y    <- aug$y
+      w    <- aug$w
+      xf   <- cbind(1, as.matrix(xf))
+      xp   <- cbind(1, as.matrix(xp))
+      expr <- expression(glm.fit(xf, y, family = binomial(link = logit), weights = w))
+      fit  <- suppressWarnings(eval(expr))
+      fit.sum <- summary.glm(fit)
+      beta <- coef(fit)
+      if (proper == TRUE) {
+        rv   <- t(chol(fit.sum$cov.unscaled))
+        beta <- beta + rv %*% rnorm(ncol(rv))  
+      }
+      p   <- 1/(1 + exp(-(xp %*% beta)))  
+      vec <- (runif(nrow(p)) <= p)
+      if (!is.logical(y)) vec <- as.numeric(vec)          
+      if (is.factor(y)) vec <- factor(vec,c(0,1), labels = levels(y))
+    } else {
+      aug <- augment.syn(y, x, ...)
+      # when no missing data must set xf to augmented version
+      xf   <- aug$x
+      y    <- aug$y
+      w    <- aug$w
+      xf   <- cbind(1, as.matrix(xf))
+      xp   <- cbind(1, as.matrix(xp))
+      den  <- w
+      denind <- which(den == 1)
+      den[denind] <- denom
+      yy   <- y/den        #denom give then average response
+      yy[den < 1]   <- mean(yy[denind]) 
+      expr <- expression(glm.fit(xf, yy, family = binomial(link = logit), weights = den))
+      fit  <- suppressWarnings(eval(expr))
+      fit.sum <- summary.glm(fit)
+      beta <- coef(fit.sum)[,1]
+      if (proper == TRUE) {
+        rv   <- t(chol(fit.sum$cov.unscaled))
+        beta <- beta + rv %*% rnorm(ncol(rv))  
+      }
+      p <- 1/(1 + exp(-(xp %*% beta)))  
+      vec <- rbinom(nrow(p),denomp, p) 
     }
-    p <- 1/(1 + exp(-(xp %*% beta)))  
-    vec <- rbinom(nrow(p),denomp, p) 
-  }
-  return(list(res = vec, fit = fit.sum))  # fit = "logreg"
+    return(list(res = vec, fit = fit.sum))
   }
 }
 
@@ -383,46 +391,43 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
   if (dim(x)[2] == 0) {
     yp <- sample(y, size = dim(xp)[1], replace = TRUE)
     return(list(res = yp, fit = "polyreg/sample")) 
-  }
-  else {
-  
-  
-  aug <- augment.syn(y, x, ...)
-  # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
-  xf  <- aug$x
-  yf  <- aug$y
-  w   <- aug$w
-  
-  ### rescaling numeric to [0,1]
-  toscale <- sapply(xf, function(z) (is.numeric(z) & (any(z < 0) | any(z > 1))))
-  rsc <- sapply(xf[, toscale, drop = FALSE], range)
-  xf_sc <- xf
-  for (i in names(toscale[toscale == TRUE])) xf_sc[, i] <- (xf_sc[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
-  for (i in names(toscale[toscale == TRUE])) xp[, i] <- (xp[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
-  ###
-  
-  xfy <- cbind.data.frame(yf, xf_sc)  
-  fit <- multinom(formula(xfy), data = xfy, weights = w,
-    maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
-  if (fit$convergence == 1) cat("\nReached max number of iterations for a multinomial model\nsuggest rerunning with polyreg.maxit increased (default 1000)\n")             
-  post <- predict(fit, xp, type = "probs") 
-  if (length(y) == 1) post <- matrix(post, nrow = 1, ncol = length(post)) 
-  if (!is.factor(y)) y <- as.factor(y)
-  nc <- length(levels(yf))                    
-  un <- rep(runif(nrow(xp)), each = nc)
-  if (is.vector(post)) post <- matrix(c(1 - post, post), ncol = 2)
-  draws <- un > apply(post, 1, cumsum)
-  idx   <- 1 + apply(draws, 2, sum)
-  res <- levels(yf)[idx]
-  if (length(table(res)) == 1) {
-    cat("\n***************************************************************************************")
-    cat("\nWarning the polyreg fit produces only one category for the variable being synthesised." )
-    cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
-    cat("\nbecause the variable is sparse. Check results for this variable carefully.")
-    cat("\n****************************************************************************************\n")
-} 
-  fitted <- summary(fit)
-  return(list(res = res, fit = fitted))   # fit = "polyreg"
+  } else {
+    aug <- augment.syn(y, x, ...)
+    # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
+    xf  <- aug$x
+    yf  <- aug$y
+    w   <- aug$w
+    
+    ### rescaling numeric to [0,1]
+    toscale <- sapply(xf, function(z) (is.numeric(z) & (any(z < 0) | any(z > 1))))
+    rsc <- sapply(xf[, toscale, drop = FALSE], range)
+    xf_sc <- xf
+    for (i in names(toscale[toscale == TRUE])) xf_sc[, i] <- (xf_sc[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+    for (i in names(toscale[toscale == TRUE])) xp[, i] <- (xp[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+    ###
+    
+    xfy <- cbind.data.frame(yf, xf_sc)  
+    fit <- multinom(formula(xfy), data = xfy, weights = w,
+      maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
+    if (fit$convergence == 1) cat("\nReached max number of iterations for a multinomial model\nsuggest rerunning with polyreg.maxit increased (default 1000)\n")             
+    post <- predict(fit, xp, type = "probs") 
+    if (length(y) == 1) post <- matrix(post, nrow = 1, ncol = length(post)) 
+    if (!is.factor(y)) y <- as.factor(y)
+    nc <- length(levels(yf))                    
+    un <- rep(runif(nrow(xp)), each = nc)
+    if (is.vector(post)) post <- matrix(c(1 - post, post), ncol = 2)
+    draws <- un > apply(post, 1, cumsum)
+    idx   <- 1 + apply(draws, 2, sum)
+    res <- levels(yf)[idx]
+    if (length(table(res)) == 1) {
+      cat("\n***************************************************************************************")
+      cat("\nWarning the polyreg fit produces only one category for the variable being synthesised." )
+      cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
+      cat("\nbecause the variable is sparse. Check results for this variable carefully.")
+      cat("\n****************************************************************************************\n")
+    } 
+    fitted <- summary(fit)
+    return(list(res = res, fit = fitted)) 
   }
 }
 
@@ -485,8 +490,9 @@ syn.sample <- function(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
   if (proper == TRUE) y <- sample(y, replace = TRUE)
   yp <- sample(y, size = xp, replace = TRUE)
   
-  if (smoothing == "density") yp[!(yp %in% cont.na)] <- 
-    syn.smooth(yp[!(yp %in% cont.na)],y[!(y %in% cont.na)])
+  if (smoothing != "") yp[!(yp %in% cont.na)] <- 
+    syn.smooth(yp[!(yp %in% cont.na)], y[!(y %in% cont.na)], 
+               smoothing = smoothing)
   
   return(list(res = yp, fit = "sample"))
 }
@@ -496,7 +502,9 @@ syn.sample <- function(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
 syn.passive <- function(data, func)
 {
   # Special elementary synthesis method for transformed data.
-  res <- suppressWarnings(model.frame(as.formula(func), data, na.action = na.pass))	# SuppressWarnings to avoid message 'NAs by coercion for NAtemp
+  # SuppressWarnings to avoid message 'NAs by coercion for NAtemp  
+  res <- suppressWarnings(model.frame(as.formula(func), data, 
+                                      na.action = na.pass))	
 
   return(list(res = res, fit = "passive"))
 }
@@ -557,7 +565,9 @@ syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE,
       new[nodes == j] <- resample(donors, size = sum(nodes == j), 
                                   replace = TRUE)
     }
-    if (smoothing == "density") new <- syn.smooth(new, y) 
+ 
+    if (smoothing != "") new <- syn.smooth(new, y, smoothing = smoothing)
+    
     #donor <- lapply(nodes, function(s) y[leafnr == s])
     #new   <- sapply(1:length(donor),function(s) resample(donor[[s]], 1))
   } else {
@@ -581,9 +591,9 @@ syn.cart <- function(y, x, xp, smoothing = "", proper = FALSE,
 ###-----syn.ctree----------------------------------------------------------
 
 syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5, 
-                      mincriterion = 0.9, 
+                      mincriterion = 0.9, ...)
                       # teststat = "max", testtype = "Univariate", 
-                      ...)
+                      
 { 
   if (proper == TRUE) {
     s <- sample(length(y), replace = truehist())
@@ -612,7 +622,8 @@ syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5,
                                       replace = TRUE)
   }
   new <- y[newrowno]
-  if (!is.factor(y) & smoothing == "density") new <- syn.smooth(new, y)
+  if (!is.factor(y) & smoothing != "") new <- 
+    syn.smooth(new, y, smoothing = smoothing )
   
   return(list(res = new, fit = datact))
 }
@@ -701,9 +712,10 @@ syn.rf <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
   yhat <- sapply(ndonors, sample, size = 1)          
   
   if (is.factor(y)) yhat <- factor(yhat, levels = obslevels) 
-  if (!is.factor(y) & smoothing == "density") yhat <- syn.smooth(yhat,y)
+  if (!is.factor(y) & smoothing != "") yhat <- 
+    syn.smooth(yhat, y, smoothing = smoothing)
     
-  return(list(res = yhat, fit = rf.fit))  # "rf"
+  return(list(res = yhat, fit = rf.fit)) 
 }
 
 
@@ -752,7 +764,8 @@ syn.ranger <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
   yhat <- sapply(ndonors, sample, size = 1)          
   
   if (is.factor(y)) yhat <- factor(yhat, levels = obslevels) 
-  if (!is.factor(y) & smoothing == "density") yhat <- syn.smooth(yhat,y)
+  if (!is.factor(y) & smoothing != "") yhat <- 
+    syn.smooth(yhat, y, smoothing = "smoothing")
   
   return(list(res = yhat, fit = rf.fit))
 }
@@ -796,9 +809,10 @@ syn.bag <- function(y, x, xp, smoothing = "", proper = FALSE, ntree = 10, ...)
   yhat <- sapply(ndonors, sample, size = 1)
   
   if (is.factor(y)) yhat <- factor(yhat, levels = obslevels) 
-  if (!is.factor(y) & smoothing == "density") yhat <- syn.smooth(yhat,y)
+  if (!is.factor(y) & smoothing != "") yhat <- 
+    syn.smooth(yhat,y, smoothing = smoothing)
     
-  return(list(res = yhat, fit = rf.fit))    # "bag"
+  return(list(res = yhat, fit = rf.fit))
 }
 
 
@@ -818,8 +832,9 @@ syn.nested <- function(y, x, xp, smoothing = "", cont.na = NA, ...)
   }
   yp <- y[indexp]
   
-  if (smoothing == "density") yp[!(yp %in% cont.na)] <-
-    syn.smooth(yp[!(yp %in% cont.na)],y[!(y %in% cont.na)])
+  if (smoothing != "") yp[!(yp %in% cont.na)] <-
+    syn.smooth(yp[!(yp %in% cont.na)], y[!(y %in% cont.na)], 
+               smoothing = smoothing)
   
   return(list(res = yp, fit = "nested"))
 }
@@ -955,13 +970,12 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
 ###-----syn.ipf------------------------------------------------------------
   
 syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-                    gmargins = "twoway", othmargins = NULL, tol = 1e-4, max.its = 5000,
+                    gmargins = "twoway", othmargins = NULL, tol = 1e-3, max.its = 5000,
                     maxtable = 1e8, print.its = FALSE, epsilon= 0, rand = TRUE,...)
 {
  # Fits log-linear model to combinations of variables
  # k just holds number of synthetic records required
 
- if (!is.null(structzero)) stop("Stuctural zeros not implemented yet.\n", .call = FALSE)
  levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))}) # all NAtemp here already
  table.size <- prod(levs)   # exp(sum(log(levs))) 
  if (table.size > maxtable) stop("Table has more than ", maxtable/1e6,
@@ -1072,7 +1086,7 @@ resample <- function(x, ...) x[sample.int(length(x), ...)]
 decimalplaces <- function(x) 
 {
   x <- x - floor(x) # -> more digit numbers 
-  if ((x %% 1) != 0 & (round(x, 15) %% 1 != 0)) {
+  if (!is.na(x) & (x %% 1) != 0 & (round(x, 15) %% 1 != 0)) {
     nchar(strsplit(sub("0+$", "", as.character(x)), ".", fixed = TRUE)[[1]][[2]])
   } else {
     return(0)
@@ -1106,24 +1120,43 @@ addXfac <- function(x,...)
 
 
 ###-----syn.smooth--------------------------------------------------------- 
-syn.smooth <- function(ysyn, yobs)
+
+syn.smooth <- function(ysyn, yobs = NULL, smoothing = "spline", window = 5, ...)
 {
-  ys <- 1:length(ysyn)
-  # exclude from smoothing if freq for a single value higher than 70% 
-  maxfreq <- which.max(table(ysyn))
-  maxcat  <- as.numeric(names(table(ysyn))[maxfreq])
-  if (table(ysyn)[maxfreq]/sum(table(ysyn)) > .7) ys <- which(ysyn != maxcat)
-  # exclude from smoothing if data are top-coded - approximate check
-  if (10*table(ysyn)[length(table(ysyn)) - 1] <
-      tail(table(ysyn), n = 1) - table(ysyn)[length(table(ysyn)) - 1]) {
-    ys   <- ys[-which(ysyn == max(yobs))]
-    maxy <- max(yobs)
+  if (!(smoothing %in% c("", "spline", "density", "rmean"))) 
+    cat('Smoothing must be one of "spline", "density" or "rmean". No smoothing done.\n')
+  if (any(is.na(ysyn))) stop("ysyn cannot contain missing values", call. = FALSE)
+  
+  else if (smoothing == "density") {
+    ys <- 1:length(ysyn)
+    # exclude from smoothing if freq for a single value higher than 70% 
+    maxfreq <- which.max(table(ysyn))
+    maxcat  <- as.numeric(names(table(ysyn))[maxfreq])
+    if (table(ysyn)[maxfreq]/sum(table(ysyn)) > .7) ys <- which(ysyn != maxcat)
+    # exclude from smoothing if data are top-coded - approximate check
+    if (10 * table(ysyn)[length(table(ysyn)) - 1] <
+        tail(table(ysyn), n = 1) - table(ysyn)[length(table(ysyn)) - 1]) {
+          ys   <- ys[-which(ysyn == max(yobs))]
+          maxy <- max(yobs)
+    }
+ 
+    densbw  <- density(ysyn[ys], width = "SJ")$bw
+    ysyn[ys] <- rnorm(n = length(ysyn[ys]), mean = ysyn[ys], sd = densbw)
+    if (!exists("maxy")) maxy <- max(yobs) + densbw
+    ysyn[ys] <- pmax(pmin(ysyn[ys], maxy), min(yobs))
+    ysyn[ys] <- round(ysyn[ys], max(sapply(yobs, decimalplaces))) 
+  }    
+  else if (smoothing == "rmean") {
+    ord <- order(ysyn)
+    ysyn <- runningmean(1:length(ysyn), ysyn[ord], window = window)
+    ysyn[ord] <- round(ysyn, max(sapply(yobs, decimalplaces))) 
   }
-  densbw  <- density(ysyn[ys], width = "SJ")$bw
-  ysyn[ys] <- rnorm(n = length(ysyn[ys]), mean = ysyn[ys], sd = densbw)
-  if (!exists("maxy")) maxy <- max(yobs) + densbw
-  ysyn[ys] <- pmax(pmin(ysyn[ys], maxy), min(yobs))
-  ysyn[ys] <- round(ysyn[ys], max(sapply(yobs, decimalplaces)))      
+  else if (smoothing == "spline") {
+    ord <- order(ysyn)
+    ysyn <- smooth.spline(sort(ysyn), all.knots = FALSE)$y
+    ysyn[ord] <- round(ysyn, max(sapply(yobs, decimalplaces))) 
+  }
+  
   return(ysyn)
 }
 
@@ -1181,13 +1214,12 @@ array.to.frame <- function(x)
 
 ###-----roundspec----------------------------------------------------------
 
-roundspec <- function(tab) {  ## special rounding
+roundspec <- function(tab) {  ## special rounding to preserve total
   if (abs(round(sum(tab)) - sum(tab)) > 1e-6) 
     stop("This function assumes sum of tab is a whole number\n", .call= FALSE)
   diff <- round(sum(tab) - sum(round(tab)))
-
+  
   if (diff == 0 & all(tab >= 0)) { 
-    cat("roundspec no adjustment required\n")
     result <- round(tab)
   } else if (any(round(tab) <= 0)){
     if (diff < 0 ) {
@@ -1195,13 +1227,12 @@ roundspec <- function(tab) {  ## special rounding
       vals <- tab[round(tab) > 0]
       ordinds <- inds[order(vals)]
       newtab <- round(tab)
-      newtab[ordinds[1:(-diff)]]<- 0
+      newtab[ordinds[1:(-diff)]]<- newtab[ordinds[1:(-diff)]]  - 1
     } else {
-      inds <- (1:length(tab))[round(tab) == 0]
-      vals <- tab[round(tab)==0]
-      ordinds <- inds[order(-vals)]
+      inds <- (1:length(tab))
       newtab <- round(tab)
-      newtab[ordinds[1:diff]]<- 1 
+      newtab[1:(diff)]<- newtab[1:(diff)] + 1
+      
     }
     result <- newtab
   } else {
@@ -1217,35 +1248,25 @@ including this output\n", tab, "\n")
 }
 
 
-###-----roundspec2---------------------------------------------------------
+###-----addlapn------------------------------------------------------------
 
-roundspec2 <- function(tab, N){  ## with neg counts
-  rtab <- round(tab)
-  rtab[rtab < 0] <- 0
-  sumtodrop <- sum(rtab) - N
-  if (!(sumtodrop > 0  )) stop(paste("Check data for roundspec2 N sumtodrop ",  
-                                     N, sumtodrop,"\n\n"))
-  cumtab <- cumsum(sort(rtab))
-  indout <- (1:length(tab))[cumtab == sumtodrop]
-  valout <- tab[order(tab)][indout]
-  rtab[tab <= valout] <- 0
-  newtab <- rtab    
-  newtab
+addlapn <- function(x, eps){
+  # add Laplace noise with re-scaling to a total or sample size
+  
+  if (eps <= 0) stop("eps must be > 0\n")
+  res <- x + rlaplace(length(x), 0, 1/eps)
+  res <- makepos(res, sum(x))
+  return(res)
 }
 
 
-###-----addlapn---------------------------------------------------------
+###---------------makepos--------------------------------------------------
 
-addlapn <- function(x, eps, tot = NULL){
-  # add laplace noise with rescaling to a total or sample size
-
-  if (eps <= 0) stop("eps must be > 0\n")
-  res <- x + rlaplace(length(x), 0, 1/eps)
-  res[res< 1e-6] <- 1e-6
-  if (is.null(tot)) N <- sum(x)
-  else N <- tot
-  res <- N *res/sum(res)
-  return(res)
+makepos <- function(lap, tot) {  ## makes positive summing to total
+  olap <- order(-lap)
+  lapo <- lap[olap]
+  lap[olap[cumsum(abs(lapo)) >= tot]] <- 0
+  abs(lap)
 }
 
 

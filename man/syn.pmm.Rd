@@ -6,7 +6,7 @@
   matching.
 }
 \usage{
-syn.pmm(y, x, xp, proper = FALSE, ...)
+syn.pmm(y, x, xp, smoothing = "", proper = FALSE, ...)
 }
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
@@ -14,6 +14,8 @@ syn.pmm(y, x, xp, proper = FALSE, ...)
   \item{xp}{a matrix (\code{k} x \code{p}) of synthesised covariates.}
   \item{proper}{a logical value specifying whether proper synthesis 
     should be conducted. See details.}
+  \item{smoothing}{smoothing method. See documentation for 
+    \code{\link{syn.smooth}}.}
   \item{\dots}{additional parameters.}
 }
 \details{
@@ -29,9 +31,8 @@ syn.pmm(y, x, xp, proper = FALSE, ...)
   }
   The Bayesian version (for proper synthesis) includes additional 
   step before computing predicted values: \itemize{\item{Draw coefficients 
-  from normal distribution with mean and variance
-  estimated in step 1 and use them to calculate predicted
-  values for the synthesised covariates.}}
+  from normal distribution with mean and variance estimated in step 1 and use 
+  them to calculate predicted values for the synthesised covariates.}}
 }
 \value{
 A list with two components:
@@ -40,6 +41,6 @@ A list with two components:
 }
 %\references{...}
 \seealso{
-  \code{\link{syn}}
+  \code{\link{syn}}, \code{\link{syn.smooth}}
 }
 \keyword{datagen}

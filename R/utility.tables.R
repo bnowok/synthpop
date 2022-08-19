@@ -80,7 +80,7 @@ utility.tables.synds <- function(object, data,
 
  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data object.\n", call. = FALSE)   
  if (is.null(data)) stop("Requires parameter 'data' to give name of the original data.\n", call. = FALSE)
- if (class(object) != "synds") stop("'object' must be of class 'synds', a synthetic data object", call. = FALSE)
+ if (!inherits(object, "synds")) stop("'object' must be of class 'synds', a synthetic data object", call. = FALSE)
  if (!is.data.frame(data)) stop("'data' must be a data.frame.\n", call. = FALSE)
  if (!(tables %in% c("twoway", "oneway", "threeway"))) stop("Argument tables must be 'oneway', 'twoway' or 'threeway.'\n", call. = FALSE)
 

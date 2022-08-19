@@ -94,7 +94,7 @@ utility.gen.synds <- function(object, data,
    stop("Invalid 'resamp.method' type - must be NULL, 'perm', 'pairs' or 'none'.\n", call. = FALSE)
  if (aggregate == TRUE & method != "logit") stop("Aggregation only works for 'logit' method.\n", call. = FALSE)
  if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n",  call. = FALSE)
- if (!class(object) == "synds") stop("Object must have class 'synds'.\n", call. = FALSE)
+ if (!inherits(object, "synds")) stop("Object must have class 'synds'.\n", call. = FALSE)
  if (k.syn & !is.null(resamp.method) && resamp.method == "pairs") stop('\nresamp.method = "pairs" will give the wrong answer when k.syn is TRUE.\n', call. = FALSE)
  if (is.null(tree.method) || length(tree.method) != 1 || is.na(match(tree.method, c("rpart", "ctree"))))
    stop("Invalid 'tree.method' - must be either 'rpart' or 'ctree'.\n", call. = FALSE)
@@ -631,7 +631,7 @@ utility.tab.synds <- function(object, data, vars = NULL, ngroups = 5,
     stop("Requires parameter 'data' to give name of the real data.\n", call. = FALSE)
   if (!is.data.frame(data))
     stop("Data must have class 'data.frame'.\n", call. = FALSE)
-  if (!class(object) == "synds")
+  if (!inherits(object, "synds"))
     stop("Object must have class 'synds'.\n", call. = FALSE)
   if (is.null(vars)) stop("You need to set variables with vars parameter.\n", call. = FALSE) else if
     (!(all(vars %in% names(data)))) stop("Unrecognized variable(s) in vars parameter: ",

@@ -20,7 +20,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
   
  if (any(class(data) %in% c("tbl", "tbl_df"))) data <- as.data.frame(data)  
   
- if (class(object) != "synds") stop("Object must have class synds.\n", call. = FALSE )                                                                    
+ if (!inherits(object, "synds")) stop("Object must have class synds.\n", call. = FALSE )                                                                    
  if (!is.null(msel) & !all(msel %in% (1:object$m))) stop("Invalid synthesis number(s).", call. = FALSE)
  if (!all(utility.stats %in% c("VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", "MabsDD", "dBhatt",
                               "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE", "df", "all"))) 
@@ -439,7 +439,7 @@ compare.fit.synds <- function(object, data, plot = "Z",
  value <- "Value"
  coefficient <- c("Coefficient", "Model")  
   
- if (!class(object) == "fit.synds") stop("Object must have class fit.synds.\n")
+ if (!inherits(object, "fit.synds")) stop("Object must have class fit.synds.\n")
  if (!is.data.frame(data)) stop("Data must be a data frame.\n")  # theoretically can be a matrix (?)
  if (ci.level <= 0 | ci.level > 1) stop("ci.level must be beteen 0 and 1.\n")
 

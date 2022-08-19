@@ -20,7 +20,8 @@ export(syn,
        syn.nested,
        syn.satcat,
        syn.catall,
-       syn.ipf)
+       syn.ipf,
+       syn.smooth)
 
 export(compare, compare.synds, compare.fit.synds,
        compare.data.frame, compare.list,
@@ -85,6 +86,7 @@ import(MASS,
        proto,
        survival)
 
+importFrom(broman, runningmean)
 importFrom(party, ctree)
 importFrom(party, where)
 importFrom(party, cforest, cforest_unbiased)

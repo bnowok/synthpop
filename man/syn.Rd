@@ -100,15 +100,16 @@ syn.strata(data, strata = NULL,
   \item{semicont}{a named list of values at which semi-continuous
      variables have spikes. The names of the list elements must correspond 
      to the names of the semi-continuous variables.}     
-  \item{smoothing}{a named list specifying smoothing method (\code{"density"} 
-     or \code{""}) to be used for selected variables. Smoothing can only be 
-     applied to continuous variables synthesised using \code{sample}, 
-     \code{ctree}, \code{cart}, \code{rf}, \code{bag}, \code{normrank} or 
-     \code{nested} method. The names of the list elements must correspond to 
-     the names of the variables whose values are to be smoothed. Smoothing is 
-     applied to the synthesised values. For \code{"density"} smoothing a Gaussian 
-     kernel density estimator is applied with bandwidth selected using the 
-     Sheather-Jones 'solve-the-equation' method (see \code{\link{bw.SJ}}).}  
+  \item{smoothing}{a single string specifying a smoothing method for all numeric 
+     variables in the data or a named list specifying a smoothing method to be 
+     used for selected variables. Avaliable methods include: \code{"spline"} 
+     (recommended), \code{"rmean"}, \code{"density"}, and \code{""}).
+     Smoothing can only be applied to continuous variables synthesised using 
+     \code{sample}, \code{ctree}, \code{cart}, \code{rf}, \code{bag}, 
+     \code{ranger}, \code{normrank}, \code{pmm} or \code{nested} method. 
+     The names of the list elements must correspond to the names of the 
+     variables whose values are to be smoothed. Smoothing is applied to the 
+     synthesised values. For more details see \code{\link{syn.smooth}}.}
   \item{event}{a named list specifying for survival data the names of 
      corresponding event indicators. The names of the list elements 
      must correspond to the names of the survival variables.}
@@ -139,8 +140,8 @@ syn.strata(data, strata = NULL,
     before running \code{syn()} with the function \code{numtocat.syn()}}
   \item{catgroups}{An integer or a vector of integers of the same length as
     \code{numtocat} giving the target number of groups into which of the
-     numeric variables is to be categorised. The function \code{group_var}
-     from the \code{classInt} package performs the categorisation.}
+    numeric variables is to be categorised. The function \code{group_var}
+    from the \code{classInt} package performs the categorisation.}
   \item{models}{if \code{TRUE} parameters of models fitted to the original data 
      and used to generate the synthetic values are stored.}
   \item{print.flag}{if \code{TRUE} (default) synthesising history and 

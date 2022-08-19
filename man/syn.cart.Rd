@@ -16,7 +16,8 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
   \item{y}{an original data vector of length \code{n}.}
   \item{x}{a matrix (\code{n} x \code{p}) of original covariates.}
   \item{xp}{a matrix (\code{k} x \code{p}) of synthesised covariates.}
-  \item{smoothing}{smoothing method for continuous variables.}
+  \item{smoothing}{smoothing method for numeric variable. See 
+    \code{\link{syn.smooth}}.}
   \item{proper}{for proper synthesis (\code{proper = TRUE}) a CART 
     model is fitted to a bootstrapped sample of the original data.}  
   \item{minbucket}{the minimum number of observations in
@@ -72,6 +73,7 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
 }
 \seealso{
   \code{\link{syn}}, \code{\link{syn.survctree}},
-  \code{\link[rpart]{rpart}}, \code{\link[party]{ctree}}
+  \code{\link[rpart]{rpart}}, \code{\link[party]{ctree}},
+  \code{\link{syn.smooth}}
 }
 \keyword{datagen}

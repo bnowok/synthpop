@@ -10,7 +10,8 @@ syn.sample(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
 \arguments{
   \item{y}{an original data vector of length \code{n}.}
   \item{xp}{a target length \code{k} of a synthetic data vector.}
-  \item{smoothing}{smoothing method for a continous variable.}
+  \item{smoothing}{smoothing method for numeric variable. See documentation
+   for \code{\link{syn.smooth}}.}
   \item{cont.na}{a vector of codes for missing values for continuous
      variables that should be excluded from smoothing.}  
   \item{proper}{if \code{proper = TRUE} values are sampled from  
@@ -30,6 +31,6 @@ A list with two components:
   \item{fit}{a name of the method used for synthesis (\code{"sample"}).}
 }
 \seealso{
-  \code{\link{syn}}
+  \code{\link{syn}}, \code{\link{syn.smooth}}
 }
 \keyword{datagen}

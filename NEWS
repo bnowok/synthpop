@@ -19,8 +19,6 @@ CHANGES
 * In multi.compare() if `msel = NULL`, pooled synthetic data copies are 
   compared with the original data.  
 * Parameter `incomplete` added to summary.fit.synds() function.  
-* Method for first variable is NOT changed to "sample" for "norm", "normrank", 
-  "lognorm", "sqrtnorm", and "cubertnorm".
 * In syn.ipf() default value of `tol` parameter changed to 1e-3 in order to 
   speed up convergence.  
   

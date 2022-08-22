@@ -470,12 +470,13 @@ check.method.syn <- function(setup, data, proper) {
  if (sum(pred) > 0) has.pred <- apply(pred != 0, 1, any)   # GR condition added
  else has.pred <- rep(0, nvar) 
  
- if (any(method == "parametric")) { # the default argument
-   # change to default methods 
-
-   #if (length(vis) > 1) {
-	   for (j in vis) {
-	     #if (has.pred[j]) { #GR removed this and edited below v1.7-1
+ if (any(method == "parametric")) {
+   # set method for first in visit.sequence to "sample"
+   # change to default methods for variables with predictors
+   
+   if (length(vis) > 1) {
+	   for (j in vis[-1]) {
+	     if (has.pred[j]) {
 	       y <- data[,j]
 	       if (is.numeric(y))        method[j] <- default.method[1]
 	       else if (nlevels(y) == 2) method[j] <- default.method[2]
@@ -484,9 +485,9 @@ check.method.syn <- function(setup, data, proper) {
 	       else if (is.logical(y))   method[j] <- default.method[2]
 	       else if (nlevels(y) != 1) stop("Variable ",j," ",varnames[j],
 		     " type not numeric or factor.", call. = FALSE) # to prevent a constant values failing
-	     } #else if (method[j] != "constant") method[j] <- "sample" 
-	   #}
-	 #}
+	     } else if (method[j] != "constant") method[j] <- "sample" 
+	   }
+	 }
  }
   
  # check whether the elementary synthesising methods are available
@@ -567,8 +568,7 @@ check.method.syn <- function(setup, data, proper) {
 
  for (j in vis) {
    if (!has.pred[j] & substr(method[j], 1, 6) != "nested" & is.na(any(match(method[j],
-      c("", "constant", "sample", "sample.proper", "catall", "ipf",
-        "norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm", "logreg", "polyreg")))))  #GR for 1.7-1
+      c("", "constant", "sample", "sample.proper", "catall", "ipf"))))) 
    {
      if (print.flag == TRUE) cat('\nMethod "', method[j],
      '" is not valid for a variable without predictors (',
@@ -898,10 +898,9 @@ check.rules.syn <- function(setup, data) {
  if (length(method) == 1) {
    if (is.passive(method)) stop("Cannot have a passive syhthesising method for every column.", call. = FALSE)
    method <- rep(method, nvar)
-   if (!(method[1] %in% c("catall", "ipf", "norm", "normrank", "lognorm", 
-          "sqrtnorm", "cubertnorm","logreg","polyreg"))) method[visit.sequence[1]] <- "sample" #GRBN
+   if (!(method[1] %in% c("catall", "ipf"))) method[visit.sequence[1]] <- "sample"
    # set method to "" for vars not in visit.sequence
-   method[setdiff(1:nvar,visit.sequence)] <- ""
+   method[setdiff(1:nvar, visit.sequence)] <- ""
  }
  # if user specifies multiple methods, check the length of the argument
  # methods must be given for all columns in the data
@@ -1163,12 +1162,9 @@ check.rules.syn <- function(setup, data) {
    }
  } 
 
- #browser()                                                     #1.7-1  GR condition added
- if (sum(predictor.matrix) > 0 | any(method[visit.sequence[1]] %in% 
-                        c("norm", "normrank", "lognorm", "sqrtnorm", "cubertnorm","logreg","polyreg")))
-   {
+ if (sum(predictor.matrix) > 0){
 
-	  pm <- padMis.syn(data, method, predictor.matrix, visit.sequence,
+	 pm <- padMis.syn(data, method, predictor.matrix, visit.sequence,
 			   nvar, rules, rvalues, default.method, cont.na, smoothing, event, denom)
 
 	 # Pad the Syhthesis model with dummy variables for the factors
@@ -1179,16 +1175,16 @@ check.rules.syn <- function(setup, data) {
    if (k != dim(data)[1]) {
      # create a non-empty data frame in case some variables are kept unsynthesised
      p$syn <- p$syn[sample(1:nrow(data), k, replace = TRUE),]
-     dimnames(p$syn)[[1]] <- 1:k                             #!BN-15/06/2016
+     dimnames(p$syn)[[1]] <- 1:k
    }
    if (sum(duplicated(names(p$data))) > 0)
      stop("Column names of padded data should be unique.", call. = FALSE)
  
-	 p$cont.na <- pm$cont.na  #!bn
+	 p$cont.na <- pm$cont.na  
 	 
  } else {
  
-   p <- list(data = data,                             #  GR this added
+   p <- list(data = data,                        
              syn = data,
              predictor.matrix = predictor.matrix, 
              method = method, 
@@ -1196,12 +1192,12 @@ check.rules.syn <- function(setup, data) {
              rules = rules,
              rvalues = rvalues,
              cont.na = cont.na, 
-             event = event,                  #GRdenom new
-             denom = denom,                  #GRdenom new
+             event = event,                
+             denom = denom,
              categories = NULL,
              smoothing = smoothing)         
    
-   if (k != dim(data)[1]) {                                  #!BN-27/06/2018
+   if (k != dim(data)[1]) {
      p$syn <- p$syn[sample(1:nrow(data), k, replace = TRUE),]   
      dimnames(p$syn)[[1]] <- 1:k
    }

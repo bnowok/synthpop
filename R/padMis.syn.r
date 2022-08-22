@@ -24,10 +24,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
 
  for (j in 1:nvar) {
     # if (No.NA[j] & is.numeric(data[,j]) & inpred[j]==TRUE){  #GR1.7-1
-    if (No.NA[j] & is.numeric(data[,j]) & 
-        (inpred[j] == TRUE | (method[j] %in% c("norm", "normrank", "lognorm", 
-                                               "sqrtnorm", "cubertnorm",
-                                               "logreg", "polyreg")))  & 
+    if (No.NA[j] & is.numeric(data[,j]) & inpred[j] == TRUE & 
         !is.passive(method[j]) & !method[j] %in% c("nested", "ipf", "catall")) {
 
     # augment the data with a column for the original continuous variable with 

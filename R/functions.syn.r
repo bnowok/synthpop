@@ -300,63 +300,55 @@ syn.logreg <- function(y, x, xp, denom = NULL, denomp = NULL,
   # 3. Compute predicted scores for m.d., i.e. logit-1(X BETA)
   # 4. Compare the score to a random (0,1) deviate, and synthesise.
 
-  # insert to allow model with no npredictors GR1.7-1
-  if (dim(x)[2] == 0) {
-    if (proper == TRUE) y <- sample(y, replace = TRUE)
-    yp <- sample(y, size = dim(xp)[1], replace = TRUE)
-    return(list(res = yp, fit = "logreg/sample")) 
+  xmeans <- lapply(x, mean)                      ## x matrix centred
+  x  <- mapply(function(x, y) x - y, x, xmeans)
+  xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
   
-  } else {
-    xmeans <- lapply(x, mean)                      ## x matrix centred
-    x  <- mapply(function(x, y) x - y, x, xmeans)
-    xp <- mapply(function(x, y) x - y, xp, xmeans) ## also xp to match
-  
-    if (is.null(denom)) {
-      aug <- augment.syn(y, x, ...)
-      # when no missing data must set xf to augmented version
-      xf   <- aug$x
-      y    <- aug$y
-      w    <- aug$w
-      xf   <- cbind(1, as.matrix(xf))
-      xp   <- cbind(1, as.matrix(xp))
-      expr <- expression(glm.fit(xf, y, family = binomial(link = logit), weights = w))
-      fit  <- suppressWarnings(eval(expr))
-      fit.sum <- summary.glm(fit)
-      beta <- coef(fit)
-      if (proper == TRUE) {
-        rv   <- t(chol(fit.sum$cov.unscaled))
-        beta <- beta + rv %*% rnorm(ncol(rv))  
-      }
-      p   <- 1/(1 + exp(-(xp %*% beta)))  
-      vec <- (runif(nrow(p)) <= p)
-      if (!is.logical(y)) vec <- as.numeric(vec)          
-      if (is.factor(y)) vec <- factor(vec,c(0,1), labels = levels(y))
-    } else {
-      aug <- augment.syn(y, x, ...)
-      # when no missing data must set xf to augmented version
-      xf   <- aug$x
-      y    <- aug$y
-      w    <- aug$w
-      xf   <- cbind(1, as.matrix(xf))
-      xp   <- cbind(1, as.matrix(xp))
-      den  <- w
-      denind <- which(den == 1)
-      den[denind] <- denom
-      yy   <- y/den        #denom give then average response
-      yy[den < 1]   <- mean(yy[denind]) 
-      expr <- expression(glm.fit(xf, yy, family = binomial(link = logit), weights = den))
-      fit  <- suppressWarnings(eval(expr))
-      fit.sum <- summary.glm(fit)
-      beta <- coef(fit.sum)[,1]
-      if (proper == TRUE) {
-        rv   <- t(chol(fit.sum$cov.unscaled))
-        beta <- beta + rv %*% rnorm(ncol(rv))  
-      }
-      p <- 1/(1 + exp(-(xp %*% beta)))  
-      vec <- rbinom(nrow(p),denomp, p) 
+  if (is.null(denom)) {
+    aug <- augment.syn(y, x, ...)
+    # when no missing data must set xf to augmented version
+    xf   <- aug$x
+    y    <- aug$y
+    w    <- aug$w
+    xf   <- cbind(1, as.matrix(xf))
+    xp   <- cbind(1, as.matrix(xp))
+    expr <- expression(glm.fit(xf, y, family = binomial(link = logit), weights = w))
+    fit  <- suppressWarnings(eval(expr))
+    fit.sum <- summary.glm(fit)
+    beta <- coef(fit)
+    if (proper == TRUE) {
+      rv   <- t(chol(fit.sum$cov.unscaled))
+      beta <- beta + rv %*% rnorm(ncol(rv))  
     }
-    return(list(res = vec, fit = fit.sum))
+    p   <- 1/(1 + exp(-(xp %*% beta)))  
+    vec <- (runif(nrow(p)) <= p)
+    if (!is.logical(y)) vec <- as.numeric(vec)          
+    if (is.factor(y)) vec <- factor(vec,c(0,1), labels = levels(y))
+  } else {
+    aug <- augment.syn(y, x, ...)
+    # when no missing data must set xf to augmented version
+    xf   <- aug$x
+    y    <- aug$y
+    w    <- aug$w
+    xf   <- cbind(1, as.matrix(xf))
+    xp   <- cbind(1, as.matrix(xp))
+    den  <- w
+    denind <- which(den == 1)
+    den[denind] <- denom
+    yy   <- y/den        #denom give then average response
+    yy[den < 1]   <- mean(yy[denind]) 
+    expr <- expression(glm.fit(xf, yy, family = binomial(link = logit), weights = den))
+    fit  <- suppressWarnings(eval(expr))
+    fit.sum <- summary.glm(fit)
+    beta <- coef(fit.sum)[, 1]
+    if (proper == TRUE) {
+      rv   <- t(chol(fit.sum$cov.unscaled))
+      beta <- beta + rv %*% rnorm(ncol(rv))  
+    }
+    p <- 1/(1 + exp(-(xp %*% beta)))  
+    vec <- rbinom(nrow(p),denomp, p) 
   }
+  return(list(res = vec, fit = fit.sum))
 }
 
 
@@ -386,49 +378,42 @@ syn.polyreg <- function(y, x, xp, proper = FALSE, maxit = 1000,
     y   <- y[s]  
     y   <- factor(y)
   }
-
-  # to allow model with no predictors #GR1.7-1
-  if (dim(x)[2] == 0) {
-    yp <- sample(y, size = dim(xp)[1], replace = TRUE)
-    return(list(res = yp, fit = "polyreg/sample")) 
-  } else {
-    aug <- augment.syn(y, x, ...)
-    # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
-    xf  <- aug$x
-    yf  <- aug$y
-    w   <- aug$w
+  aug <- augment.syn(y, x, ...)
+  # yf and xf needed for augmented data to save x as non augmented  not now needed can tidy
+  xf  <- aug$x
+  yf  <- aug$y
+  w   <- aug$w
     
-    ### rescaling numeric to [0,1]
-    toscale <- sapply(xf, function(z) (is.numeric(z) & (any(z < 0) | any(z > 1))))
-    rsc <- sapply(xf[, toscale, drop = FALSE], range)
-    xf_sc <- xf
-    for (i in names(toscale[toscale == TRUE])) xf_sc[, i] <- (xf_sc[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
-    for (i in names(toscale[toscale == TRUE])) xp[, i] <- (xp[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
-    ###
-    
-    xfy <- cbind.data.frame(yf, xf_sc)  
-    fit <- multinom(formula(xfy), data = xfy, weights = w,
-      maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
-    if (fit$convergence == 1) cat("\nReached max number of iterations for a multinomial model\nsuggest rerunning with polyreg.maxit increased (default 1000)\n")             
-    post <- predict(fit, xp, type = "probs") 
-    if (length(y) == 1) post <- matrix(post, nrow = 1, ncol = length(post)) 
-    if (!is.factor(y)) y <- as.factor(y)
-    nc <- length(levels(yf))                    
-    un <- rep(runif(nrow(xp)), each = nc)
-    if (is.vector(post)) post <- matrix(c(1 - post, post), ncol = 2)
-    draws <- un > apply(post, 1, cumsum)
-    idx   <- 1 + apply(draws, 2, sum)
-    res <- levels(yf)[idx]
-    if (length(table(res)) == 1) {
-      cat("\n***************************************************************************************")
-      cat("\nWarning the polyreg fit produces only one category for the variable being synthesised." )
-      cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
-      cat("\nbecause the variable is sparse. Check results for this variable carefully.")
-      cat("\n****************************************************************************************\n")
-    } 
-    fitted <- summary(fit)
-    return(list(res = res, fit = fitted)) 
-  }
+  ### rescaling numeric to [0,1]
+  toscale <- sapply(xf, function(z) (is.numeric(z) & (any(z < 0) | any(z > 1))))
+  rsc <- sapply(xf[, toscale, drop = FALSE], range)
+  xf_sc <- xf
+  for (i in names(toscale[toscale == TRUE])) xf_sc[, i] <- (xf_sc[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+  for (i in names(toscale[toscale == TRUE])) xp[, i] <- (xp[, i] - rsc[1,i])/(rsc[2,i] - rsc[1,i])
+  ###
+  
+  xfy <- cbind.data.frame(yf, xf_sc)  
+  fit <- multinom(formula(xfy), data = xfy, weights = w,
+    maxit = maxit, trace = trace, MaxNWts = MaxNWts, ...)
+  if (fit$convergence == 1) cat("\nReached max number of iterations for a multinomial model\nsuggest rerunning with polyreg.maxit increased (default 1000)\n")             
+  post <- predict(fit, xp, type = "probs") 
+  if (length(y) == 1) post <- matrix(post, nrow = 1, ncol = length(post)) 
+  if (!is.factor(y)) y <- as.factor(y)
+  nc <- length(levels(yf))                    
+  un <- rep(runif(nrow(xp)), each = nc)
+  if (is.vector(post)) post <- matrix(c(1 - post, post), ncol = 2)
+  draws <- un > apply(post, 1, cumsum)
+  idx   <- 1 + apply(draws, 2, sum)
+  res <- levels(yf)[idx]
+  if (length(table(res)) == 1) {
+    cat("\n***************************************************************************************")
+    cat("\nWarning the polyreg fit produces only one category for the variable being synthesised." )
+    cat("\nThis may indicate that the function multinom used in polyreg failed to iterate, possibly")
+    cat("\nbecause the variable is sparse. Check results for this variable carefully.")
+    cat("\n****************************************************************************************\n")
+  } 
+  fitted <- summary(fit)
+  return(list(res = res, fit = fitted)) 
 }
 
 

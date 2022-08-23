@@ -263,7 +263,7 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
            cat.columns <- p$syn[, p$categories[j, 4]]  # this is the single column with the data for which this is the dummy
            model.frame(~cat.columns - 1, data = p$syn) 
            p$syn[, (j:(j + p$categories[p$categories[j, 4], 2] - 1))] <- # replaces all the dummies for this variable with
-           matrix((model.matrix(~cat.columns - 1)[, -1]),               # dummies calculated from the synthesised data
+           matrix((model.matrix(~cat.columns - 1)[, -1]),                # dummies calculated from the synthesised data
                    ncol = p$categories[p$categories[j, 4], 2],
                    nrow = nrow(p$syn))
            p$syn[,j] <- as.numeric(p$syn[, j])

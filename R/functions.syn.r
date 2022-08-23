@@ -1021,7 +1021,7 @@ the same proportion in each level.
    margins.data[[i]] <- table(x[, margins[[i]]], useNA = "ifany")
     margins.data[[i]] <- margins.data[[i]] + priorn/length(margins.data[[i]])
     if (epsilon > 0) {
-      margins.data[[i]] <- addlapn(margins.data[[i]],eps,N)
+      margins.data[[i]] <- addlapn(margins.data[[i]], eps)
     }
  }
  start <- array(1, dim(tab))
@@ -1152,7 +1152,10 @@ checksz <- function(sz, x)
 {
   if (!is.list(sz)) stop("structzero needs to be a list.\n", call. = FALSE)
   if (!is.character(names(sz)) || !all(grepl("_", names(sz)))) stop("\nstructzero list elements must be named using variable names\nseperated by an underscore, e.g. sex_edu", call. = FALSE)
-  allvars  <- unique(unlist(strsplit(names(sz), "_")))
+  
+  list_sub_names <- names(do.call("c", sz))
+  allvars <- unique(sub(".*\\.", "", list_sub_names))  
+  
   if (!all(allvars %in% names(x))) stop("\nStructural zero variables must match names of variables in the data.", call. = FALSE)
 
   dd  <- as.data.frame(table(x, useNA = "ifany"))
@@ -1161,7 +1164,8 @@ checksz <- function(sz, x)
   for (i in 1:length(sz)) {
     
     tempz <- rep(TRUE, nrow(dd))
-    vars  <- unlist(strsplit(names(sz)[i], "_"))
+    if (names(sz)[i] != paste0(names(sz[[i]]), collapse = "_")) stop("\nNames of structzero list elements must correspond to names of their sublists.", call. = FALSE)
+    vars  <- names(sz[[i]])    
     vars  <- match(vars, names(x))
     nvars <- length(vars)
     if (!(is.list(sz[[i]]) & length(sz[[i]]) == nvars)) stop("Each element of structzero list must be a list of length\nequal to the number of variables used to define structural zeros.\n", call. = FALSE)

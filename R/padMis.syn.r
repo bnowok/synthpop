@@ -38,6 +38,7 @@ padMis.syn <- function(data, method, predictor.matrix, visit.sequence,
       data <- cbind(data,y.0,y.NA)           
       name.0  <- paste(attr(data,"names")[j], 0, sep = ".")
       name.NA <- paste(attr(data,"names")[j], NA, sep = ".")
+      
       names(data)[(ncol(data) - 1):ncol(data)] <- c(name.0, name.NA)
       factorNA[(ncol(data) - 1):ncol(data)] <- c(FALSE,TRUE) 
 

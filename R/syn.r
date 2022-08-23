@@ -40,6 +40,18 @@ if (!is.null(attr(data,"filetype")) && attr(data,"filetype") == "sav") {
   var.lab <- val.lab <- NULL
 }
 
+# check problematic characters in varaiable names
+has_space  <- grepl(" ", obs.vars) + 
+              sapply(data, function(x) {res <- any(is.na(x))}) +
+              sapply(data, is.numeric)
+if (any(has_space == 3)) stop(paste("Your data have numeric variable(s) with missing values with names that include spaces:\n  ",
+                              paste0("`", paste(obs.vars[has_space == 3], collapse = "`, `"), "`"),
+                              "\nThese should be renamed for synthpop to work correctly."), call. = FALSE)
+has_eq  <- grepl("=", obs.vars)
+if (any(has_eq)) stop("Your data have variable(s) with names that include '=':\n  ",
+                     paste(names(data)[has_eq], collapse = ", "),
+                     "\nYou must rename them for synthpop to work correctly.", call. = FALSE)
+
 # if visit sequence includes variable names change them into column indecies 
 if (is.character(visit.sequence)) {
   nametoind <- match(visit.sequence, colnames(data))
@@ -369,7 +381,6 @@ check.method.syn <- function(setup, data, proper) {
    }
  } 
 
- #browser()
  # check that passive variables obey rule in original data
  #---
  passive.idx <- grep("~", method)
@@ -689,7 +700,7 @@ check.rules.syn <- function(setup, data) {
  varnames   <- setup$varnames
  method     <- setup$method
  vis        <- setup$visit.sequence
-  
+#browser()  
  # Check the syntax
  #------------------
  # check the length of the rules and corresponding values
@@ -707,20 +718,22 @@ check.rules.syn <- function(setup, data) {
  #if (any(char.wrong)) stop("Unexpected character(s) in rules: ",paste(char.present[char.wrong],collapse=" "),".")
 
  # variables names (=a string before a special character) must be in varnames 
- rule.sep <- lapply(sapply(rules,strsplit,"[|&]"),unlist)       # split into seperate conditions
- get.vars <- lapply(rule.sep,function(x) gsub("[<>=!].*","",x)) # remove evrything after a special character
- get.vars <- lapply(get.vars,function(x) gsub(" ","",x))        # remove spaces
- get.vars <- lapply(get.vars,function(x) gsub("[\\(\\)]","",x)) # remove brackets  
- get.vars <- lapply(get.vars,function(x) gsub("is.na","",x))    # remove function name 
- get.vars <- lapply(get.vars,function(x) x[x != ""])            # remove empty strings  ?? why this
+ rule.sep <- lapply(sapply(rules, strsplit, "[|&]"), unlist)       # split into seperate conditions
+ get.vars <- lapply(rule.sep, function(x) gsub("[<>=!].*", "", x)) # remove everything after a special character
+ #get.vars <- lapply(get.vars,function(x) gsub(" ","",x))          # remove spaces
+ get.vars <- lapply(get.vars, trimws)                              # Remove leading and trailing spaces
+ get.vars <- lapply(get.vars, function(x) gsub("[\\(\\)]", "", x)) # remove brackets  
+ get.vars <- lapply(get.vars, function(x) gsub("is.na", "", x))    # remove function name
+ get.vars <- lapply(get.vars, function(x) gsub("`", "", x))        # remove `
+ get.vars <- lapply(get.vars, function(x) x[x != ""])              # remove empty strings  ?? why this
  
  vars.in.rules <- unique(unlist(get.vars))
  vars.wrong <- !(vars.in.rules %in% varnames)                   # identify unxepected variables
 
  if (any(vars.wrong)) stop("Unexpected variable(s) in rules: ",
    paste(vars.in.rules[vars.wrong], collapse = ", "), ".", call. = FALSE)
+ 
  # remove rules with warning for ipf and catall
-
  vars.with.rules <- varnames[rules != ""]
  if (any(method[varnames %in% vars.with.rules] %in% c("catall","ipf"))){
    cat("\nRules cannot be used for variables synthesised by ipf or catall")
@@ -1100,7 +1113,7 @@ check.rules.syn <- function(setup, data) {
    else cat("CAUTION: The synthesised data will contain the variable(s) unchanged.\n\n")
  }
 
-#browser()   
+
 # remove columns not used from data and replace predictor matrix, visit sequence, nvar and others
  if (any(out) & drop.not.used == T) {
    if (sum(!out) == 0) stop("No variables left to be synthesised", call. = FALSE) ######to stop if all data excluded 
@@ -1300,6 +1313,7 @@ check.rules.syn <- function(setup, data) {
 
 #---------------------------------------------------------------------
 #Tidy models
+
 #---
  if (models) {
    if (m == 1) { 
@@ -1308,9 +1322,9 @@ check.rules.syn <- function(setup, data) {
                grepl("orig.", names(fits))
      if (any(fitout)) fits <- fits[!fitout]
      # move the models for non-missing values to original position
-     n.0 <- grepl(".0", names(fits))      
+     n.0 <- grepl("\\.0", names(fits))      
      if (any(n.0)) {
-       fits[gsub(".0", "", names(fits[n.0]))] <- fits[n.0]
+       fits[gsub("\\.0", "", names(fits[n.0]))] <- fits[n.0]
        fits <- fits[!n.0]
      }
    }
@@ -1319,9 +1333,9 @@ check.rules.syn <- function(setup, data) {
        fitout <- sapply(fits[[j]], function(x) is.null(x) || (is.character(x) && x =="dummy")) |
                  grepl("orig.", names(fits))
        if (any(fitout)) fits[[j]] <- fits[[j]][!fitout]
-       n.0 <- grepl(".0",names(fits[[j]]))
+       n.0 <- grepl("\\.0",names(fits[[j]]))
        if ( any(n.0)) {
-         fits[[j]][gsub(".0","",names(fits[[j]][n.0]))] <- fits[[j]][n.0]
+         fits[[j]][gsub("\\.0","",names(fits[[j]][n.0]))] <- fits[[j]][n.0]
          fits[[j]] <- fits[[j]][!n.0]
        }
      }

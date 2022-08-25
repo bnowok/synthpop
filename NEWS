@@ -13,6 +13,7 @@ NEW FEATURES
   a named list to smooth selected variables only.
 
 CHANGES
+* syn.ctree() and syn.survctree() use now {partykit} implementation of ctree().
 * Optional parameters can be set for syn.norm(), syn.lognorm(), syn.sqrtnorm(),
   syn.cubertnorm(), syn.normrank(), syn.pmm().
 * syn.cubertnorm() now allows negative values.
@@ -31,6 +32,7 @@ BUG FIXES
   could create duplicated values.
 * Subsetting of columns in data frames that are also tibbles.  
 * Handling of special characters in variable names.
+
 
 synthpop 1.7-0
 ---------------

@@ -87,14 +87,9 @@ import(MASS,
        survival)
 
 importFrom(broman, runningmean)
-importFrom(party, ctree)
-importFrom(party, where)
-importFrom(party, cforest, cforest_unbiased)
-importFrom(party, ctree_control)
-importFrom(rpart, rpart)
-importFrom(rpart, rpart.control)
-importFrom(stats, glm)
-importFrom(stats, lm)
+importFrom("partykit", "ctree", "ctree_control")
+importFrom("party", "cforest", "cforest_unbiased")
+importFrom("rpart", "rpart", "rpart.control")
 importFrom(polspline, polymars, predict.polymars, polyclass, ppolyclass)
 importFrom(randomForest, randomForest)
 importFrom(ranger, ranger)
@@ -102,7 +97,7 @@ importFrom(classInt, classIntervals)
 #importFrom(glmnet, glmnet, predict.glmnet) not used at the moment
 importFrom(mipfp, Ipfp)
 importFrom("graphics", "hist")
-importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment",
+importFrom("stats", "lm", "glm","C", "as.formula", "coef", "coefficients", "contr.treatment",
            "cor", "density", "formula", "model.frame", "model.matrix", "na.pass",
            "pnorm", "predict", "qnorm", "rbinom", "rchisq", "rnorm", "runif",
            "setNames", "summary.glm", "var", "residuals", "sd", "xtabs", "pchisq",
@@ -110,5 +105,5 @@ importFrom("stats", "C", "as.formula", "coef", "coefficients", "contr.treatment"
            "ks.test", "wilcox.test")
 importFrom("utils", "head", "read.csv", "read.table", "tail", "combn",
            "write.csv", "write.table")
-importFrom("stringr", "str_pad")
+importFrom("stringr", "str_pad", "str_detect", "str_extract_all", "str_subset")
 importFrom("rmutil", "rlaplace")

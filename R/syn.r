@@ -47,10 +47,13 @@ has_space  <- grepl(" ", obs.vars) +
 if (any(has_space == 3)) stop(paste("Your data have numeric variable(s) with missing values with names that include spaces:\n  ",
                               paste0("`", paste(obs.vars[has_space == 3], collapse = "`, `"), "`"),
                               "\nThese should be renamed for synthpop to work correctly."), call. = FALSE)
-has_eq  <- grepl("=", obs.vars)
-if (any(has_eq)) stop("Your data have variable(s) with names that include '=':\n  ",
-                     paste(names(data)[has_eq], collapse = ", "),
-                     "\nYou must rename them for synthpop to work correctly.", call. = FALSE)
+
+bad_char <- "[^\\w_.]"
+has_bad_char  <- str_detect(obs.vars, bad_char)
+if (any(has_bad_char)) cat("WARNING: Some variable names include special characters",
+                           unlist(str_extract_all(obs.vars, bad_char)),"\n  ",
+                           paste0(str_subset(obs.vars, bad_char), collapse = ", "),
+                           "\nYou must rename them for synthpop to work correctly.")
 
 # if visit sequence includes variable names change them into column indecies 
 if (is.character(visit.sequence)) {
@@ -381,7 +384,7 @@ check.method.syn <- function(setup, data, proper) {
    }
  } 
 
- # check that passive variables obey rule in original data
+ # check that passive relationship holds in original data
  #---
  passive.idx <- grep("~", method)
  for (i in passive.idx) {

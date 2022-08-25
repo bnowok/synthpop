@@ -17,9 +17,9 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   \item{proper}{for proper synthesis (\code{proper = TRUE}) a CART 
     model is fitted to a bootstrapped sample of the original data.}  
   \item{minbucket}{the minimum number of observations in
-    any terminal node. See \code{\link{ctree_control}}
+    any terminal node. See \code{\link[partykit]{ctree_control}}
     for details.}
-  \item{\dots}{additional parameters passed to \code{\link{ctree}}.}
+  \item{\dots}{additional parameters passed to \code{\link[partykit]{ctree}}.}
 }
 \details{
   The procedure for synthesis by a CART model is as follows: 
@@ -33,7 +33,7 @@ syn.survctree(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   
   The function is used in \code{syn()} to generate survival times 
   by setting elements of method in \code{syn()} to \code{"survctree"}.
-  Additional parameters related to \code{\link{ctree}} function, 
+  Additional parameters related to \code{\link[partykit]{ctree}} function, 
   e.g. \code{minbucket} can be supplied to \code{syn()} as 
   \code{survctree.minbucket}.
   

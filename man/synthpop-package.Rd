@@ -8,7 +8,7 @@
 \tabular{ll}{
 Package: \tab synthpop\cr
 Type: \tab Package\cr
-Version: \tab 1.7-1\cr
+Version: \tab 1.8-0\cr
 Date: \tab 2022-08-26\cr
 License: \tab GPL-2 | GPL-3\cr
 }

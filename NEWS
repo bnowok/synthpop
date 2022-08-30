@@ -1,4 +1,4 @@
-synthpop 1.7-1
+synthpop 1.8-0
 ---------------
 
 NEW FEATURES
@@ -11,6 +11,9 @@ NEW FEATURES
   can also provide a single string specifying a smoothing method, which will be
   then used to smooth all numeric variables in the data. You can still provide
   a named list to smooth selected variables only.
+* New parameters `low`, `high`, `n.breaks`, and `breaks` for utility.tables()
+  that allow to create a two color binned gradient and set colours for low and 
+  high ends of the gradient.  
 
 CHANGES
 * syn.ctree() and syn.survctree() use now {partykit} implementation of ctree().

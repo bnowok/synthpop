@@ -25,7 +25,9 @@
                plot.stat = "S_pMSE", plot = TRUE, 
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,
-               nworst = 5, ntabstoprint = 0, k.syn = FALSE, \dots)
+               nworst = 5, ntabstoprint = 0, k.syn = FALSE, 
+               low = "grey92", high = "#E41A1C",
+               n.breaks = NULL, breaks = NULL, \dots)
                
 \method{utility.tables}{data.frame}(object, data, 
                cont.na = NULL, not.synthesised = NULL, 
@@ -36,7 +38,9 @@
                plot.stat = "S_pMSE", plot = TRUE,  
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,  
-               nworst = 5, ntabstoprint = 0, k.syn = FALSE, \dots)
+               nworst = 5, ntabstoprint = 0, k.syn = FALSE,
+               low = "grey92", high = "#E41A1C",
+               n.breaks = NULL, breaks = NULL, \dots)
 
 \method{utility.tables}{list}(object, data,
                cont.na = NULL, not.synthesised = NULL, 
@@ -47,7 +51,9 @@
                plot.stat = "S_pMSE", plot = TRUE, 
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,  
-               nworst = 5, ntabstoprint = 0, k.syn = FALSE, \dots)
+               nworst = 5, ntabstoprint = 0, k.syn = FALSE,
+               low = "grey92", high = "#E41A1C",
+               n.breaks = NULL, breaks = NULL, \dots)
 
 \method{print}{utility.tables}(x, print.tabs = NULL, digits.tabs = NULL, 
       plot = NULL, plot.title = NULL, max.scale = NULL, min.scale = NULL, 
@@ -127,6 +133,11 @@
     data with the worst utility.}
   \item{k.syn}{a logical indicator as to whether the sample size itself has 
     been synthesised.}
+  \item{low}{colour for low end of the gradient.}
+  \item{high}{colour for high end of the gradient.} 
+  \item{n.breaks}{a number of break points to create if breaks are not given 
+    directly.}
+  \item{breaks}{breaks for a two colour binned gradient.}    
   \item{\dots}{additional parameters}   
   \item{x}{an object of class \code{utility.tables}.}
 }

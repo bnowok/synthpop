@@ -614,47 +614,6 @@ syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5,
 }
 
 
-# ###-----syn.ctree----------------------------------------------------------
-# 
-# syn.ctree.party <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5, 
-#                       mincriterion = 0.9, ...)
-#                       # teststat = "max", testtype = "Univariate", 
-#                       
-# { 
-#   if (proper == TRUE) {
-#     s <- sample(length(y), replace = truehist())
-#     y <- y[s]
-#     x <- x[s, , drop = FALSE]
-#   }
-#   
-#   for (i in which(sapply(x, class) != sapply(xp,class))) xp[,i] <-
-#   eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
-#   # Fit a tree
-#   datact     <- ctree(y ~ ., data = as.data.frame(cbind(y, x)), 
-#     controls = ctree_control(minbucket = minbucket, mincriterion = mincriterion, 
-#                              # teststat = teststat, testtype = testtype, 
-#                              ...))
-#   fit.nodes  <- where(datact)
-#   nodes      <- unique(fit.nodes)
-#   no.nodes   <- length(nodes)
-#   pred.nodes <- where(datact, newdata = xp)
-#   # Get row numbers for predicted by sampling with replacement from existing data
-#   rowno      <- 1:length(y)
-#   newrowno   <- vector("integer", nrow(xp))
-# 
-#   for (i in nodes) {
-#     newrowno[pred.nodes == i] <- sample(rowno[fit.nodes == i],
-#                                       length(newrowno[pred.nodes == i]),
-#                                       replace = TRUE)
-#   }
-#   new <- y[newrowno]
-#   if (!is.factor(y) & smoothing != "") new <- 
-#     syn.smooth(new, y, smoothing = smoothing )
-#   
-#   return(list(res = new, fit = datact))
-# }
-# 
-
 ###-----syn.survctree------------------------------------------------------
 
 syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
@@ -965,13 +924,13 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
  dn  <- dimnames(tab)
   if (epsilon > 0) {
     if (rand == TRUE) {
-      if (!is.null(structzero)) tab[sz] <- addlapn(tab[sz], epsilon) 
+      if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
       else tab <- addlapn(tab, epsilon) 
       fit <- tab
       tab <- tab/sum(tab)   # get it as proportions
       tab <- rmultinom(1, k, tab)
     } else {
-      if (!is.null(structzero)) tab[sz] <- addlapn(tab[sz], epsilon) 
+      if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
       else tab <- addlapn(tab, epsilon ) #GR2022
       fit <- tab
       tab <- roundspec(tab*k/sum(tab))

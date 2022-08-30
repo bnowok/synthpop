@@ -408,7 +408,7 @@ check.method.syn <- function(setup, data, proper) {
      if (NAderived > 0) cat("Total of ", NAderived," case(s) where value in data but some predictors missing.\n", sep = "")
      if (NAorig > 0) cat("Total of ", NAorig," case(s) where no predictors missing but no value in data.\n", sep = "")
      if (nonmiss > 0) cat("Total of ", nonmiss," case(s) where predictors do not give value present in data.\n", sep = "")
-    stop("You must recompute the variable(s) in the original data in order for the synthesis to run.", sep = "", call. = FALSE)
+    cat("You might want to recompute the variable(s) in the original data.\n")
    }
 
    if (is.numeric(data.val) & any(is.na(data.val))) cat("\nVariable ", varnames[i],

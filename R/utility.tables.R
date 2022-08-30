@@ -18,8 +18,9 @@ utility.tables.data.frame <- utility.tables.list <-
                            plot.stat = "S_pMSE", plot = TRUE,
                            print.tabs = FALSE, digits.tabs = 4,
                            max.scale = NULL, min.scale = 0, plot.title = NULL,
-                           nworst = 5, ntabstoprint = 0, k.syn = FALSE, ...) {
-
+                           nworst = 5, ntabstoprint = 0, k.syn = FALSE,
+                           low = "grey92", high = "#E41A1C",
+                           n.breaks = NULL, breaks = NULL, ...){
                      if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n", call. = FALSE)
  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data.\n", call. = FALSE)   
   
@@ -60,7 +61,8 @@ utility.tables.data.frame <- utility.tables.list <-
                        digits.tabs = digits.tabs, max.scale = max.scale, 
                        min.scale = min.scale, plot.title = plot.title, 
                        nworst = nworst, ntabstoprint = ntabstoprint, 
-                       k.syn = k.syn, ...)
+                       k.syn = k.syn, low = low, high = high,
+                       n.breaks = n.breaks, breaks = breaks, ...)
  
  res$call <- match.call()
  return(res)
@@ -76,7 +78,9 @@ utility.tables.synds <- function(object, data,
                                  plot.stat = "S_pMSE", plot = TRUE,
                                  print.tabs = FALSE, digits.tabs = 4,
                                  max.scale = NULL, min.scale = 0, plot.title = NULL,
-                                 nworst = 5, ntabstoprint = 0, k.syn = FALSE, ...){
+                                 nworst = 5, ntabstoprint = 0, k.syn = FALSE, 
+                                 low = "grey92", high = "#E41A1C",
+                                 n.breaks = NULL, breaks = NULL, ...){
 
  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data object.\n", call. = FALSE)   
  if (is.null(data)) stop("Requires parameter 'data' to give name of the original data.\n", call. = FALSE)
@@ -252,9 +256,26 @@ utility.tables.synds <- function(object, data,
    toplot$val[toplot$val < min.scale] <- min.scale
  }
 
+ if (!is.null(n.breaks)){
+   plot.scale <- scale_fill_steps(
+     n.breaks = n.breaks,
+     low = low, high = high,
+     limits = c(0, max.scale), ...)
+ } else if (!is.null(breaks)){
+   plot.scale <- scale_fill_steps(
+     breaks = breaks,
+     low = low, high = high,
+     limits = c(0, max.scale), ...)
+ } else {
+   plot.scale <- scale_fill_gradient(
+     low = low, high = high, 
+     limits = c(0, max.scale), ...) 
+ }
+ 
+ 
  utility.plot <- ggplot(toplot, aes(x = X2, y = X1)) + 
    geom_raster(aes(fill = val)) + 
-   scale_fill_gradient(low = "grey92", high = "#E41A1C", limits = c(0, max.scale)) + 
+   plot.scale + 
    labs(x = "", y = "", title = plot.title) +
    theme_minimal() + 
    theme(axis.text.x = element_text(size = 10, angle = 90, hjust = 0.9, vjust = 0.2), 

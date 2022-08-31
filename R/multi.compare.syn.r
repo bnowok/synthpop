@@ -50,7 +50,11 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
    synall <- do.call(rbind, synall)
  }
  obssyn <- rbind(cbind(data, source = "obs"), synall)
- obssyn$source <- factor(obssyn$source, levels = c("obs", paste0("syn=", msel))) 
+ if ("syn" %in% unique(obssyn$source)){
+   obssyn$source <- factor(obssyn$source, levels = c("obs", "syn")) 
+ } else {
+   obssyn$source <- factor(obssyn$source, levels = c("obs", paste0("syn=", msel))) 
+ }
  #----
  
  # change any numeric variables with < 6 distinct values to factors

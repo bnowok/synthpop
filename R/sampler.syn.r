@@ -40,9 +40,9 @@ sampler.syn <- function(p, data, m, syn, visit.sequence,
    if (models) fits <- rep(list(setNames(vector("list", length(p$method)),
                                 names(p$method))), m) 
    for (i in 1:m) {  # Synthesising loop
-     if (print.flag & m > 1) cat("Synthesis number ", i, 
+     if (print.flag & m > 1) cat("\nSynthesis number ", i, 
                          "\n--------------------\n", sep = "")  
-     if (print.flag & m == 1) cat("Synthesis\n-----------\n", sep = "")  
+     if (print.flag & m == 1) cat("\nSynthesis\n-----------\n", sep = "")  
      
      # Code for methods that take more than one variable together: ipf & catall      
      #--------------------------------------------------------------------------

@@ -587,15 +587,20 @@ syn.ctree <- function(y, x, xp, smoothing = "", proper = FALSE, minbucket = 5,
   for (i in which(sapply(x, class) != sapply(xp,class))) xp[,i] <-
       eval(parse(text = paste0("as.", class(x[,i]), "(xp[,i])", sep = "")))
 
-    # Fit a tree
-  datact     <- partykit::ctree(y ~ ., data = as.data.frame(cbind(y, x)), 
-                  control = partykit::ctree_control(minbucket = minbucket, 
-                                                    mincriterion = mincriterion, ...))
+  # Fit a tree
+#  datact     <- partykit::ctree(y ~ ., data = as.data.frame(cbind(y, x)), 
+#                  control = partykit::ctree_control(minbucket = minbucket, 
+#                                                    mincriterion = mincriterion, ...))
+  datact <- ctree(y ~ ., data = as.data.frame(cbind(y,x)), 
+    controls = ctree_control(minbucket = minbucket, 
+                             mincriterion = mincriterion, ...))
   
-  fit.nodes  <- predict(datact, type = "node")
+# fit.nodes  <- predict(datact, type = "node")
+  fit.nodes  <- where(datact)
   nodes      <- unique(fit.nodes)
   no.nodes   <- length(nodes)
-  pred.nodes <- predict(datact, type = "node", newdata = xp)
+# pred.nodes <- predict(datact, type = "node", newdata = xp)
+  pred.nodes <- where(datact, newdata = xp)
   # Get row numbers for predicted by sampling with replacement from existing data
   rowno      <- 1:length(y)
   newrowno   <- vector("integer", nrow(xp))
@@ -638,11 +643,13 @@ syn.survctree <- function(y, yevent, x, xp, proper = FALSE, minbucket = 5, ...)
   # Fit a tree  
   datact     <- ctree(Surv(y, yevent0) ~ ., 
                       data = as.data.frame(cbind(y, yevent0, x)),
-                      control = ctree_control(minbucket = minbucket, ...))
-  fit.nodes  <- predict(datact, type = "node")
+                      controls = ctree_control(minbucket = minbucket, ...))
+# fit.nodes  <- predict(datact, type = "node")
+  fit.nodes  <- where(datact)
   nodes      <- unique(fit.nodes)
   no.nodes   <- length(nodes)
-  pred.nodes <- predict(datact, type = "node", newdata = xp)
+# pred.nodes <- predict(datact, type = "node", newdata = xp)
+  pred.nodes <- where(datact, newdata = xp)
   # Get row numbers for predicted by sampling
   # with replacement from existing data
   rowno      <- 1:length(y)

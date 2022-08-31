@@ -22,7 +22,7 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
     model is fitted to a bootstrapped sample of the original data.}  
   \item{minbucket}{the minimum number of observations in
     any terminal node. See \code{\link[rpart]{rpart.control}} and
-    \code{\link[partykit]{ctree_control}} for details.}
+    \code{\link[party]{ctree_control}} for details.}
   \item{cp}{complexity parameter. Any split that does not
     decrease the overall lack of fit by a factor of cp is not
     attempted. Small values of \code{cp} will grow large trees. 
@@ -30,9 +30,9 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
   \item{mincriterion}{\code{1 - p-value} of the test that must be 
     exceeded for a split to be retained. Small values of 
     \code{mincriterion} will grow large trees. 
-    See \code{\link[partykit]{ctree_control}} for details.}
+    See \code{\link[party]{ctree_control}} for details.}
   \item{\dots}{additional parameters passed to 
-    \code{\link[partykit]{ctree_control}} for \code{syn.ctree} and 
+    \code{\link[party]{ctree_control}} for \code{syn.ctree} and 
     \code{\link[rpart]{rpart.control}} for \code{syn.cart}.}
 }
 \details{
@@ -44,7 +44,7 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
   value of \code{y} from that draw as the synthetic value.}
   
   \code{syn.ctree} uses \code{\link{ctree}} function from the
-  \pkg{partykit} package and \code{syn.cart} uses \code{\link{rpart}}
+  \pkg{party} package and \code{syn.cart} uses \code{\link{rpart}}
   function from the \pkg{rpart} package. They differ, among others, 
   in a selection of a splitting variable and a stopping rule for the 
   splitting process.
@@ -73,7 +73,7 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
 }
 \seealso{
   \code{\link{syn}}, \code{\link{syn.survctree}},
-  \code{\link[rpart]{rpart}}, \code{\link[partykit]{ctree}},
+  \code{\link[rpart]{rpart}}, \code{\link[party]{ctree}},
   \code{\link{syn.smooth}}
 }
 \keyword{datagen}

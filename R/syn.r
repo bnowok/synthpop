@@ -412,7 +412,7 @@ check.method.syn <- function(setup, data, proper) {
    }
 
    if (is.numeric(data.val) & any(is.na(data.val))) cat("\nVariable ", varnames[i],
-                                                        " with passive synthesis has missing values\nso it will not be used to predict other variables.", sep = "")
+                                                        " with passive synthesis has missing values\nso it will not be used to predict other variables.\n", sep = "")
  }
 
  
@@ -1007,7 +1007,7 @@ check.rules.syn <- function(setup, data) {
  chartofac <- (ischar * inpred) > 0
  if (sum(chartofac) > 0) {
    cat("\nVariable(s):",paste0(varnames[chartofac], collapse = ", "),
-       "have been changed for synthesis from character to factor.\n\n", sep = " ")
+       "have been changed for synthesis from character to factor.\n", sep = " ")
    for (j in (1:nvar)[chartofac]) data[,j] <- as.factor(data[,j]) 
  }
 
@@ -1024,7 +1024,7 @@ check.rules.syn <- function(setup, data) {
  if (minnumlevels < 5 & any(nlevel > minnumlevels & nlevel <= 5 & ifnum & inpred & notevent)) {
    cat("Warning: In your synthesis there are numeric variables with 5 or fewer levels: ",                     
        paste0(varnames[nlevel > minnumlevels & nlevel <= 5 & ifnum & inpred & notevent], collapse = ", "), ".",
-       "\nConsider changing them to factors. You can do it using parameter 'minnumlevels'.\n\n", sep = "")  
+       "\nConsider changing them to factors. You can do it using parameter 'minnumlevels'.\n", sep = "")  
  }
 
  vartofactor <- which(nlevel <= minnumlevels & ifnum & inpred & notevent)

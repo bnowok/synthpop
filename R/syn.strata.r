@@ -112,7 +112,7 @@ syn.strata <- function(data, strata = NULL,
  synds <- list(setNames(vector("list",length(synds.names)),synds.names)) 
  synds <- rep(synds, m0)
  sel.names <- match(c("call", "m", "predictor.matrix", "proper", "strata.syn",
-   "strata.lab",  "seed","numtocat","catgroups"), synds.names)
+   "strata.lab", "seed", "numtocat", "catgroups", "models"), synds.names)
  same.by.m <- c("call", "m", "method", "visit.sequence", "predictor.matrix", 
    "smoothing", "event", "denom", "proper", "n", "rules", "rvalues", "cont.na", 
    "semicont", "drop.not.used", "drop.pred.only",  "seed", "var.lab", 
@@ -162,6 +162,7 @@ syn.strata <- function(data, strata = NULL,
      if (syn.args$k == 0 | m==0) syn.args$m <- 0 else syn.args$m <- 1
      synds.ind[[i]] <- do.call("syn", syn.args)
    }
+
    synds[[j]]$call <- match.call()
    synds[[j]]$m <- m
    synds[[j]]$proper <- proper

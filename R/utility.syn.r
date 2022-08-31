@@ -402,8 +402,9 @@ Have you selected variables with vars?\n")
        if (print.every == 0 | print.every >= nperms) cat("Running ", nperms, " permutations to get NULL utilities.", sep = "")
        else cat("Running ", nperms, " permutations to get NULL utilities and printing every ", print.every, "th.", sep = "")
      }
-     if (print.flag) cat("\nsynthesis ", j, "   ", sep = "")
-
+     #if (print.flag) cat("\nsynthesis ", j, "   ", sep = "")
+     if (print.flag) cat("\nsynthesis ")
+     
      for (i in 1:nperms) {
        if (print.every > 0 & nperms > print.every & floor(i/print.every) == i/print.every & print.flag)  cat(i, " ", sep = "")
        pdata <- df.prop

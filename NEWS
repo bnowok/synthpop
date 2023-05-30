@@ -1,3 +1,11 @@
+synthpop 1.8-1
+---------------
+NEW FEATURES
+The two syn methods that can be made differentially private (DP) ("catall" and "ipf"
+can now use the Gaussian mechanism instead of the Laplace mechanism. They
+each have new parameters (noise) to define the type of noise to add and
+del - to define delta for the Gaussian mechanism.
+
 synthpop 1.8-0
 ---------------
 

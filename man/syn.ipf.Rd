@@ -7,9 +7,9 @@
   numbers in the margins specified by the margin parameters.}
 \usage{
 syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-        gmargins = "twoway", othmargins = NULL, tol = 1e-3,
-        max.its = 5000, maxtable = 1e8, print.its = FALSE,
-        epsilon = 0, rand = TRUE, ...)
+                    gmargins = "twoway", othmargins = NULL, tol = 1e-3, max.its = 5000,
+                    maxtable = 1e8, print.its = FALSE, 
+                    epsilon= 0, delta = 0.05, rand = TRUE, noisetype ="Laplace", ...)
 }
 \arguments{
   \item{x}{a data frame of the set of original data to be synthesised.}
@@ -43,10 +43,15 @@ syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL,
     iterations have converged will be given at the end of the fitting.}
   \item{epsilon}{epsilon value for overall differential privacy (DP) parameter.
     This is implemented by dividing the privacy budget equally over all the 
-    margins used to fit the data.}  
+    margins used to fit the data.} 
+   \item{delta}{delta value for epsilon-delta differential privacy (DP) parameter.
+        Used if the noisetype is "Gaussian".}  
   \item{rand}{when epsilon is > 0 and DP synthetic data are created this 
     determines whether the data are created by Poisson counts from the expected 
     fitted counts in the cells of the DP adjusted data.}
+    \item{noisetype}{when epsilon is > 0 and DP synthetic data are created this 
+        determines the type of noise to add to margins to make the synthesis DP
+        possible values are "Laplace" and "Gaussian".}
   \item{\dots}{additional parameters.}
 }
 \details{

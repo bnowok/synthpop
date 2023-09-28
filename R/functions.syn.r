@@ -897,8 +897,8 @@ syn.collinear <- function(y, x, xp, ...)
 
 ###-----syn.catall---------------------------------------------------------
 
-syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-                       maxtable = 1e8, epsilon = 0, rand = TRUE, ...)
+syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, maxtable = 1e8,  
+                       epsilon= 0, delta = 0.05, rand = TRUE, noisetype ="Laplace",  ...)
 {
  # Fits a saturated model to combinations of variables
  # xp just holds number of synthetic records required
@@ -931,8 +931,14 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
  dn  <- dimnames(tab)
   if (epsilon > 0) {
     if (rand == TRUE) {
-      if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
-      else tab <- addlapn(tab, epsilon) 
+      if (noisetype == "Laplace"){
+        if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
+        else tab <- addlapn(tab, epsilon) 
+      }
+      if (noisetype == "Gaussian"){
+        if (!is.null(structzero)) tab[!sz] <- addGaussn(tab[!sz], epsilon, delta) 
+        else tab <- addGaussn(tab, epsilon, delta) 
+      }
       fit <- tab
       tab <- tab/sum(tab)   # get it as proportions
       tab <- rmultinom(1, k, tab)
@@ -963,7 +969,8 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
   
 syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
                     gmargins = "twoway", othmargins = NULL, tol = 1e-3, max.its = 5000,
-                    maxtable = 1e8, print.its = FALSE, epsilon= 0, rand = TRUE,...)
+                    maxtable = 1e8, print.its = FALSE, 
+                    epsilon= 0, delta = 0.05, rand = TRUE,noisetype ="Laplace", ...)
 {
  # Fits log-linear model to combinations of variables
  # k just holds number of synthetic records required
@@ -1028,7 +1035,8 @@ the same proportion in each level.
    margins.data[[i]] <- table(x[, margins[[i]]], useNA = "ifany")
     margins.data[[i]] <- margins.data[[i]] + priorn/length(margins.data[[i]])
     if (epsilon > 0) {
-      margins.data[[i]] <- addlapn(margins.data[[i]], eps)
+      if (noisetype == "Gaussian") margins.data[[i]] <- addGaussn(margins.data[[i]], eps, delta)
+      if (noisetype == "Laplace") margins.data[[i]] <- addlapn(margins.data[[i]], eps)
     }
  }
  start <- array(1, dim(tab))
@@ -1241,8 +1249,19 @@ including this output\n", tab, "\n")
     if (diff <0 ) result[inds] <- result[inds] - 1
   }
   return(result)
-}
+} 
+###-----add Gaussian noise------------------------------------------------------------
 
+addGaussn <- function(x, eps, delta = 0.05){
+  # add Gaussian noise with re-scaling to a total or sample size
+  
+  if ( eps <= 0) stop("eps must be > 0\n")
+  if ( delta <= 0 | delta > 1) stop(" delta must be > 0 and < 1 \n")
+  sd <-  sqrt(2*log(1.25/delta))/eps
+  res <- x + rnorm(length(x), 0, sd)
+  res <- makepos(res, sum(x))
+  return(res)
+}
 
 ###-----addlapn------------------------------------------------------------
 

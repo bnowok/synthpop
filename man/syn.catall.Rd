@@ -5,8 +5,8 @@
   A saturated model is fitted to a table produced by cross-tabulating
   all the variables.}
 \usage{
-syn.catall(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-           maxtable = 1e8, epsilon = 0, rand = TRUE,  ...)}
+syn.catall(x, k, proper = FALSE, priorn = 1, structzero = NULL, maxtable = 1e8,  
+                       epsilon= 0, delta = 0.05, rand = TRUE, noisetype ="Laplace",  ...)}                       
 \arguments{
   \item{x}{a data frame (\code{n} x \code{p}) of the set of original variables.}
   \item{k}{a number of rows in each synthetic data set - defaults to \code{n}.}
@@ -29,9 +29,14 @@ syn.catall(x, k, proper = FALSE, priorn = 1, structzero = NULL,
     that will trigger a severe warning.}
   \item{epsilon}{measures scale of laplace noise to be added under differential 
     privacy (DP)}
-  \item{rand}{for DP versions determines if multinomial noise is to be added to 
-    DP counts. If it is set to false the DP adjusted counts are simply rounded 
-    to a whole number in a manner that preserves the desired sample size (k).}
+  \item{delta}{delta value for epsilon-delta differential privacy (DP) parameter.
+    Used if the noisetype is "Gaussian".}  
+   \item{rand}{when epsilon is > 0 and DP synthetic data are created this 
+     determines whether the data are created by Poisson counts from the expected 
+     fitted counts in the cells of the DP adjusted data.}
+   \item{noisetype}{when epsilon is > 0 and DP synthetic data are created this 
+            determines the type of noise to add to cells to make the synthesis DP
+        possible values are "Laplace" and "Gaussian".}
   \item{\dots}{additional parameters.}
 }
 \details{

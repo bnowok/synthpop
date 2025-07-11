@@ -328,11 +328,11 @@ These results allow a test of the bias of each coefficient to be calculated as a
 		
 A composite lack-of-fit test for the vector of differences between the coefficients from the fit to the original and synthetic data can be obtained  from the quadratic form 
  \begin{equation*}
- LOF = {(\bar{q}_{m}-\hat{Q})'}{{V_{diff}}}^{-1}(\bar{q}_{m}-\hat{Q)} 
+ LOF = {(\bar{q}_{m}-\hat{Q})'}{{V_{diff}}}^{-1}(\bar{q}_{m}-\hat{Q}) 
  \end{equation*}
  
 \noindent{where ${V_{diff}}$ is the between synthesis variance-covariance matrix for the differences, which depends on the synthesis method used. For  completely synthesised data ${V_{diff}}=\hat{V}_{orig}(k/n)/m$ if the synthesis parameter \texttt{proper = FALSE} or  ${V_{diff}}=\hat{V}_{orig}(1+k/n)/m$ for synthesis with  \texttt{proper = TRUE} \cite{RaabNowokDibben_2017}. 
-If the synthesis model is correct these $LOF$ measures will have a $\chi^2$ distribution with degrees of freedom equal to the number of coefficients in the model.
+If the synthesis model is correct these $LOF$ measures will have a $\chi^2$ distribution with degrees of freedom equal to the number of coefficients in the model.}
  
 We illustrate these results with three different syntheses and three different logistic regression models. For the first synthesis \texttt{s7} and the first fit \texttt{f7} the synthesis model is compatible with the model fitted. By using the new function \texttt{syn.strata} the synthesis preserves all the relationships between the stratifying variable, synthesised first, and the within-stratum relationships. Here  stratification is by the dependent variable ``smoke" and within each smoking group education is modelled as a multinomial distribution conditional on sex, giving the correct model for \texttt{f7}. 
  	
@@ -501,7 +501,7 @@ In this case  confidence interval overlaps are calculated using the standard err
 IO_{j}= \left[\frac{min(u_o,u_s)-max(l_o,l_s)}{u_o-l_o}\right]
 \label{2}
 \end{equation}
-\noindent{
+
 \noindent{where the confidence interval for the original coefficient is $(l_{o},u_{o})$ and for that from the synthesised data is $(l_{s},u_{s})$. When the intervals do not overlap $IO_{j}$ becomes negative. Note that 
 this interval is a simplification of Equation \ref{1}, below, proposed by \cite{KarrUtil06} because both intervals are the same length. The two intervals are offset by $|z_j|$ so that standardised difference and the interval overlap are linearly related by ${IO}_j=1-|z_j|/(2{q_N}_{(1-\alpha/2)})$, where ${q_N}_{(1-\alpha/2)}$ is the quantile of the Normal distribution used in calculating the confidence intervals, i.e. 1.96 for 95\% intervals. The average of the overlaps can then be used as a second summary measure of utility.  
 		
@@ -741,7 +741,5 @@ We are most grateful to Dr. J\"org Drechsler for his constructive criticisms of 
 \bibliography{inference}
 
 \end{document}
-
-
 
 

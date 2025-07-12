@@ -8,13 +8,13 @@ compare.default <- function(object, ...)
 
 ###-----compare.synds------------------------------------------------------
 compare.synds <- function(object, data, vars = NULL, msel = NULL,  
-                          stat = "percents", breaks = 20, 
+                          stat = "percents", breaks = 20, ngroups =5, 
                           nrow = 2, ncol = 2, rel.size.x = 1,
                           utility.stats = c("pMSE", "S_pMSE", "df"),
                           utility.for.plot = "S_pMSE",  
                           cols = c("#1A3C5A","#4187BF"),
-                          plot = TRUE, table = FALSE, ...){    
-                                                                         
+                          plot = TRUE, table = FALSE, print.flag = TRUE, ...){   
+
  if (is.null(data)) stop("Requires parameter data to give name of the real data.\n", call. = FALSE)
  if (!is.data.frame(data)) stop("Argument data must be a data frame.\n", call. = FALSE) 
   
@@ -81,7 +81,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    df.syn <- vector("list",length(msel))
    for (i in 1:length(msel)) df.syn[[i]] <- synds[[i]][, commonnames, drop = FALSE]
  }
- 
+
  # change any numeric variables with < 6 distinct values to factors
  for (i in 1:length(commonnames)) {
    if (is.numeric(df.obs[,i]) && length(table(df.obs[,i])) < 6){
@@ -97,7 +97,7 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    if (object$m == 1) vars <- names(object$syn)
    else vars <- names(object$syn[[1]])
  }
- 
+
  if (!is.null(utility.stats) | !is.null(utility.for.plot)) {
    utility.list <- as.list(1:length(vars))
    names(utility.list) <- vars
@@ -109,10 +109,12 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    dimnames(tab.utility) <- list(vars, unique(c(utility.stats, utility.for.plot)))
 
    for (i in 1:length(vars)) {
-     utility.list[[i]] <- utility.tab(object, data, vars = vars[i])
+     utility.list[[i]] <- utility.tab(object, data, vars = vars[i], ngroups = ngroups)
      if (i == 1) tab.ind <- match(utility.stats, names(utility.list[[i]]))
      tab.utility[i, ] <- sapply(utility.list[[i]][tab.ind], mean)
+     if (print.flag) cat("Calculations done for", vars[i],"\n")
    }
+
    if (!is.null(utility.for.plot)) utilvals.for.plot <- tab.utility[, match(utility.for.plot, dimnames(tab.utility)[[2]])]
  } else {
    if (is.null(utility.stats)) tab.utility <- NULL
@@ -177,7 +179,6 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
    per.obs.num <- NULL
    per.syn.numall <- NULL
  }
-
  # data frame for plotting 
  if (length(msel) <= 1) per.fac <- rbind.data.frame(per.obs.fac$perdf, 
    per.obs.num$perdf, per.syn.facall$perdf, per.syn.numall$perdf )
@@ -287,12 +288,13 @@ compare.synds <- function(object, data, vars = NULL, msel = NULL,
 
 ###-----compare.data.frame---compare.list----------------------------------    
 compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.na = NULL,         
-                                               msel = NULL, stat = "percents", breaks = 20, 
-                                               nrow = 2, ncol = 2, rel.size.x = 1,
-                                               utility.stats = c("pMSE", "S_pMSE", "df"),
-                                               utility.for.plot = "S_pMSE",
-                                               cols = c("#1A3C5A","#4187BF"),   
-                                               plot = TRUE, table = FALSE, ...){
+                                   msel = NULL, stat = "percents", breaks = 20, ngroups = 5, 
+                                   nrow = 2, ncol = 2, rel.size.x = 1,
+                                   utility.stats = c("pMSE", "S_pMSE", "df"),
+                                   utility.for.plot = "S_pMSE",
+                                   cols = c("#1A3C5A","#4187BF"),   
+                                   plot = TRUE, table = FALSE ,print.flag = TRUE,
+                                   compare.synorig = TRUE, ...){
   
   if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n\n",  call. = FALSE)
   if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data.\n\n",  call. = FALSE)   
@@ -314,16 +316,30 @@ compare.data.frame <- compare.list <- function(object, data, vars = NULL, cont.n
       cont.na[[j]] <- unique(c(NA,cna[[i]]))
     }
   }
-
+  
+  if (compare.synorig){
+    if (m ==1) adjust.data <- synorig.compare(object,data, print.flag = FALSE) else
+      if (m > 1) adjust.data <- synorig.compare(object[[1]],data, print.flag = FALSE)
+    
+    if (adjust.data$needsfix) stop("Synthetic data and/or original data needs more fixing before you can
+      run the disclosure functions - see output. Use function synorig,compare() to check.", call. = FALSE)
+    else if (!adjust.data$unchanged) {
+      object <- adjust.data$syn
+      data <- adjust.data$orig
+      cat("Synthetic data or original or both adjusted with synorig.compare to try to make them comparable.\n")
+      if (m > 1) cat("only first element of the list has been adjusted and will be used here\n")
+      m <- 1 }
+  }
+  
   object <- list(syn = object, m = m, cont.na = cont.na)
   class(object ) <- "synds"
   
   res <- compare.synds(object = object, data = data, vars = vars, 
-                       msel = msel, stat = stat, breaks = breaks, 
+                       msel = msel, stat = stat, breaks = breaks, ngroups = ngroups,
                        nrow = nrow, ncol = ncol, rel.size.x = rel.size.x,
                        utility.stats = utility.stats,
                        utility.for.plot = utility.for.plot,
-                       cols = cols, plot = plot, table = table, ...) 
+                       cols = cols, plot = plot, table = table,print.flag = print.flag, ...) 
   res$call <- match.call()
   return(res)
 }
@@ -495,7 +511,7 @@ compare.fit.synds <- function(object, data, plot = "Z",
  colnames(res.obs) <- c("Beta","se(Beta)","Z")
  res.syn  <- syn.fit$coefficients[,1:3] 
  res.syn  <- res.syn[order(match(rownames(res.syn), rownames(res.obs))), ]
- res.overlap <- compare.CI(res.syn, res.obs, ci.level = ci.level, intercept = TRUE)
+ res.overlap <- overlap.CI(res.syn, res.obs, ci.level = ci.level, intercept = TRUE)
  ncoef <- nrow(res.obs) 
 
  res.diff <-  cbind(res.syn[,1], res.obs[,1], 
@@ -633,8 +649,8 @@ dfCI <- function(modelsummary, names.est.se = c("Estimate","Std. Error"),
 }
 
 
-###-----compare.CI---------------------------------------------------------
-compare.CI <- function(synthetic, observed, ci.level, intercept, ...)
+###-----overlap.CI---------------------------------------------------------
+overlap.CI <- function(synthetic, observed, ci.level, intercept, ...)
 {
  CI <- qnorm(1- (1 - ci.level)/2)
  ##Initiate

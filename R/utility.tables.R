@@ -15,12 +15,13 @@ utility.tables.data.frame <- utility.tables.list <-
                            vars = NULL, third.var = NULL,
                            useNA = TRUE, ngroups = 5,
                            tab.stats = c("pMSE", "S_pMSE", "df"), 
-                           plot.stat = "S_pMSE", plot = TRUE,
+                           plot.stat = "S_pMSE", plot = TRUE, max.table = 1e07,
                            print.tabs = FALSE, digits.tabs = 4,
                            max.scale = NULL, min.scale = 0, plot.title = NULL,
                            nworst = 5, ntabstoprint = 0, k.syn = FALSE,
                            low = "grey92", high = "#E41A1C",
-                           n.breaks = NULL, breaks = NULL, ...){
+                           n.breaks = NULL, breaks = NULL, compare.synorig = TRUE,
+                           print.flag = TRUE, ...){
                      if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n", call. = FALSE)
  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data.\n", call. = FALSE)   
   
@@ -47,7 +48,22 @@ utility.tables.data.frame <- utility.tables.list <-
    if ( !is.null(not.synthesised) && !all(not.synthesised %in% names(data))) stop("not.synthesised must be names of variables in data\n\n", call. = FALSE)
    syn.method[names(data) %in% not.synthesised] <- ""
  }
-  
+ 
+ 
+ if (compare.synorig) {
+   if (m ==1) adjust.data <- synorig.compare(object,data, print.flag = FALSE) else
+     if (m > 1) adjust.data <- synorig.compare(object[[1]],data, print.flag = FALSE)
+   
+   if (adjust.data$needsfix) stop("Synthetic data and/or original data needs more fixing before you can
+      run the disclosure functions - see output. Use function synorig,compare() to check.", call. = FALSE)
+   else if (!adjust.data$unchanged) {
+     syn <- adjust.data$syn
+     orig <- adjust.data$orig
+     cat("Synthetic data or original or both adjusted with synorig.compare to try to make them comparable\n\n")
+     if (m > 1) cat("only first element of the list has been adjusted and will be used here\n")
+     m <- 1 }
+   else cat("Synthetic and original data checked with synorig.compare, no adjustment needed\n\n")
+ }   
  object <- list(syn = object, m = m, strata.syn = NULL, 
                 method = syn.method, cont.na = cont.na)
  class(object ) <- "synds"
@@ -57,12 +73,12 @@ utility.tables.data.frame <- utility.tables.list <-
                        vars = vars, third.var = third.var, 
                        useNA = useNA, ngroups = ngroups, 
                        tab.stats = tab.stats, plot.stat = plot.stat, 
-                       plot = plot, print.tabs = print.tabs, 
+                       plot = plot, max.table = max.table, print.tabs = print.tabs, 
                        digits.tabs = digits.tabs, max.scale = max.scale, 
                        min.scale = min.scale, plot.title = plot.title, 
                        nworst = nworst, ntabstoprint = ntabstoprint, 
                        k.syn = k.syn, low = low, high = high,
-                       n.breaks = n.breaks, breaks = breaks, ...)
+                       n.breaks = n.breaks, breaks = breaks, print.flag = print.flag , ...)
  
  res$call <- match.call()
  return(res)
@@ -75,13 +91,14 @@ utility.tables.synds <- function(object, data,
                                  vars = NULL, third.var = NULL,
                                  useNA = TRUE, ngroups = 5,  
                                  tab.stats = c("pMSE", "S_pMSE", "df"), 
-                                 plot.stat = "S_pMSE", plot = TRUE,
+                                 plot.stat = "S_pMSE", plot = TRUE, max.table = 1e07,
                                  print.tabs = FALSE, digits.tabs = 4,
                                  max.scale = NULL, min.scale = 0, plot.title = NULL,
                                  nworst = 5, ntabstoprint = 0, k.syn = FALSE, 
                                  low = "grey92", high = "#E41A1C",
-                                 n.breaks = NULL, breaks = NULL, ...){
-
+                                 n.breaks = NULL, breaks = NULL, print.flag = TRUE, ...){
+###---------------------- checks of input params-------------------------
+  
  if (is.null(object)) stop("Requires parameter 'object' to give name of the synthetic data object.\n", call. = FALSE)   
  if (is.null(data)) stop("Requires parameter 'data' to give name of the original data.\n", call. = FALSE)
  if (!inherits(object, "synds")) stop("'object' must be of class 'synds', a synthetic data object", call. = FALSE)
@@ -129,9 +146,8 @@ utility.tables.synds <- function(object, data,
      "MabsDD", "dBhatt", "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE"))) 
    stop('Parameter plot.stat must be just one of:\n"VW", "FT", "JSD", "SPECKS", "WMabsDD", "U", "G", "pMSE", "PO50", 
 "MabsDD", "dBhatt", "S_VW", "S_FT", "S_JSD", "S_WMabsDD", "S_G", "S_pMSE".\n', call. = FALSE)
-# End of check of input parameters 
-
-# Add labels to names.vars to get plots in right order
+ 
+###---------------- Add labels to names.vars and make lists of pairs -----------------
  nv <- length(vars)
  names.vars <- paste(ntoc(vno), vars, sep = ".")
 
@@ -170,8 +186,12 @@ utility.tables.synds <- function(object, data,
    X1[i] <- names.vars[pairs.num[1, i]]
    if (!tables == "oneway")  X2[i] <- names.vars[pairs.num[2, i]]
    if (tables == "threeway") X3[i] <- names.vars[pairs.num[3, i]]
- }
-  
+
+   }
+
+ 
+ ###-------------------make list of utils for pairs-----------------------------------
+ 
  utility.list <- as.list(1:npairs)
    # now make tabs of results
    tabs <- matrix(NA, npairs, length(tab.stats)) 
@@ -184,7 +204,8 @@ utility.tables.synds <- function(object, data,
    
    for (i in 1:npairs) {
      utility.list[[i]] <- utility.tab(object, data, vars = pairs[, i], 
-                                      ngroups = ngroups, k.syn = k.syn, 
+                                      ngroups = ngroups, k.syn = k.syn,
+                                      maxtables = maxtables, 
                                       useNA = useNA, print.flag = FALSE, ...)
      if (i == 1) {
        tab.ind <- match(tab.stats, names(utility.list[[i]]))
@@ -192,12 +213,15 @@ utility.tables.synds <- function(object, data,
      }
      tabs[i,] <- sapply(utility.list[[i]][tab.ind], mean)
      val[i]      <- sapply(utility.list[[i]][val.ind], mean) # value for plotting
+     if (print.flag) cat("Calculations done for", pairs[,i],"\n")
    }  
  
  # find worst set of variables
  nworst <- min(npairs, nworst)
  worstn <- val[order(-val)][1:nworst]
  names(worstn) <- dimnames(tabs)[[1]][order(-val)][1:nworst]
+ 
+ 
  worstnind <- (1:npairs)[order(-val)][1:nworst]
  worsttabs <- as.list(1:nworst)
  for (i in 1:nworst) {

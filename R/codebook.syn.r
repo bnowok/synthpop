@@ -20,7 +20,7 @@ codebook.syn <- function(data, maxlevs = 3)
  for (i in 1:p) {
    if (any(class(data[,i]) == "character")) details[i] <- paste("Max length: ", 
                                             max(nchar(data[,i])), sep = "")
-   if (any(class(data[,i]) == "numeric")) details[i] <- paste("Range: ", 
+   if (is.numeric(data[,i])) details[i] <- paste("Range: ", 
      min(data[!is.na(data[,i]), i]), " - ", max(data[!is.na(data[,i]),i]), 
      sep = "")
    if (any(class(data[,i]) == "factor") & ndistinct[i] > maxlevs ) { 

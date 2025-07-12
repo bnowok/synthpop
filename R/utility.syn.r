@@ -49,6 +49,20 @@ utility.gen.data.frame <- utility.gen.list <-
     if (!is.null(not.synthesised) && !all(not.synthesised %in% names(data))) stop("not.synthesised must be names of variables in data.\n", call. = FALSE)
     syn.method[names(data) %in% not.synthesised] <- ""
   }
+  
+  if (m ==1) adjust.data <- synorig.compare(object,data, print.flag = FALSE) else
+    if (m > 1) adjust.data <- synorig.compare(object[[1]],data, print.flag = FALSE)
+  
+  if (adjust.data$needsfix) stop("Synthetic data and/or original data needs more fixing before you can
+    run the disclosure functions - see output. Use function synorig,compare() to check.", call. = FALSE)
+  else if (!adjust.data$unchanged) {
+    syn <- adjust.data$syn
+    orig <- adjust.data$orig
+    cat("Synthetic data or original or both adjusted with synorig.compare to try to make them comparable")
+    if (m > 1) cat("only first element of the list has been adjusted and will be used here\n")
+    m <- 1 }
+  else if (print.flag) cat("Synthetic and original data checked with synorig.compare, no adjustment needed\n\n")
+  
 
   object <- list(syn = object, m = m, strata.syn = NULL, method = syn.method, cont.na = cont.na)
   class(object ) <- "synds"
@@ -578,7 +592,7 @@ utility.tab.data.frame <- utility.tab.list <-
                  print.tables = length(vars) < 4,
                  print.stats = c("pMSE", "S_pMSE", "df"), 
                  print.zdiff = FALSE, print.flag = TRUE,
-                 digits = 4, k.syn = FALSE, ...)
+                 digits = 4, k.syn = FALSE, compare.synorig = TRUE, ...)
 {
 
   if (is.null(data)) stop("Requires parameter 'data' to give name of the real data.\n",  call. = FALSE)
@@ -600,6 +614,19 @@ utility.tab.data.frame <- utility.tab.list <-
       j <- (1:length(data))[names(cna)[i] == names(data)]
       cont.na[[j]] <- unique(c(NA,cna[[i]]))
     }
+  }
+  if(compare.synorig){
+    if (m ==1) adjust.data <- synorig.compare(object,data, print.flag = FALSE) else
+      if (m > 1) adjust.data <- synorig.compare(object[[1]],data, print.flag = FALSE)
+      
+      if (!adjust.data$unchanged) {
+        data <- adjust.data$orig
+        object <- adjust.data$syn
+        
+        cat("Synthetic data or original or both adjusted with synorig.compare to try to make them comparable.\n")
+        if (m > 1) cat("only first element of the list has been adjusted and will be used here\n")
+        m <- 1 }
+      #else if (print.flag) cat("Synthetic and original data checked with synorig.compare, no adjustment needed\n\n")
   }
 
   object <- list(syn = object, m = m, cont.na = cont.na)
@@ -674,10 +701,22 @@ utility.tab.synds <- function(object, data, vars = NULL, ngroups = 5,
     # make all variables into factors
     for (j in 1:nvars) {
       if (is.numeric(data[, j])) {
+
         grpd <- group_num(data[, j], syndata[[i]][, j], syn.mvar[[j]],
                           n = ngroups, cont.na = cna[[j]], ...)
+        if ( length(table(grpd[[1]]))  < 3) {
+          ng <- length(table(grpd[[1]]))
+          grpd <- group_num(data[, j],  syndata[[i]][, j],  syn.mvar[[j]],
+                            cont.na = cna[[j]], n = ngroups, style = "equal")
+
+          if (length(table(grpd[[1]])) < 3 ) {
+            cat("Only",length(table(grpd[[1]])),"groups produced for", names(data)[j],"even after changing method.\n")
+          }
+          else if (print.flag) cat("Grouping changed from 'quantile' to  'equal' in function numtocat.syn for",names(data)[j],"because only",ng," groups were produced\n")
+        }
         data[, j] <- grpd[[1]]; syndata[[i]][, j] <- grpd[[2]]
-      } else if (is.character(data[, j])) {
+      } 
+      else if (is.character(data[, j])) {
         data[, j] <- factor(data[, j])
         syndata[[i]][, j] <- factor(syndata[[i]][, j],
                                    levels = levels(data[, j]))
@@ -704,7 +743,13 @@ utility.tab.synds <- function(object, data, vars = NULL, ngroups = 5,
       tab.obs[[i]] <- table(data, useNA = "no", deparse.level = 0)
       tab.syn[[i]] <- table(syndata[[i]], useNA = "no", deparse.level = 0)
     }
+    
 
+if (!all(dim(tab.obs[[i]] ) == dim(tab.syn[[i]]) )) {
+  cat("Dimensions of tables being compared for ", vars," do not match.\n")
+  cat("From synthetic ",dim(tab.syn[[i]])," from original ",dim(tab.obs[[i]]),"\n")
+  stop("Use synorig.compare() to check data and attempt to correct.\n",call.=FALSE)
+}
    ## remove cells all zeros
     nempty[i] <-   sum(tab.obs[[i]] + tab.syn[[i]] == 0)
     td <- tab.obs[[i]][tab.obs[[i]] + tab.syn[[i]]  > 0]
@@ -808,6 +853,7 @@ group_num <- function(x1, x2, xsyn, n = 5, style = "quantile", cont.na = NA, ...
   # Categorise 2 continuous variables into factors of n groups
   # with same groupings determined by the first one
   # xsyn - all synthetic values (for m syntheses)
+ 
 
   if (!is.numeric(x1) | !is.numeric(x2) | !is.numeric(xsyn)) 
     stop("x1, x2, and xsyn must be numeric.\n", call. = FALSE)
@@ -816,11 +862,12 @@ group_num <- function(x1, x2, xsyn, n = 5, style = "quantile", cont.na = NA, ...
   x1nm <- x1[!(x1 %in% cont.na) & !is.na(x1)]
   x2nm <- x2[!(x2 %in% cont.na) & !is.na(x2)]
   xsynnm <- xsyn[!(xsyn %in% cont.na) & !is.na(xsyn)]
-  
+  if (length(xsynnm) == 0 ) stop("One of your variables has only missing values\n", call. = FALSE )
+
   # Derive breaks
   my_breaks <- unique(suppressWarnings(classIntervals(c(x1nm, xsynnm),
                                        n = n, style = style, ...))$brks)
-
+  
   my_levels <- c(levels(cut(x1nm, breaks = my_breaks,
                  dig.lab = 8, right = FALSE, include.lowest = TRUE)),
                  cont.na[!is.na(cont.na)])
@@ -835,4 +882,5 @@ group_num <- function(x1, x2, xsyn, n = 5, style = "quantile", cont.na = NA, ...
 
   return(list(x1,x2))
 }
+
 

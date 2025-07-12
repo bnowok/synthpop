@@ -19,21 +19,23 @@
             print.tables = length(vars) < 4,
             print.stats = c("pMSE", "S_pMSE", "df"),
             print.zdiff = FALSE, print.flag = TRUE,
-            digits = 4, k.syn = FALSE, \dots)
+            digits = 4, k.syn = FALSE,  \dots)
 
 \method{utility.tab}{data.frame}(object, data, vars = NULL, cont.na = NULL,
             ngroups = 5, useNA = TRUE, max.table = 1e6,
             print.tables = length(vars) < 4,
             print.stats = c("pMSE", "S_pMSE", "df"),
             print.zdiff = FALSE, print.flag = TRUE,
-            digits = 4, k.syn = FALSE, \dots)
+            digits = 4, k.syn = FALSE, 
+            compare.synorig  = TRUE, \dots)
 
 \method{utility.tab}{list}(object, data, vars = NULL, cont.na = NULL,
             ngroups = 5, useNA = TRUE, max.table = 1e6,
             print.tables = length(vars) < 4,
             print.stats = c("pMSE", "S_pMSE", "df"),
             print.zdiff = FALSE, print.flag = TRUE,
-            digits = 4, k.syn = FALSE, \dots)
+            digits = 4, k.syn = FALSE, 
+            compare.synorig = TRUE, \dots)
 
 
 \method{print}{utility.tab}(x, print.tables = NULL,
@@ -88,6 +90,10 @@
   \item{k.syn}{a logical indicator as to whether the sample size itself has
     been synthesised. The default value is \code{FALSE}, which will apply
     to synthetic data created by synthpop.}
+  \item{compare.synorig}{a logical value  to determine if the functions
+  \code{synorig.compare()} should be used to check that data sets can be 
+   compared. Used when the synthetic data are supplied as a data.frame or 
+   a list when  default set to TRUE.} 
   \item{\dots}{additional parameters; can be passed to classIntervals() function.}
   \item{x}{an object of class \code{utility.tab}.}
 }
@@ -109,7 +115,7 @@ agreement with category (real or synthetic) of the observation. The first of the
 \code{pMSE} is identical except for a constant to \code{VW}. No expected values are 
 computed for the last three of these measures, but they can be obtained by replication 
 from \code{utility.gen()}. 
-Three further measures are calulated from the tables. The mean absolute difference 
+Three further measures are calculated from the tables. The mean absolute difference 
 in distributions: firstly \code{MabsDD}, the avarage absolute difference in the 
 proportions of original and synthetic data from all the cells in the table. 
 Secondly a weighted version of this measure \code{WMabsDD} where the weights are 

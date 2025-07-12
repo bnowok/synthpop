@@ -43,8 +43,8 @@ syn.cart(y, x, xp, smoothing = "", proper = FALSE,
   draw a donor from the members of the node and take the observed 
   value of \code{y} from that draw as the synthetic value.}
   
-  \code{syn.ctree} uses \code{\link{ctree}} function from the
-  \pkg{party} package and \code{syn.cart} uses \code{\link{rpart}}
+  \code{syn.ctree} uses \code{\link[party]{ctree}} function from the
+  \pkg{party} package and \code{syn.cart} uses \code{\link[rpart]{rpart}}
   function from the \pkg{rpart} package. They differ, among others, 
   in a selection of a splitting variable and a stopping rule for the 
   splitting process.

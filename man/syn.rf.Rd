@@ -3,7 +3,7 @@
 \title{Synthesis with random forest}
 \description{
 Generates univariate synthetic data using Breiman's random forest algorithm 
-classification and regression. It uses \code{\link{randomForest}} function 
+classification and regression. It uses \code{\link[randomForest]{randomForest}} function 
 from the \pkg{randomForest} package.
 }
 \usage{

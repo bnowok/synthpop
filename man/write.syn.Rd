@@ -13,7 +13,8 @@ for SPSS files imported into R using \code{\link{read.obs}} function.
 }
 \usage{
 write.syn(object, filename, 
-filetype = c("SPSS", "Stata", "SAS", "csv", "tab", "rda", "RData", "txt"), 
+filetype = c("csv", "tab", "txt",
+                    "SPSS", "Stata", "SAS", "rda", "RData"), 
 convert.factors = "numeric", data.labels = NULL, save.complete = TRUE, 
 extended.info = TRUE, ...)
 }
@@ -30,7 +31,7 @@ extended.info = TRUE, ...)
   \item{convert.factors}{a single string indicating how to handle factors in 
     Stata output files. The default value is set to \code{"numeric"} in order 
     to preserve the numeric codes from the original data. 
-    See \code{\link{write.dta}} for other possible values.}
+    See \code{\link[foreign]{write.dta}} for other possible values.}
   \item{data.labels}{a list with variable labels and value labels.}  
   \item{save.complete}{a logical value indicating whether a complete 
     'synthesised data set' (\code{synds}) object should be saved into a file

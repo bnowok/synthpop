@@ -1,3 +1,12 @@
+###-----print.repuniq.synds--------------------------------------------------------
+print.repuniq.synds <- function(x, ...){
+  cat("Uniques and replicated uniques for " ,x$m , " synthesised data set(s)\n\n",
+      "from keys: ",x$keys,"\n\n") 
+  print(x$res_tab)
+  cat("To view possible exclusions from synthesised data set(s) check components
+  synU.rm (suggested for low-fidelity synthesis) or  repU.rm (for high fidelity)")
+  invisible(x)
+}
 ###-----print.synds--------------------------------------------------------
 
 print.synds <- function(x, ...){
@@ -21,7 +30,6 @@ print.synds <- function(x, ...){
   invisible(x)
 }
 
-
 ###-----summary.synds------------------------------------------------------
 
 summary.synds <- function(object, msel = NULL, 
@@ -39,7 +47,7 @@ summary.synds <- function(object, msel = NULL,
       maxsum = maxsum, digits = digits, ...)
     zall.df <- Reduce(function(x,y) mapply("rbind",x,y),zall)
     meanres <- lapply(zall.df, function(x) apply(x,2,mean))
-    sy$result <- summary.out(meanres)
+    sy$result <- sum.out(meanres)
   } else if (length(msel) == 1) {
     sy$result <- summary(object$syn[[msel]],...)
   } else {
@@ -757,8 +765,8 @@ print.utility.tab <- function(x, print.tables = NULL,
 }
 
 
-###-----summary.out--------------------------------------------------------
-summary.out <- function(z, digits = max(3L, getOption("digits") - 3L), ...)
+###-----sum.out--------------------------------------------------------
+sum.out <- function(z, digits = max(3L, getOption("digits") - 3L), ...)
 {
     ncw <- function(x) {
         zz <- nchar(x, type = "w")

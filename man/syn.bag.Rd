@@ -3,7 +3,7 @@
 \title{Synthesis with bagging}
 \description{
 Generates univariate synthetic data using bagging. It uses 
-\code{\link{randomForest}} function from the \pkg{randomForest} package with 
+\code{\link[randomForest]{randomForest}} function from the \pkg{randomForest} package with 
 number of sampled predictors equal to number of all predictors. 
 }
 \usage{

@@ -22,12 +22,12 @@
                vars = NULL, third.var = NULL,
                useNA = TRUE, ngroups = 5,
                tab.stats = c("pMSE", "S_pMSE", "df"), 
-               plot.stat = "S_pMSE", plot = TRUE, 
+               plot.stat = "S_pMSE", plot = TRUE, max.table = 1e07,
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,
                nworst = 5, ntabstoprint = 0, k.syn = FALSE, 
                low = "grey92", high = "#E41A1C",
-               n.breaks = NULL, breaks = NULL, \dots)
+               n.breaks = NULL, breaks = NULL, print.flag = TRUE, \dots)
                
 \method{utility.tables}{data.frame}(object, data, 
                cont.na = NULL, not.synthesised = NULL, 
@@ -35,12 +35,13 @@
                vars = NULL, third.var = NULL, 
                useNA = TRUE, ngroups = 5, 
                tab.stats = c("pMSE", "S_pMSE", "df"), 
-               plot.stat = "S_pMSE", plot = TRUE,  
+               plot.stat = "S_pMSE", plot = TRUE, max.table = 1e07, 
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,  
                nworst = 5, ntabstoprint = 0, k.syn = FALSE,
                low = "grey92", high = "#E41A1C",
-               n.breaks = NULL, breaks = NULL, \dots)
+               n.breaks = NULL, breaks = NULL, 
+               compare.synorig = TRUE, print.flag = TRUE,\dots)
 
 \method{utility.tables}{list}(object, data,
                cont.na = NULL, not.synthesised = NULL, 
@@ -48,12 +49,13 @@
                vars = NULL, third.var = NULL, 
                useNA = TRUE, ngroups = 5, 
                tab.stats = c("pMSE", "S_pMSE", "df"), 
-               plot.stat = "S_pMSE", plot = TRUE, 
+               plot.stat = "S_pMSE", plot = TRUE,  max.table = 1e07,
                print.tabs = FALSE, digits.tabs = 4,
                max.scale = NULL, min.scale = 0, plot.title = NULL,  
                nworst = 5, ntabstoprint = 0, k.syn = FALSE,
                low = "grey92", high = "#E41A1C",
-               n.breaks = NULL, breaks = NULL, \dots)
+               n.breaks = NULL, breaks = NULL, 
+               compare.synorig = TRUE, print.flag = TRUE,\dots)
 
 \method{print}{utility.tables}(x, print.tabs = NULL, digits.tabs = NULL, 
       plot = NULL, plot.title = NULL, max.scale = NULL, min.scale = NULL, 
@@ -116,6 +118,7 @@
     \code{"S_G"}, \code{"S_pMSE"}. See \code{\link{utility.tab}} for 
     explanations of measures.}
   \item{plot}{determines if plot will be produced when the result is printed.} 
+  \item{max.table}{Value of maximum number of cells allowed in a table by the function  \code{\link{utility.tab}} } 
   \item{print.tabs}{logical value that determines if table of results is 
     to be printed.}  
   \item{digits.tabs}{number of digits to print for table, except for 
@@ -137,7 +140,13 @@
   \item{high}{colour for high end of the gradient.} 
   \item{n.breaks}{a number of break points to create if breaks are not given 
     directly.}
-  \item{breaks}{breaks for a two colour binned gradient.}    
+  \item{breaks}{breaks for a two colour binned gradient.}
+  \item{compare.synorig}{a logical value  to determine if the functions
+  \code{synorig.compare()} should be used to check that data sets can be 
+   compared. Used when the synthetic data are supplied as a data.frame or 
+   a list when  default set to TRUE.} 
+  \item{print.flag}{Allows printing of message as metrics are calculated 
+  for each element of the table. Default is TRUE.}
   \item{\dots}{additional parameters}   
   \item{x}{an object of class \code{utility.tables}.}
 }

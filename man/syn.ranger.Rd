@@ -3,7 +3,7 @@
 \title{Synthesis with a fast implementation of random forests}
 \description{
 Generates univariate synthetic data using a fast implementation of 
-random forests. It uses \code{\link{ranger}} function 
+random forests. It uses \code{\link[ranger]{ranger}} function 
 from the \pkg{ranger} package.
 }
 \usage{

@@ -18,28 +18,31 @@
 }
 \usage{
 \method{compare}{synds}(object, data, vars = NULL,
-        msel = NULL, stat = "percents", breaks = 20,
+        msel = NULL, stat = "percents", breaks = 20, ngroups =5,
         nrow = 2, ncol = 2, rel.size.x = 1,
         utility.stats = c("pMSE", "S_pMSE", "df"),
         utility.for.plot = "S_pMSE",
         cols = c("#1A3C5A","#4187BF"),
-        plot = TRUE, table = FALSE, \dots)
+        plot = TRUE, table = FALSE, 
+        print.flag = TRUE, \dots)
 
 \method{compare}{data.frame}(object, data, vars = NULL, cont.na = NULL,
-        msel = NULL, stat = "percents", breaks = 20,
+        msel = NULL, stat = "percents", breaks = 20,ngroups = 5,
         nrow = 2, ncol = 2, rel.size.x = 1,
         utility.stats = c("pMSE", "S_pMSE", "df"),
         utility.for.plot = "S_pMSE",
         cols = c("#1A3C5A","#4187BF"),
-        plot = TRUE, table = FALSE, \dots)
+        plot = TRUE, table = FALSE, 
+        print.flag = TRUE, compare.synorig = TRUE, \dots)
 
 \method{compare}{list}(object, data, vars = NULL, cont.na = NULL,
-        msel = NULL, stat = "percents", breaks = 20,
+        msel = NULL, stat = "percents", breaks = 20,ngroups = 5,
         nrow = 2, ncol = 2, rel.size.x = 1,
         utility.stats = c("pMSE", "S_pMSE", "df"),
         utility.for.plot = "S_pMSE",
         cols = c("#1A3C5A","#4187BF"),
-        plot = TRUE, table = FALSE, \dots)
+        plot = TRUE, table = FALSE, 
+        print.flag = TRUE, compare.synorig = TRUE, \dots)
 
 \method{print}{compare.synds}(x, \dots)
 }
@@ -66,6 +69,8 @@
     If \code{m > 1} and \code{msel = NULL} average counts for synthetic data
     are derived.}
   \item{breaks}{the number of cells for the histogram.}
+  \item{ngroups}{the number of groups used to categorise numeric 
+  variables when calculating the one-way utility measures.}
   \item{nrow}{the number of rows for the plotting area.}
   \item{ncol}{the number of columns for the plotting area.}
   \item{rel.size.x}{a number representing the relative size of x-axis labels.}
@@ -85,8 +90,14 @@
     whether plots should be produced.}
   \item{table}{a logical value with default set to \code{FALSE} indicating
     whether tables should be printed.}
+\item{print.flag}{a logical value with default set to \code{TRUE} indicating
+    whether a message should be printed as the statistic for each 
+    variable are calculated.}
+  \item{compare.synorig}{a logical value  to determine if the functions
+  \code{synorig.compare()} should be used to check that data sets can be 
+   compared. Used when the synthetic data are supplied as a data.frame or 
+   a list when  default set to TRUE.} 
   \item{\dots}{additional parameters.}
-
   \item{x}{an object of class \code{compare.synds}.}
 }
 \details{

@@ -36,7 +36,7 @@ multi.compare(object, data, var = NULL, by = NULL, msel = NULL,
     the range \code{1:object$m}. If \code{NULL} pooled synthetic data copies are 
     compared with the original data.}
   \item{binwidth}{sets width of a bin for histograms.}
-  \item{\dots}{additional parameters that can be supplied to \code{\link{ggplot}}.}
+  \item{\dots}{additional parameters that can be supplied to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
 Plots as specified above. A table of the numbers in the subgroups is printed 

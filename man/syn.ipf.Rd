@@ -9,7 +9,8 @@
 syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
         gmargins = "twoway", othmargins = NULL, tol = 1e-3,
         max.its = 5000, maxtable = 1e8, print.its = FALSE,
-        epsilon = 0, rand = TRUE, ...)
+        epsilon = 0, delta = 0.05, 
+        noisetype = "Laplace", ...)
 }
 \arguments{
   \item{x}{a data frame of the set of original data to be synthesised.}
@@ -34,19 +35,21 @@ syn.ipf(x, k, proper = FALSE, priorn = 1, structzero = NULL,
     and 2-way margins from the table.}
   \item{othmargins}{a list of margins that will be fitted. If \code{gmargins} is
     not \code{NULL} \code{othmargins} will be added to them.}
-  \item{tol}{stopping criterion for \code{\link{Ipfp}}.}
-  \item{max.its}{maximum umber of iterations allowed for \code{\link{Ipfp}}.}
+  \item{tol}{stopping criterion for \code{\link[mipfp]{Ipfp}}.}
+  \item{max.its}{maximum umber of iterations allowed for \code{\link[mipfp]{Ipfp}}.}
   \item{maxtable}{the number of cells in the cross-tabulation of all the 
     variables that will trigger a severe warning.}
-  \item{print.its}{if true the iterations from \code{\link{Ipfp}} will be 
+  \item{print.its}{if true the iterations from \code{\link[mipfp]{Ipfp}} will be 
     printed on the console. Otherwise only a message as to whether the 
     iterations have converged will be given at the end of the fitting.}
   \item{epsilon}{epsilon value for overall differential privacy (DP) parameter.
     This is implemented by dividing the privacy budget equally over all the 
     margins used to fit the data.}  
-  \item{rand}{when epsilon is > 0 and DP synthetic data are created this 
-    determines whether the data are created by Poisson counts from the expected 
-    fitted counts in the cells of the DP adjusted data.}
+    \item{delta}{Parameter for epsilon-delta differential privacy (DP) 
+    parameter, when noisetype = "Gaussian".}
+  \item{noisetype}{One of "Laplace" or "Gaussian" to determine the type of
+    noise to be added that will make the synthesis DP (Laplace) or approximately DP (Gaussian).
+    For noisetype "Gaussian" your synthesis will fail if epsilon >1.}
   \item{\dots}{additional parameters.}
 }
 \details{
@@ -72,14 +75,14 @@ for this cell is \eqn{(p_i + priorn/N^2) / (1 + priorn / N^2)} or
 equivalently \eqn{(N * p_i + priorn/N) / (N + priorn / N)}.
 
 Unlike \code{syn.satcat}, which fits saturated models from their conditional 
-distrinutions, \code{x} can include any combination of variables, including 
+distributions, \code{x} can include any combination of variables, including 
 those not present in the original data, except those defined by \code{structzero}.
 
 NOTE that when the function is called by setting elements of
 method in \code{syn} to \code{"ipf"}, the parameters \code{priorn},
 \code{structzero}, \code{gmargins}, \code{othmargins}, \code{tol}, 
-\code{max.its}, \code{maxtable}, \code{print.its}, \code{epsilon}, 
-and \code{rand} must be supplied to \code{syn} as e.g. \code{ipf.priorn}.
+\code{max.its}, \code{maxtable}, \code{print.its} and \code{epsilon}, 
+must be supplied to \code{syn} as e.g. \code{ipf.priorn}.
 }
 \value{
 A list with two components:
@@ -103,9 +106,18 @@ struct.zero <- list(
                           region = c(3, 4, 10:11, 13)),
   placesize_region = list(placesize = "URBAN 20,000-100,000", 
                           region = c(1, 3, 5, 6, 8, 9, 14:15)))
+                          
+# you could use  the object struct.zero in the command below 
+# byt devtools checking did not like it so have added the list instead
 
 synipf <- syn(ods, method = c(rep("ipf", 4), "ctree", "normrank", "ctree"), 
               ipf.gmargins = "twoway", ipf.othmargins = list(c(1, 2, 3)),
-              ipf.priorn = 2, ipf.structzero = struct.zero)
+              ipf.priorn = 2, ipf.structzero = list(
+  placesize_region = list(placesize = "URBAN 500,000 AND OVER", 
+                          region = c(2, 4, 5, 8:13, 16)),
+  placesize_region = list(placesize = "URBAN 200,000-500,000", 
+                          region = c(3, 4, 10:11, 13)),
+  placesize_region = list(placesize = "URBAN 20,000-100,000", 
+                          region = c(1, 3, 5, 6, 8, 9, 14:15))))
 }
 \keyword{datagen}

@@ -35,7 +35,7 @@ are calculated by averaging summary values for all synthetic data copies
     summary values for all synthetic data copies.}
   \item{method}{a vector of synthesising methods applied to each variable
     in the saved synthesised data.}
-  \item{result}{a table or a list of tabels (if more than one synthetic data 
+  \item{result}{a table or a list of tables (if more than one synthetic data 
     set is selected) with summaries of synthesised variables.}
 }
 \references{

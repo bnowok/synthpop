@@ -15,7 +15,7 @@
 \item{age}{Age of person, 2011}
 \item{agegr}{Age group, 2011}
 \item{placesize}{Category of the place of residence}
-\item{region}{Region (voivodeship)}
+\item{region}{Region (voivodeship: a province in Poland, the highest level of administrative division in the country)}
 \item{edu}{Highest educational qualification, 2011}
 \item{eduspec}{Discipline of completed qualification}
 \item{socprof}{Socio-economic status, 2011}

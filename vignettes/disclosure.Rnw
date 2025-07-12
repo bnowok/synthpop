@@ -1,0 +1,452 @@
+\documentclass[12pt]{article}
+
+\usepackage{amssymb,amsmath,latexsym,graphics,authblk,url,setspace,caption}
+
+
+%\usepackage[pdftex]{graphicx}
+\usepackage{epstopdf} 
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{color}
+\usepackage{amssymb}
+
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{verbatim}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{color}
+\usepackage{footnote}
+\usepackage{threeparttable}
+\usepackage{caption}
+\usepackage{setspace}
+
+
+
+%\usepackage{breqn}
+
+\usepackage[square,sort,comma,numbers]{natbib}
+
+\usepackage[portrait, margin=0.8in]{geometry}
+
+\title{Practical privacy metrics for synthetic data}
+\author{Gillian M Raab, Beata Nowok \& Chris Dibben}
+
+
+\renewcommand{\baselinestretch}{1.5} % 1.5 denotes double spacing. Changing it will change the spacing
+
+% \VignetteIndexEntry{Disclosure}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<echo=false>>=
+options(prompt="R> ", width=77, digits=4, useFancyQuotes=FALSE)
+@
+
+\maketitle
+\begin{abstract}
+This paper explains how synthpop package \footnote{see \url{www.synthpop.org.uk} } \footnote{The new version 1.8-1 is currently available on Github at \url{https://github.com/gillian-raab/synthpop}} has been extended to include functions to calculate measures of identity and attribute disclosure risk for synthetic data that measure risks for the 
+records used to create the synthetic data. The basic function \texttt{disclosure} calculates identity disclosure for a set of quasi-identifiers (keys) and attribute disclosure for one variable specified as a target from the same set of keys. The second function \texttt{multi.disclosure} is a wrapper for the first and presents summary results for a set of targets. This short paper explains the measures of disclosure risk and documents how they are calculated. We recommend two measures: $RepU$ (replicated uniques) for identity
+disclosure and $DiSCO$ (Disclosive in Synthetic Correct Original) for attribute disclosure. Both
+are expressed a \% of the original records and each can be compared to similar measures calculated from the original data.
+Experience with using the functions on real data found that some apparent disclosures could be identified as coming from relationships 
+in the data that would be expected to be known to anyone familiar with its features. We flag cases when this seems to have occurred and provide means of excluding them.
+
+\end{abstract}
+\section{Introduction}
+\renewcommand{\baselinestretch}{1.5} 
+In his recent review of synthetic data (SD) methodology Reiter \cite{reiter2023}
+comments: 
+\begin{quote}
+''While there is need to examine disclosure risks in synthetic data, there is no standard for
+doing so, especially in fully synthetic data. Instead, disclosure checks tend to be ad hoc"
+\end{quote}
+This is in contrast to the variety of measures of utility available for SD; see \cite{raab2021} for a list of these. While utility measures must be chosen that are relevant to the intended use of the SD, disclosure measures must focus on the possible harm to the privacy of an individual or other unit whose data contributed to the creation of the SD. The evaluation of the disclosure risk from SD must relate to the context of its release (see \cite{elliotanonframe} for a discussion of this). We cannot expect a fixed rule, for example that a criterion for release requires a value of some disclosure measure beyond a threshold. Instead, we expect those releasing data to use the disclosure measures to evaluate potential harm to the data subjects, or to the data custodians, from information in the released data. We hope that these new functions will allow the disclosure risk of SD sets to be explored and, where necessary, reduced. 
+
+We expect that disclosure risks from SD to be lower than those from the original data. But in some cases, e.g. a large data set with only a few categorical variables, the disclosure risk from the original may already be low. To evaluate the protection from disclosure afforded by a synthesis method, the risks for SD must be compared with equivalent risks for the GT. We consider two types of disclosure risk:
+
+\begin{itemize}
+\item{\textit{identity disclosure}: This refers to the ability to identify individuals in the data from a set of known characteristics that we will refer to as keys. Identity disclosure may be less relevant for completely synthesized\footnote{Complete or full synthesis is when all values of all variables are replaced by synthetic values. This is in contrast to incomplete or partial synthesis where only some variables are replaced.} data because there is no one-to-one correspondence between records in the original and SD. But it may still be of interest since it is an important factor for attribute disclosure.}
+\item{\textit{attribute disclosure}:This refers to the ability to find out from the keys something, not previously known, for an attribute associated with a record in the original data.}
+\end{itemize}
+
+The measures we describe here are appropriate for fully SD where all items in all records are replaced by synthetic values. Different measures have been developed for partially SD \cite{DrechslerReiter2009,ReiterMitra2009}. Note that our disclosure methods treat numeric variables, by default, as if they were categories unless \texttt{ngroups\_keys} and/or \texttt{ngroups\_target(s)} are set. In our first example the \texttt{income} variable has been grouped into 20 categories, but the other numerical variable \texttt(depress) with only 21 categories has been left as it is.  The number of groups formed may differ from the parameter setting e.g. if there are fewer than \texttt{numgroups} distinct values.\footnote{The code uses grouping options from functions in the \texttt{classInt} package.}. 
+
+The disclosure risk posed by SD can be reduced by using techniques from statistical disclosure control (\textbf{sdc}), such as aggregation of categories, smoothing of numeric values or removal of replicated uniques. These methods can be used to reduce disclosure risk by modifying the original data before synthesis, or the SD before its is released. Some such methods are already available in the \textbf{synthpop} package. These include categorising, top/bottom coding and smoothing for continuous variables, and the merging of small categories for factors. The removal of replicated uniques is another option available in \texttt{synthpop}.
+
+There have been many recent proposals for making synthetic data sets comply with  Differential Privacy (DP) \cite{Dwork2006b}. DP is a very strong privacy guarantee that protects against an intruder with arbitrary external information about the subjects in the data, except for the one whose privacy is being protected. This is an unrealistic assumption and DP SD has been shown to have unacceptably low utility in many cases \cite{bowen_ss, groundhog}. We will not discuss these methods here, but note that we could use the metrics proposed here to evaluate disclosure risks for DP SD. 
+
+
+
+
+\section[A simple example]{A simple example}\label{sec:simpexamp}
+Here we illustrate the basic use of \texttt{multi.disclosure}. If the parameter \texttt{targets} is not specified, all the variables in the SD that are not part of keys are used as targets.
+The identity disclosure measures are \texttt{UiO} for original and \texttt{repU} for synthetic, and for attribute disclosure \texttt{Dorig} for original and \texttt{DiSCO} for synthetic. These and other measures will be explained in Sections \ref{subsec:ident} and \ref{subsec:attrib}.
+
+First, a subset of 9 variables are selected from the \texttt{SD2011} data (a survey on quality of life in Poland) that is available as part of the \texttt{synthpop} package. A single synthetic data set is created by the default method in \texttt{synthpop}: \texttt{cart} for each conditional distribution. Note that the variable \texttt{income} has values -8 that indicate not applicable, and the synthesis allows for this. The synthetic data object \texttt{s1}\footnote{an object of class \texttt{synds}} has a component \texttt{syn} that is a single synthetic data set. The disclosure functions can also be used with synthetic data created by other methods either as single synthetic data sets or lists of repeated syntheses from the same original. Here we select 4 keys that represent items that might be known
+for members of this sample, or of the Polish population in 2011. By default,the 5 other variables become the targets: \texttt{depress} \texttt{income} \texttt{ls} \texttt{marital} (marital status), \texttt{workab} (intention to work abroad). The second target, \texttt{income}, is grouped into 20 categories, plus the -8 category. 
+We first use \texttt{multi.disclosure} to create a \texttt{multi.disclosure} object for these keys, and we print out its identity component.
+\renewcommand{\baselinestretch}{1.0}
+<<synth, size="small">>=
+library("synthpop")
+ods <- SD2011[, c("sex", "age", "region","placesize","depress",
+   "income","ls","marital" , "workab")]
+s1 <- syn(ods, seed = 8564, print.flag = FALSE, cont.na = list(income = -8))
+t1 <- multi.disclosure(s1, ods, print.flag = FALSE, plot = FALSE, 
+ keys = c("sex", "age", "region", "placesize"),   ngroups_targets = c(0,20,0,0,0))
+print(t1,to.print = "ident")
+@
+\renewcommand{\baselinestretch}{1.5}
+The measure $UiO$ (Unique in Original) shows that 48\% of the original records would have unique combinations of these 4 keys. The term, ''singling out" is used in data protection regulation for this type of attribute disclosure\footnote{See for example its use in the UK Information Commissioner's guidance on anonymisation here https://ico.org.uk/media/about-the-ico/documents/4018606/chapter-2-anonymisation-draft.pdf}. For the synthetic data $RepU$ tells us that almost 15\% of the original records would be unique in the original and also unique in the synthetic data.
+For attribute disclosure we can examine the results as either a table or a plot. Here we see in Figure \ref{fig:f1} the plot that would have been generated if \texttt{plot} had been set to TRUE in the code above, the attribute disclosure results would have been plotted as shown in Figure \ref{fig:f1}. Details of how identity and disclosure measures are calculated can be found in Section 3. The results in the Figure 1 are in descending order by the attribute disclosure risk in the SD.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=1\linewidth]{fig1dis.png}
+  \caption{Plot from \texttt{multi.disclosure} with \texttt{plot = TRUE}, the default value.}
+  \label{fig:f1}
+\end{figure}
+
+
+The measure $Dorig$ tells us that these 4 keys would identify a unique value of each of these targets for over 50\% of the original records. We get lower values for $DiSCO$, the proportion of the original records that are disclosive in the original and also in the synthetic data with a correct attribution to the target. The first two variables shown in Figure \ref{fig:f1} have additional labels that 
+flag possible contributions to disclosure from knowledge of 1-way or 2-way relationships in the original data. This is detailed in Section 4. 
+
+Previous work on attribute disclosure \cite{elliot2014SYLLS,taub_PSD2018} has used the Correct Attribution Probability ($DCAP$) as a disclosure measure for synthetic data. This is calculated as the percentage of records correctly predicted from the synthetic data by a set of keys.  However it has been suggested \cite{ChenUNECE2019}, that it may be as much a measure of utility as disclosure risk and modifications have been suggested \cite{taubUNECE2019,little2022} one of which ($TCAP$) is close to our proposed measure, $DiSCO$. For completeness the measures $DCAP$ and $TCAP$ are calculated by \texttt{disclosure}; see Appendix 2.
+
+\section{Scenario and definitions}\label{sec:sc_def_not}
+\subsection{Setting the scene}\label{subsec:scen}
+These disclosure measures are intended to assess what a person who only has access 
+to the synthetic data can infer about known individuals who are present in the original data. We will use the term "intruder" for such a person, though no malicious intent is implied. The intruder is assumed to have information for one or more individuals about the value of certain key variables that are present in the same format in the original and the synthetic data. They attempt first to see if the individual is present, and then to determine the value of other items in the data file that we refer to as targets. We are assuming a worst-case scenario where the intruder believes 
+they are querying the original data.\footnote{This may not be too unrealistic if the data are made available inadvertently, or if the intruder thinks that efforts to label the synthetic data as e.g. "Fake Data" are thought just to be a cover up. It may also be a reqasonable measure to use without this scenario, since it compares the disclosiveness of the SD to that of the GT.}
+Disclosure measures from the synthetic data are each compared to similar measures for someone with access to the original data. Here we will introduce the measures by an example. Formal definitions with notation and formulae are in Appendix 1.
+The first step in evaluating disclosure risk, as described here, is to identify a set of keys that might be expected to be known to an intruder. These keys are then combined to form a quasi-identifier that we designate as $q$. For example, if we have hospital records we might define age,sex date and hospital as keys and this would give a $q$ with levels such as ''\texttt{78 | M | 1/1/2024 | WG}" for a 78 year old man admitted to hospital WG on 1/1/2024.
+
+\subsection{Identity disclosure measures}\label{subsec:ident} 
+The concept of k-anonymity is central to identity disclosure for microdata. First proposed in 1998 \cite{kanon1} it is discussed fully in \cite{elliotanonframe}. A table is k-anonymous if a set of keys identifies at most $k$ individuals. Thus 2-anonymous data will never identify just one individual. Based on this idea, the percentage of records for which the keys identify just one individual give identity disclosure measures. 
+ Tables of $q$ values are produced from the synthetic and the original data. $UiO$ and $UiS$ are the percentages of records with keys where the table count is 1. An intruder checking out a record for their known set of keys will look for it in the synthetic data. Some records
+will not be in the SD and $UiOiS$ (Unique in Original in Synthetic) gives the \% that would be found. These records are then checked for uniqueness in the
+synthetic data giving, $repU$ is the percentage of unique original records that are also unique in the SD.
+
+The percentage $repU$ has been used as a disclosure measure to evaluate SD by \cite{jackson_rss} and by \cite{raab22} \footnote{Jackson et al. in \cite{jackson_rss} argue that the denominator for $repU$ should be $N_s$ rather than $N_d$. This is inappropriate because our scenario is to consider the risk to the original data.}.
+Replicated uniques are used in \texttt{synthpop} as part of the statistical disclosure control function, \texttt{sdc}, that includes the option of reducing disclosure risk by removing them from the SD. Nowok et al. \cite{nowok_repu} have evaluated this and give an example where this process has very little effect on utility. The function \texttt{replicated.uniques}\footnote{For example by \texttt{replicated.uniques(s2, ods, keys = c("sex","region","age","placesize"))}} also calculates $repU$ using a different method from the one described here.
+
+One of the outputs of the functions \texttt{disclosure} and \texttt{multi.disclosure} is \texttt{ident}, a table of identity disclosure measures as illustrated by this example, using the keys from the example in Section \ref{sec:simpexamp} but now calculated for a synthetic object with 5 data sets, using the one target \texttt{depress}. We first create \texttt{t5} an object of class \texttt{disclosure} and then print out the identity and attribute disclosure measures for each synthetic data set.
+
+The table for identity disclosure has $UiO$ and $repU$ as its first and last column. The 2nd and 3rd columns are $UiS$ calculated from the synthetic data in the same manner as $UiO$ from the original and $UiOiS$ the \% of $UiO$ with $q$ that are in the SD but not necessarily unique. Each are steps towards calculating $repU$.
+\renewcommand{\baselinestretch}{1.0}
+<<mof5, size="small">>=
+s5 <- syn(ods, seed = 8564, m = 5, print.flag = FALSE)
+t5 <- disclosure( s5, ods, keys = c("sex", "age", "region",
+   "placesize"), target = "depress", print.flag = FALSE)
+print(t5, to.print = c("ident"))
+@
+\renewcommand{\baselinestretch}{1.5}
+
+
+\subsection{Attribute disclosure measures}\label{subsec:attrib} 
+We approach disclosure risk from the point of view of an intruder with access to the SD
+and to certain attributes (quasi-identifiers) known for one or more individuals in the original data.
+The quasi-identifiers for the known record(s) can be combined to create a composite variable $q$ that can be created for all records in the original and SD.
+Modelling what an intruder might do we calculate the following measures, each of which is a proportion of the original records:
+\begin{itemize}
+\item{Look up $q$ for each original record in the SD. The proportion found becomes $iS$ (in Synthetic).}
+\item{Check if all records with the same $q$ have the same level of the target $t$. The proportion passing this further test becomes $DiS$ (Disclosive in Synthetic).}
+\item{Then check if these apparent disclosures correspond to the value of $t$ in the original data. The proportion of original records for which this is true
+becomes $DiSCO$ Disclosive in Synthetic Correct Original.}
+\end{itemize}
+Note that records contributing to $DiSCO$ may not be disclosive in the original data, as this information would not be available to the intruder. A further measure $DiSDiO$ (Disclosive in Synthetic Disclosive in Original) restricts the score to those disclosive in the original. These measures are defined formally in Appendix 1.
+\renewcommand{\baselinestretch}{1.0}
+<<mof5a, size="small">>=
+print(t5, to.print = c("attrib"))
+@
+\renewcommand{\baselinestretch}{1.5}
+Here we print the table of attribute disclosure measures for the example 
+in the previous section.
+As we move from $iS$ to $DiS$ and to $DiSCO$  we can see how the \%disclosive is affected by different conditions. Here lack of $q$ levels in the SD retains just 64\% of records. The requirement for a record to be disclosive in
+the SD reduces this to 34\% and again to around 9\% for those with a correct attribution. This reduces it to around 6\% by restricting to 
+records disclosive in the original.
+
+The $Dorig$ and $DiSCO$ measures are not restricted to disclosures that are identified from unique records for $q$ in either the original or the SD. The number of records contributing to each disclosive $qt$ cell in the synthetic table is the denominator that applies to that record. The columns \texttt{max denom} and \texttt{mean denom} refer to the denominators for the records disclosive in the SD that contribute to $DiSCO$. We can see from the mean that here the majority of disclosive records had unique key combinations in the SD, and the maxima was 3 for the first synthesis and 4 for the others. Large denominators can be an indication that some of the disclosure may be coming from strong relationships between variables in the data that might even be expected 
+a-priori. This aspect is discussed further in Section \ref{sec:onetwoway}. The disclosure measures can be restricted to those with small denominators by using
+the parameter \texttt{exclude\_over\_denom\_lim} to TRUE. The example in Section \ref{sec:simpexamp} is here run restricted to denominators of 1.
+\renewcommand{\baselinestretch}{1.0}
+<<mof5, size="small">>=
+multi.disclosure(s1, ods, print.flag = FALSE, plot = FALSE,
+   keys = c("sex", "age", "region", "placesize"),
+   denom_lim =1, exclude_ov_denom_lim = TRUE)
+@
+\renewcommand{\baselinestretch}{1.5}
+
+The $DiSCO$ values have decreased, as expected, but $UiO$ and $repU$
+have increased and also that $Dorig$ is now the same for all targets and equal to the $UiO$ value before the denominator exclusion. This makes sense because 
+removing large denominators from $UiO$ and $repU$ increases the number of uniques. Also, with denominators of 1, all unique values of $q$ are disclosive in the original data.
+
+Note that decreases in $DiSCO$ are more pronounced
+for \texttt{workab} and \texttt{marital}, the two targets that were flagged to check 1-way or 
+2-way relationships. Their original $DiSCO$ values were 37\% for \texttt{marital} and 53\%
+for \texttt{workab}. This and other methods of excluding certain apparent disclosures 
+are discussed in the next section.
+
+ 
+ \section{Identifying disclosure from 1-way and 2-way relationships}\label{sec:onetwoway}
+As mentioned in the Introduction, what we can learn about disclosiveness of attributes can depend on our prior knowledge of the data set or the population from which it is drawn. It would not be practical to specify our prior probability for every possible combination of keys. However, checking two aspects
+of disclosure results can help us to check when we might have predicted the correct attribution with high probability without knowledge of all the keys.
+The first is a check for a target where a high proportion of records have one level of the target. The second is when there is a strong relationship
+between a target and one of the keys, so that one $tq$ pair accounts for many of the disclosive records. These two aspects are flagged by the
+values of \texttt{check\_1way} and \texttt{check\_2way} that are returned as part of objects of 
+Returning to the example in Section \ref{sec:simpexamp}, we now use the function \texttt{disclosure} 
+to get details for the two targets that were flagged as requiring checking; see Figure \ref{fig:f1}. 
+\renewcommand{\baselinestretch}{1.0}
+<<workab, size="small">>=
+d1_workab <- disclosure(s1, ods, print.flag = FALSE, target = "workab",
+    keys = c("sex", "age", "region", "placesize"),plot = FALSE)
+print(d1_workab, to.print = c("check_1way"))
+@
+\renewcommand{\baselinestretch}{1.5}
+We can see that it was the category "NO" of \texttt{workab} that contributed most to the
+disclosure risk; most survey respondents (89\%) had never worked abroad. This level of
+the target accounted for 95\% of apparent disclosures for \texttt{workab}. To
+predict this level for all of a group with the same $q$ could hardly be considered 
+disclosive. This would be true if the intruder had access to the marginal distribution
+of \texttt{workab}, and even if they did not, some knowledge of the respondents' background
+might suffice. The $tq$ pairs identified for \texttt{workab} both included the "NO"
+level of the target.
+\renewcommand{\baselinestretch}{1.0}
+<<marital, size="small">>=
+d1_marital <- disclosure(s1, ods, print.flag = FALSE, target = "marital",
+    keys = c("sex", "age", "region", "placesize"),plot = FALSE)
+print(d1_marital, to.print = c("check_2way"))
+@
+\renewcommand{\baselinestretch}{1.5}
+For the target \texttt{marital} two $tq$ pairs are identified as contributing large denominators. Those aged 19 are almost all SINGLE, and those aged 40 are mainly MARRIED. Again these would not 
+be considered disclosive for an intruder with some knowledge of the respondents.
+
+The thresholds for identifying one-way and two-way relationships can be modified. In each case there are two criteria that need to be satisfied, one number and one \%. For one-way disclosure 
+the parameter \texttt{thresh\_1way} has the default value of $c(50, 90)$, meaning that there must be at least 50 disclosive records for one level of a target and that $q$ values including this target must account for over 90\% of all disclosive records. For two way relationships the \texttt{thresh\_2way} has default value $c(5,80)$ and the algorithm first identifies all 
+disclosive $tq$ combinations with denominators over 4. It then identifies the level of the key in $q$ with that best predicts this level of $t$ and checks if over 80\% of the disclosive records with this key would have the correct prediction. 
+
+\section{Excluding records}\label{sec:exclusions}
+Having identified records where the apparent disclosure is something that would generally be known, one option is to exclude these key-target combinations explicitly from the measures. The following parameters 
+for \texttt{multi.disclosure} and \texttt{disclosure} can be used for this.
+\begin{itemize}
+\item{\texttt{not.target}: All records with levels of the target given by the parameter \texttt{not.target} are excluded from all disclosure measures.}
+\item{\texttt{usekeysNA}:This is set to TRUE by default so that missing values are included in all tables. It can be set to FALSE for some or all keys to exclude NAs.}
+\item{\texttt{usetargetsNA (multi.disclosure) or usetargetNA (disclosure)}: Similar to the above for target(s) - note can be a vector for multi.disclosure.}
+\item{\texttt{exclude.keys, exclude.keylevs and exclude.targetlev}: Three vectors of length the number of key-target pairs to be excluded from all tables.\footnote{For \texttt{multi.disclosure} these parameters are supplied as lists with elements for each target in \texttt{targets}}}
+\end{itemize}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1\linewidth]{fig2dis.png}
+\caption{Plot from \texttt{multi.disclosure} for variables flagged by checks.}
+\label{fig:f2}
+\end{figure}
+To illustrate exclusions we will use the Adult data set from the UCI machine learning repository \cite{UCI} with almost 50 thousand records from the US Census income study, available as part of the \texttt{arules} package for \textbf{R} \cite{arules}. This is one of the data sets used in \cite{giomi2022anon} to evaluate privacy risks for SD. Note that the two variables, \texttt{capital gain} and textt{capital gain}, originally numeric data, have been truncated so that they have only 123 and 99 distinct values repsectively. They have not been grouped further in the results presented here.  Figure \ref{fig:f2} is the output of \texttt{multi.disclosure} from the keys \texttt{age, occupation, race and sex} for the other 10 variables that are not in the keys.
+The disclosiveness of the original data is relatievly low, compared to the previous example, because of the large sample size and the absence of any geographic identifiers. 
+Three of the 10 variables \texttt{capital.gain, capital.loss and native.country} are flagged to check one-way relationships. The check1 column of the attribute table tells us that the levels contributing to disclosure are
+zeros for the first two and \texttt{United-States} for \texttt{native.country}. These levels make up 95\%, 92\% and 89\% of all records.
+
+Three other variables are flagged as having disclosive two\_way relationships \texttt{workclass, marital, relationship} with totals of 7,7 and 2 $tq$ combinations respectively. The summary function \texttt{multi.disclosure} does not allow target and key specific pairs to be excluded. To
+investigate this it is necessary to examine the output of \texttt{disclosure}\footnote{see code in Appendix 3 for how to do this.}. This showed that 
+the largest contribution to \texttt{check\_2way} for \texttt{workclass} was due to this being missing when occupation was missing, although other
+relationships between these two variables also contributed. 
+
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|r|rr|rr|rr|rr|rr|}
+ \hline
+   & \multicolumn{2}{|c|} {} & \multicolumn{2}{|c|} {} & \multicolumn{2}{|c|} {} & 
+   \multicolumn{2}{|c|} {denom\_lim 1} &  \multicolumn{2}{|c|} {} \\
+  & \multicolumn{2}{|c|} {} & \multicolumn{2}{|c|} {} & \multicolumn{2}{|c|} {NAs out} & 
+   \multicolumn{2}{|c|} {NAs out} &  \multicolumn{2}{|c|} {} \\
+ & \multicolumn{2}{|c|} {No excl} & \multicolumn{2}{|c|} {not.tlev} & \multicolumn{2}{|c|} {not.tlev} & 
+   \multicolumn{2}{|c|} {not.tlev} &  \multicolumn{2}{|c|} {denom\_lim 1} \\
+ target & orig & syn & orig & syn  & orig & syn & orig & syn & orig & syn   \\ 
+ \hline
+capital.gain & 22.55 &  19.87 &  0.21 & 0.00 &  0.21 &  0.00 &  0.19 &  0.00 &  2.68 &  1.17\\
+capital.loss &  30.61 &   27.71 &  0.08 &  0.00 &  0.08 &  0.00 &  0.08 &  0.00 &  2.68 &  1.26\\
+education &    3.71 & 0.93 &  3.71 &  0.93 &  3.71 &  0.93 &  2.45 &  0.46 &  2.68 &  0.50\\
+fnlwgt &  2.70 & 0.00 &  2.70 &  0.00 &  2.70 &  0.00 &  2.45 &  0.00 &  2.68 &  0.00\\
+hours.per.week &  4.36 & 0.19 &  4.36 &  0.19 &  4.36 &  0.19 &  2.45 &  0.12 &  2.68 &  0.13\\
+income &  4.97 & 2.10 &  4.97 &  2.10 &  4.97 &  2.10 &  1.58 &  0.50 &  2.68 &  0.82\\
+marital.status & 8.23 & 5.27 &  8.23 &  5.27 &  8.23 &  5.27 &  2.45 &  0.68 &  2.68 &  0.74\\
+native.country & 17.09 &   13.55 &  0.94 &  0.08 &  0.94 &  0.08 &  0.67 &  0.04 &  2.68 &  0.87\\
+relationship &  5.17 & 2.64 &  5.17 &  2.64 &  5.17 &  2.64 &  2.45 &  0.69 &  2.68 &  0.73\\
+workclass &   14.27 &   11.64 &  14.27 & 11.64 &  14.27 & 11.64 &  2.45 &  0.85 &  2.68 &  0.96\\
+  \hline
+\end{tabular}
+\caption{Disclosure results from Adult data with different exclusions.}
+\label{table:1}
+\end{table}
+
+
+Table 1 gives the results of excluding different entries in the tables of $q$ and $t$ from the attribute disclosure measures.
+Excluding the levels of the target flagged by \texttt{check\_1way} reduces the $DiSCO$ to almost zero for these 3 variables.
+Adding exclusion of missing values reduced the disclosure for \texttt{workclass} and for some other variables a little. 
+Adding the restriction to denominators of 1, reduced the disclosure for variables identified by \texttt{check\_2way} to low 
+levels. In the final columns we can see that restricting to denominators of 1, by itself, gives low levels of disclosure for
+all variables, with the exception of those flagged by \texttt{check\_1way}. This approach was one that was trialed in an earlier 
+version of these functions but discarded for giving misleading results for some data. It does not count some attribute disclosures that might well be found by an intruder. For example, if a small number of records with the same keys all had the same level of the target that
+corresponded to the level in the original data. We feel that a better approach is to exclude specific target/key combinations.
+
+\section{Conclusions}
+The privacy metrics we propose here are in some sense the opposite of differential privacy (DP).
+DP claims to protect data from an intruder with arbitrary knowledge of the data, except of
+the one record that has the greatest influence on the likelihood of the results. In contrast our metrics require the user to specify keys that identify variables in the data
+that would expect to be known about individuals, as well as to 
+specify the details of what they would expect an intruder 
+to know about the data.  Also, the routines flag cases where part of the
+disclosure measures come from one- or two-way relationships so that disclosure would be
+expected even in the absence of data. 
+
+We have evaluated the routines on a few data sets
+and set levels of the thresholds for this at what seem to be reasonable levels, but 
+more experience with other data sets would be valuable. 
+We hope that these tools will be helpful to data holders who need to make decisions 
+about the risks of releasing SD to the public, or to a restricted audience.
+They should also enable the disclosure risks of different synthesis methods to be evaluated.
+
+
+\section{Acknowledgement}
+Research Data Scotland (\url{https://www.researchdata.scot/}) funded Gillian Raab's time to carry 
+out the research reported here and  to expand the capabilities of the synthpop package\footnote{
+from version 1.8-0 available on CRAN at \url{https://CRAN.R-project.org/package=synthpop}
+}
+to include measures of disclosure control. We also thank the Scottish Centre for Administrative 
+Data Research for continue to support the development of the synthpop package since its creation was
+supported by the ESRC funded SYLLS poject in 2012-14.
+
+\bibliographystyle{acm}
+\bibliography{disclosure}
+
+\section*{Appendix 1: Notation and formal definitions}{\label{sec:app1}}
+Before defining the measures of identity and disclosure risk we need to introduce the notation that will be used to calculate them. The first step is to create the quasi-identifiers from the keys for the original and SD. For the keys used in the example given in Section \ref{sec:simpexamp} the quasi-identifier that we will designate as $q$ for the first record in the original data is:
+
+\noindent{\texttt{"FEMALE | 57 | Lubuskie | URBAN 100,000-200,000"}}
+
+\noindent{and that for the first record in the SD:}
+
+\noindent{\texttt{"FEMALE | 39 | Zachodnio-pomorskie | URBAN 100,000-200,000"}}.
+
+In order to calculate identity disclosure measures, we need to compare the tables of $q$ from the original and SD. For attribute disclosure measures we need to cross-tabulate $q$ with each target variable $t$ and compare findings from the SD with what would have been found from the original data. In general, the levels of $q$ and sometimes $t$ in the original and SD will not be the same. Before creating any tables, we need to define sets of $q$ and $t$ values that give the union of both sets of levels and align the tables so that their indices correspond.
+
+For the original data $d_{.q}$ is the count of records with the keys corresponding to the levels of $q$ and $q_{tq}$ is the count of records with this $q$ and level $t=1,...T$ of the target. The equivalent counts from the synthesised data are designated by $s_{.q}$ and $s_{tq}$. When a member of $q$ is in the original data but not in the synthetic, $s_{.q}$ and $s_{tq}$ are all zero. Similarly when a member of $q$ is in the SD but not in the original, $d_{.q}$ and $d_{tq}$ are all zero. The two tables can be written as shown in Table 1, where the total records in the original data is $N_d$, made up of $N_{d~only}$ and $N_{d~both}$. The
+equivalent totals for the SD are $N_s$, $N_{s~only}$ and $N_{s~both}$.
+
+\begin{center}
+\begin{table}[ht]
+\begin{tabular}{ c|ccc|ccc|ccc|c} 
+ & \multicolumn{3}{|c|}{only in original} & \multicolumn{3}{|c|}{in both} & \multicolumn{3}{|c|}{only in synthetic} & Total\\
+ \hline
+1  & ... & $d_{1q}$ & ...  & ... & $d_{1q}$ & ...  & ... & 0 & ... & $d_{1.}$ \\
+ ... & ... & ... & ...  & ... & ... & ...  & ... & ... & ... & ... \\
+t  & ... & $d_{tq}$  & ...  & ... & $d_{tq}$ & ...  & ... & 0 & ... & $d_{t.}$ \\
+... & ... & ... & ...  & ... & ... & ...  & ... & ,,, & ... & ... \\
+T  & ... & $d_{Tq}$ & ...  & ... & $d_{Tq}$ & ...  & ... & 0 & ... & $d_{T.}$ \\
+ \hline
+Column sums  & & $d_{.q}$ &  & ... & $d_{.q}$ & ...  & ... & 0 & ... & $N_d$ \\
+ \hline
+Totals  &  & $N_{d\:only}$ &  & & $N_{d~both}$ &  & & 0 &  & $N_d$ \\
+\end{tabular}
+\end{table}
+\begin{table}[ht]
+\begin{tabular}{ c|ccc|ccc|ccc|c} 
+ & \multicolumn{3}{|c|}{only in original} & \multicolumn{3}{|c|}{in both} & \multicolumn{3}{|c|}{only in synthetic} & Total\\
+ \hline
+1  & ... & 0 & ...  & ... & $s_1q$ & ...  & ... & $s_1q$ & ... & $s_{1.}$ \\
+ ... & ... & ... & ...  & ... & ... & ...  & ... & ... & ... & ... \\
+t  & ... & 0 & ...  & ... & $s_tq$ & ...  & ... & $s_tq$ & ... & $s_{t.}$ \\
+... & ... & ... & ...  & ... & ... & ...  & ... & ... & ... & ... \\
+T  & ... & 0 & ...  & ... & $s_Tq$ & ...  & ... & $s_Tq$ & ... & $s_{T.}$ \\
+ \hline
+Column sums  & ... & 0 & ...  & ... & $s_{.q}$ & ...  & ... & $s_{.q}$ & ... & $N_s$ \\
+ \hline
+Totals  &  & 0 &  & & $N_{s~both}$ &  &  &  & $N_{s\:only}$ & $N_s$ \\
+
+\end{tabular}
+\caption{Notation for tables from quasi-identifier ($q$) and target ($t$) from original (upper table) and SD (lower table).}
+\label{table:2}
+\end{table}
+\end{center}
+ To calculate the \% of records in the original and SD we need:
+  \begin{equation}
+\%~Unique~in~Original = UiO = 100\sum{(d_{.q} |d_{.q} = 1)}/N_d. 
+  \end{equation}
+  \begin{equation}
+  \%~Unique~in~Synthetic = UiS = 100\sum{(s_{.q} |d_{.q} = 1)}/N_d.
+    \end{equation}
+    The intruder has information about the keys for an individual in the real data that they attempt to identify in the SD. They first attempt to find them in the SD, and  the \% found is:
+      \begin{equation}
+    \%~Unique~in~Original~in~Synthetic = UiOiS = 100 \sum{(d_{.q} = 1 |s_{.q} = 1 \land d_{.q} > 0)}/N_d.
+      \end{equation}
+      Some of these records would not be unique in the SD, restricting to such records gives:
+        \begin{equation}
+      \%~replicated~Uniques = repU = 100\sum{(s_{.q} |d_{.q} = 1 \land s_{.q} = 1)}/N_d.
+      \end{equation}
+      
+      To find an attribute from a set of keys, it is necessary to examine the distribution of $s_{tq}$ for groups defined by $q$. We define column proportions for the original and SD as $pd_{tq} = d_{tq}/d_{.q}$ and for the synthetic as $ps_{tq} = s_{tq}/s_{.q}$.
+     
+Returning to the scenario described in Section \ref{subsec:scen}, we must first define a measure of attribute disclosure for the original data. This is based on the concept of \textit{l-diversity} \cite{ldiv} that requires that each set of records defined by $q$ has at least $l(\ge{2}$ distinct values of the target. A data set is \textit{l2-diverse} for $q$ and $t$ if all records for every $q$ have the same level of $t$\footnote{This could be generalised to $l>2$, but in practice the levels of targets are not generally exchangeable and a more practical approach would be to aggregate levels for certain targets.} An attribute disclosure measure for the original data can be defined as \textit{\% Disclosive in Original} :
+\begin{equation}
+ Dorig = 100\sum^q{\sum^t{(d_{tq} |pd_{tq} = 1)}}/N_d.
+\end{equation}
+The equivalent measure for the SD, taken as if it were real, becomes :
+\begin{equation}
+ Dsyn = 100\sum^q{\sum^t{(s_{tq} |ps_{tq} = 1)}}/N_s.
+\end{equation}
+An intruder with access only to the SD, but with knowledge of $q$ from one or more individuals in the original, would look them up in the SD. Some of their $q$ levels be key combinations that do not appear in the SD
+leaving the proportion that do appear as $iSO$ (in in Synthetic Original) 
+\begin{equation}
+ iSO = 100\sum^q{\sum^t{(d_{tq} | s_{tq}>0)}}/N_d.
+\end{equation}
+A level of $q$ from an original record may identify more than one target in the SD, or identify the wrong target.
+To exclude these we require the records to be Disclosive in  the SD and Correct when checked 
+with the original giving:
+\begin{equation}
+ DiSCO = 100\sum^q{\sum^t{(d_{tq} | ps_{tq} = 1)}}/N_d.
+\end{equation}
+
+Note that $DiSCO$ can include records that are not disclosive in the original data giving a further 
+measure Disclosive in Synthetic and Disclosive in the  Original :
+\begin{equation}
+DiSDiO = 100\sum^q{\sum^t{(d_{tq} | ps_{tq} = 1 \land pd_{tq} = 1)}}/N_d.
+  \end{equation}
+As we comment above the intruder would not be able to tell if records were 
+identified as $DiSDiO$ rather than $DiSCO$, so we prefer the latter measure.
+However, the intruder can identify when the apparently disclosive record
+is not unique in the SD. 
+ This restriction can be imposed by requiring that the denominator for disclosive records in the SD does not exceed a 1,  as described
+ and discussed in Section \ref{sec:exclusions}.
+
+\section*{Appendix 2: CAP measures }{\label{sec:app2}}
+
+The measures $baseCAPd$, $DCAP$, $TCAP$ are calculated by the function \texttt{disclosure} and are stored in the component \texttt{allCAPs} of the output object of class \texttt{disclosure}. This is printed when the parameter \texttt{to.print} includes \texttt{allCAPs}. The first measure is known as the baseline CAP and refers to an average of the predictions that would be made by someone who only has access to the marginal distribution of the target. The intruder then guesses the CAP for each level of the target according to the relative frequencies $pd_{t.}$. Averaging this over all observations gives
+\begin{equation}
+  \nonumber baseCAPd = \sum{(pd_{t.})^2}/N_d.
+\end{equation}
+The \% of $t$ that would be correctly predicted from $q$ for someone with access to the original data is $CAPd$:
+\begin{equation}
+  \nonumber CAPd = \sum\limits_{tq}{(pd_{tq}d_{tq})}/N_d,
+\end{equation}
+and the equivalent measure for the SD treated as if it were the original is
+\begin{equation}
+  \nonumber CAPs = \sum\limits_{tq}{(ps_{tq}s_{tq})}/N_s.
+\end{equation}
+The measure  DCAP is the percentage of $t$ correctly predicted in the SD  $q$. This gives
+\begin{equation}
+  \nonumber DCAP = \sum\limits_{tq}{(ps_{tq}d_{tq})}/N_d
+\end{equation}
+The $DCAP$ score can be expressed  by scaling it from  $baseCAPD$ to 1 (see \cite{little2022,lotte}), although this can result in some negative values.
+The $TCAP$ measure as defined by \cite{little2022} uses the same count of disclosive records
+as $DISCO$, but uses as denominator the number of records that have keys represented in both the synthetic and the original data. It can also be scaled from $baseCAPD$ to 1,
+and as \cite{little2022} demonstrate this measure can also take negative values.
+\renewcommand{\baselinestretch}{1.0}
+<<>>=
+print(t5, to.print = "allCAPs")
+@
+\renewcommand{\baselinestretch}{1.5}
+As expected the lower denominator for $TCAP$ gives values higher than the equivalent $DiSCO$ values for the same example given in Section 3.3.
+\end{document}
+

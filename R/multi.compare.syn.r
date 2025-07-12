@@ -63,17 +63,17 @@ multi.compare <- function(object, data, var = NULL, by = NULL, msel = NULL,
    data[, var] <- as.factor(data[, var])
  }
  
- ..count.. <- ..density.. <- NULL
+ ##after_stat(count) <- after_stat(density) <- NULL
  
  if (is.numeric(data[, var])) {
    if (cont.type == "hist") {
      p <- ggplot(data = obssyn, aes(x = eval(parse(text = var))))
      plabs <- labs(x = var, fill = "")
      if (y.hist == "count") {
-       ptype <- geom_histogram(aes(y = ..count.., fill = source), 
+       ptype <- geom_histogram(aes(y = after_stat(count), fill = source), 
          position = "dodge", binwidth = binwidth)
      } else if (y.hist == "density"){
-       ptype <- geom_histogram(aes(y = ..density.., fill = source), 
+       ptype <- geom_histogram(aes(y = after_stat(density), fill = source), 
          position = "dodge", binwidth = binwidth)
      }
    } else if (cont.type == "boxplot") {

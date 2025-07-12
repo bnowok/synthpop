@@ -535,7 +535,7 @@ print.compare.synds <- function(x, ...) {
     else cat("\nComparing percentages observed with synthetic\n\n")
   }
   
-  if (class(x$plots)[1] == "gg") {
+  if (class(x$plots)[1] != "list") {
     if (x$table) print(x$tables) 
     if (x$plot) print(x$plots)
   } else {

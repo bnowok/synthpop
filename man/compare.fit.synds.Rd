@@ -38,7 +38,7 @@
   \item{lty}{the line width.}
   \item{lcol}{line colours.}
   \item{dodge.height}{size of vertical shifts for confidence intervals to 
-   prevent overlaping.} 
+   prevent overlapping.} 
   \item{point.size}{size of plotting symbols used to plot point estimates of 
    coefficients.}
   \item{population.inference}{a logical value indicating whether intervals for 
@@ -47,13 +47,13 @@
    and the standardised differences since these are based on differences 
    standardised by the original interval widths.} 
   \item{ci.level}{Confidence interval coverage as a proportion.} 
-  \item{\dots}{additional parameters passed to \code{\link{ggplot}}.}
+  \item{\dots}{additional parameters passed to \code{\link[ggplot2]{ggplot}}.}
   
   \item{x}{an object of class \code{compare.fit.synds}.}
 }
 \details{This function can be used to evaluate whether the method used for 
 synthesis is appropriate for the fitted model. If this is the case the 
-estimates from the  synthetic dataof what would be expected from the original 
+estimates from the  synthetic data of what would be expected from the original 
 data \code{xpct(Beta)} \code{xpct(Z)} should not differ from the estimates from 
 the observed data (\code{Beta} and \code{Z}) by more than would be expected from 
 the standard errors (\code{se(Beta)} and \code{se(Z)}). For more details see the 
@@ -145,6 +145,6 @@ vignette on inference.
 ods <- SD2011[,c("sex","age","edu","smoke")]
 s1 <- syn(ods, m = 3)
 f1 <- glm.synds(smoke ~ sex + age + edu, data = s1, family = "binomial")
-compare(f1, ods) 
-compare(f1, ods, print.coef = TRUE, plot = "coef")
+compare(f1, SD2011) 
+compare(f1, SD2011, print.coef = TRUE, plot = "coef")
 }

@@ -1314,11 +1314,11 @@ check.rules.syn <- function(setup, data) {
   }
  }
 
-#---------------------------------------------------------------------
+ #---------------------------------------------------------------------
 #Tidy models
-
 #---
- if (models) {
+
+  if (models) {
    if (m == 1) { 
      # drop fits from dummies and nulls
      fitout <- sapply(fits, function(x) is.null(x) || (is.character(x) && x =="dummy")) | 

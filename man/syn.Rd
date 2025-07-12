@@ -102,7 +102,7 @@ syn.strata(data, strata = NULL,
      to the names of the semi-continuous variables.}     
   \item{smoothing}{a single string specifying a smoothing method for all numeric 
      variables in the data or a named list specifying a smoothing method to be 
-     used for selected variables. Avaliable methods include: \code{"spline"} 
+     used for selected variables. Available methods include: \code{"spline"} 
      (recommended), \code{"rmean"}, \code{"density"}, and \code{""}).
      Smoothing can only be applied to continuous variables synthesised using 
      \code{sample}, \code{ctree}, \code{cart}, \code{rf}, \code{bag}, 
@@ -309,7 +309,7 @@ syn.strata(data, strata = NULL,
      using \code{read.obs()}.}       
   \item{obs.vars}{a vector of all variable names in the observed data set.}
 
-When \code{syn.strata()} is used there are two additiona components:
+When \code{syn.strata()} is used there are two additional components:
 
   \item{strata.syn}{a factor variable or a list of factor variables containing 
      stratum values for all observation units in \code{syn}.}

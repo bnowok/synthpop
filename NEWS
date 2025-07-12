@@ -1,3 +1,69 @@
+
+synthpop 1.9-1
+---------------
+
+CHANGES
+* Removal of typos from the inference vignette.
+
+
+synthpop 1.9-0
+---------------
+NEW FEATURES
+* Two new disclosure functions calculate various disclosure measures and their 
+  associated  statistics from a set of keys combined to form a quasi-identifier. 
+  The basic function disclosure() calculates  measures for one target variable. 
+  The other function (multi.disclosure()) calls disclosure() for a set of target
+  variables, defaulting to all the variables in a   data set that are not in the
+  keys. Both functions allow numerical variables to be categorised into groups
+  defined by the supplied parameters. By default numeric variables are treated
+  as factors with levels equal to their number of distinct values.
+* A new vignette on disclosure gives details and sample code for the
+  new disclosure functions.
+* The function syn.ipf() now allows grouped margins that include all threeway
+  and fourway interactions, as well as twoway.
+* The two syn methods that can be made differentially private (DP) (`catall` and
+  `ipf` can now use the Gaussian mechanism instead of the Laplace mechanism. They
+  each have new parameters (`noise`) to define the type of noise to add and del,
+  to define delta for the Gaussian mechanism. Exponential noise can also be added
+  but this is not recommended and a warning is printed.
+* New function mergelevels() that combines levels of factors in a data.frame 
+  using routines from the forcats package.
+* New function synorig.compare() that can be used to check synthetic data created
+  by methods other than syn() to make sure that the data sets are comparable.
+  Some simple fixes can be done and the changed data sets returned.
+  It is called in the versions of compare.synds(), utility.gen(), utility.tab(), 
+  utility.tables(), disclosure() and multi.disclosure() when these methods are
+  for synthetic data supplied as a dataframe or a list of data frames. If 
+  fixing is possible this is done and functions continue with fixed data. 
+  At present this only happens for first elemement of a list. 
+
+CHANGES
+* Function replicated.uniques() changed. Now has additional parameter `keys`,
+  a vector of variable names  used to define unique records. As well as checking 
+  for replicated uniques it also checks for uniques in the synthetic data
+  that are present (but not necessarily  unique in the original). 
+  It now returns results as an object of class `repuniq.synds`, that can be
+  printed with print.repuniq.synds. Its value is a table of numbers of 
+  different types of uniques and two vectors or matrices (if object$m>1)
+  that identify the records to be excluded for each type of unique
+  that can be excluded with the function sdc().
+* Function sdc() is modified to accept input from the new replicated.uniques()
+  function. As well as the parameter `rm.replicated.uniques`, there is another
+  rm.uniques.in.orig. THis may be a more appropriate strategy for low-fidelity
+  synthetic data. (add ref here when I have report published).
+* The functions compare.synds() and utility.tables() that calulate utility 
+  measures comparing synthetic data to the original, now have a parameter
+  `print.flag` (default `TRUE`) that prints out a message as each element of the
+  output is calculated.
+
+BUG FIXES
+* In syn at the check for collinearity that removes some predictors, predictors
+  that have a passive method are not removed.
+* The function utility.tables() now has an explicit parameter `max.table` that is 
+  used by utility.tab() to override the default for the maximum table size for 
+  any set of tables to prevent the plots from failing.
+
+
 synthpop 1.8-0
 ---------------
 
@@ -364,7 +430,7 @@ CHANGES
 * No message on the seed value used (it is stored in the result object).
 * Formula of the model to be fitted using glm.synds() or lm.synds() can be 
   specified outside the function.
-* Massage for sdc() on number of replicated uniques also when it is equal to 
+* Message for sdc() on number of replicated uniques also when it is equal to 
   zero.   
 * Maximum number of iterations for a multinomial model used in `polyreg` and 
   `polr` method increased to 1000 (`maxit` parameter). Message if the limit is 

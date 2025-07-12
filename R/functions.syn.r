@@ -472,6 +472,7 @@ syn.sample <- function(y, xp, smoothing = "", cont.na = NA, proper = FALSE, ...)
 {
   # Generates random sample from the observed y's
   # with bootstrap if proper == TRUE
+
   if (proper == TRUE) y <- sample(y, replace = TRUE)
   yp <- sample(y, size = xp, replace = TRUE)
   
@@ -897,13 +898,18 @@ syn.collinear <- function(y, x, xp, ...)
 
 ###-----syn.catall---------------------------------------------------------
 
-syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
-                       maxtable = 1e8, epsilon = 0, rand = TRUE, ...)
+syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, maxtable = 1e8,  
+                       epsilon= 0, delta = 0.05, rand = TRUE, noisetype ="",  ...)
 {
  # Fits a saturated model to combinations of variables
  # xp just holds number of synthetic records required
+ if (!(noisetype %in% c("Laplace","Gaussian", "Exponential",""))) stop("catall.noisetype must be one of  c('Laplace','Gaussian', 'Exponential','')" , call. = FALSE)
+  
+ if (epsilon < 0 )  stop("catall.epsilon to make catall DP must be > 0 and only 0 if noisetype is ''",call. = FALSE)
+ if (noisetype %in% c("Laplace", "Exponential") ) cat("catall made DP with ",noisetype,"noise and epsilon set to", epsilon,"\n")
+ if (noisetype == "Gaussian") cat("Gaussian noise added to make catall approximately DP with epsilon", epsilon," and delta", delta,"\n")
 
-   levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))})  # all NAtemp here already
+ levs <- sapply(x, function(x) {length(levels(x)) + any(is.na(x))})  # all NAtemp here already
  table.size <- prod(levs)   # exp(sum(log(levs)))
  if (table.size > maxtable) stop("Table has more than ", maxtable/1e6,
    " million cells (", round(table.size/1e6, 2),
@@ -914,32 +920,46 @@ syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL,
  N <- dim(x)[1]
  if (proper == TRUE) x <- x[sample(1:N, replace = TRUE), ]
  tab <- table(x)
- n <- length(tab) 
- addon <- priorn/n
- # Set structural zero cells to zeros 
  if (!is.null(structzero)) {
    sz <- checksz(structzero, x) ## checks and converts var names to numbers
    if (sum(tab[sz]) > 0) cat("
 \n************************************************************************
 WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero cells.
 ************************************************************************\n", sep = "")
+   n <- length(tab[!sz])    ## not sure about this GR 9/24
  }
+ else n <- length(tab) 
+ pn <- priorn
+ if (noisetype == "Exponential" & !(epsilon == 0) ) {
+    priorn <- n*N/(exp(epsilon) - 1 )
+    cat("Priorn changed from ",pn,"to", priorn,"to satisfy DP with epsilon",epsilon,"\n")
+    cat("
+\n************************************************************************
+WARNING: We do not recommend this method because it adds far far too much noise 
+and we expect that the utility measures from the synthetic data will be terrible.
+************************************************************************\n", sep = "")
+ }
+
  # Add extra to prior
- tab <- (tab + addon)
+ tab <- (tab + priorn/n)
+ # Set structural zero cells to zeros  even if not zero in original
  if (!is.null(structzero)) tab[sz] <- 0
  dt  <- dim(tab)
  dn  <- dimnames(tab)
-  if (epsilon > 0) {
-    if (rand == TRUE) {
-      if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
-      else tab <- addlapn(tab, epsilon) 
-      fit <- tab
-      tab <- tab/sum(tab)   # get it as proportions
-      tab <- rmultinom(1, k, tab)
-    } else {
-      if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
-      else tab <- addlapn(tab, epsilon ) #GR2022
-      fit <- tab
+  if (noisetype %in% c("Laplace","Gaussian") & epsilon > 0 ) {
+      if (noisetype == "Laplace"){
+        if (!is.null(structzero)) tab[!sz] <- addlapn(tab[!sz], epsilon) 
+        else tab <- addlapn(tab, epsilon) 
+      }
+      if (noisetype == "Gaussian"){
+        if (!is.null(structzero)) tab[!sz] <- addGaussn(tab[!sz], epsilon, delta) 
+        else tab <- addGaussn(tab, epsilon, delta) 
+      }
+      if (rand) {
+        fit <- tab
+        tab <- tab/sum(tab)   # get it as proportions
+        tab <- rmultinom(1, k, tab)
+      }  else {
       tab <- roundspec(tab*k/sum(tab))
     }
  } else {
@@ -963,7 +983,8 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
   
 syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, 
                     gmargins = "twoway", othmargins = NULL, tol = 1e-3, max.its = 5000,
-                    maxtable = 1e8, print.its = FALSE, epsilon= 0, rand = TRUE,...)
+                    maxtable = 1e8, print.its = FALSE, 
+                    epsilon= 0, delta = 0.05, noisetype ="Laplace", ...)
 {
  # Fits log-linear model to combinations of variables
  # k just holds number of synthetic records required
@@ -981,9 +1002,11 @@ syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL,
  if (proper == TRUE) x <- x[sample(1:N, replace = TRUE),]
  tab <- table(x, useNA = "ifany")
  n <- length(tab)
- # Add extra to prior
- addon <- priorn/n
- # Set structural zero cells to zeros 
+ if (epsilon > 0) {eps <- epsilon / length(margins)
+ cat("Overall epsilon for DP is ",epsilon," divided equally between ", 
+     length(margins)," margins to give ", eps, " each,\n")
+ } 
+# Set structural zero cells to zeros 
  if (!is.null(structzero)) {
    sz <- checksz(structzero, x) # checks and converts var names to numbers
    if (sum(tab[sz]) > 0) cat("
@@ -992,13 +1015,23 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
 ************************************************************************\n", sep = "")
  }
  if (!is.null(gmargins)) {
-   if (gmargins == "twoway") {
+   if (gmargins == "fourway") {
+     n_margins  <- nv*(nv - 1)*(nv-2)*(n-3)/24
+     mx_margins <- combn(1:nv, 4)
+     margins <- split(mx_margins, col(mx_margins))
+     print(margins)
+   }    else if (gmargins == "threeway") {
+     n_margins  <- nv*(nv - 1)*(nv-2)/6
+     mx_margins <- combn(1:nv, 3)
+     margins <- split(mx_margins, col(mx_margins))
+     print(margins)
+     }   else if (gmargins == "twoway") {
      n_margins  <- nv*(nv - 1)/2
      mx_margins <- combn(1:nv, 2)
      margins <- split(mx_margins, col(mx_margins))
    } else if (gmargins == "oneway") {
      margins <- as.list(1:nv)
-   } else stop("Only 'oneway' or 'twoway' are implemented for gmargins.\n", 
+   } else stop("Only 'oneway', 'twoway', 'threeway' or 'fourway' are implemented for gmargins.\n", 
                call. = FALSE)
    if (!is.null(othmargins)) for (i in 1:length(othmargins)) {
      margins[[length(margins) + 1]] <- othmargins[[i]]
@@ -1017,10 +1050,7 @@ SEVERE WARNING: Margins ", missed, " not fitted.
 This means they will be fitted as having
 the same proportion in each level.
 **************************************************\n", sep = "")
- if (epsilon > 0) {eps <- epsilon / length(margins)
-   cat("Overall epsilon for DP is ",epsilon," divided equally between ", 
-       length(margins)," margins to give ", eps, " each,\n")
- } 
+
 
 # Get data for margins
  margins.data <- vector("list", length(margins))
@@ -1028,7 +1058,8 @@ the same proportion in each level.
    margins.data[[i]] <- table(x[, margins[[i]]], useNA = "ifany")
     margins.data[[i]] <- margins.data[[i]] + priorn/length(margins.data[[i]])
     if (epsilon > 0) {
-      margins.data[[i]] <- addlapn(margins.data[[i]], eps)
+      if (noisetype == "Gaussian") margins.data[[i]] <- addGaussn(margins.data[[i]], eps, delta)
+      if (noisetype == "Laplace") margins.data[[i]] <- addlapn(margins.data[[i]], eps)
     }
  }
  start <- array(1, dim(tab))
@@ -1045,9 +1076,7 @@ the same proportion in each level.
  if (!is.null(structzero)) exp1[sz] <- 0
  
  exp1 <- exp1 / sum(exp1)   # get it as proportions
- if (epsilon == 0 & rand == FALSE) cat("WARNING: No DP noise or random noise added,\nData returned will be close to NULL expectation for model defined by margins.\n")
- if (rand == TRUE)  z    <- rmultinom(1, k, exp1)
- else z <- roundspec(exp1*k/sum(exp1))
+ z    <- rmultinom(1, k, exp1)
  res  <- array(z, dim(exp1))
  dimnames(res) <- dimnames(tab)
  res  <- array.to.frame(res)
@@ -1241,8 +1270,20 @@ including this output\n", tab, "\n")
     if (diff <0 ) result[inds] <- result[inds] - 1
   }
   return(result)
-}
+} 
+###-----add Gaussian noise------------------------------------------------------------
 
+addGaussn <- function(x, eps, delta = 0.05){
+  # add approximateluy DP Gaussian noise with re-scaling to a total or sample size
+  
+  if ( eps <= 0) stop("eps must be > 0\n")
+  if ( delta <= 0 | delta > 1) stop(" delta must be > 0 and < 1 \n")
+  if ( eps >= 1 ) stop(" Approximate differential privacy is not guaranteed for epsilon >=1  \n")
+  sd <-  sqrt(2*log(2/delta))/eps
+  res <- x + rnorm(length(x), 0, sd)
+  res <- makepos(res, sum(x))
+  return(res)
+}
 
 ###-----addlapn------------------------------------------------------------
 

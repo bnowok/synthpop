@@ -1,71 +1,112 @@
 ###-----replicated.uniques-------------------------------------------------
-# unique units in the synthesised data that replicates unique real units
-# (+number +percent of all observations)
+# finds unique units in the synthesised data that replicate unique real units
+# for variables in keys  (+number of uniques in real and synthetic data)
+#
+# also finds all unique key combinations in synthetic data that are in the original
+# but not necessarily unique (relevant to low fidelity sd)
 
-replicated.uniques <- function(object, data, exclude = NULL){
-  # check names of vars to be excluded
-  if (!is.null(exclude)) {
-    exclude.cols <- match(exclude, colnames(data))
-    if (any(is.na(exclude.cols))) stop("Unrecognized variable(s) in exclude parameter for uniques: ",
-      paste(exclude[is.na(exclude.cols)],collapse=", "), call. = FALSE)
+replicated.uniques <- function(object, data, keys = names(data)){
+  
+  if (!inherits(object, "synds")) stop("replicated uniques requires an object of class 'synds'", call. = FALSE)
+  
+  # check names of vars to be keys exist in data and syn
+  if (!is.null(keys)) {
+    keys.cols <- match(keys, colnames(data))
+    if (any(is.na(keys.cols))) stop("Variable(s) not in data supplied in keys parameter of replicated.uniques: ",
+                                    paste(keys[is.na(keys.cols)],collapse=", "), call. = FALSE)
+    if (object$m > 1)      keys.cols <- match(keys, colnames(object$syn[[1]]))
+    else keys.cols <- match(keys, colnames(object$syn))
+    if (any(is.na(keys.cols))) stop("Variable(s) in keys parameter of replicated.uniques are not in synthetic data : ",
+                                    paste(keys[is.na(keys.cols)],collapse=", "), call. = FALSE)
+  }
+  #------------------------- restrict data and syn to keys--------------------------------------
+  data <- data.frame(data[,keys, drop = FALSE])
+  if (object$m == 1) object$syn <- object$syn[,keys, drop = FALSE]
+  if (object$m > 1) for ( i in 1:object$m) object$syn[[i]] <- object$syn[[i]][,keys, drop = FALSE]
+  
+  ###------------------------ make composite variables for keys --------------------------
+  pp <- function(x) paste(x, collapse="|")
+  ff <-  function(x) apply(x,1, pp)
+  if (length(keys) >1) {
+    data_keys <- ff(data)
+    if (object$m == 1 ) syn_keys <-  ff(object$syn)
+    if (object$m >1 )  { 
+      syn_keys <-  data.frame( matrix(NA, dim(object$syn[[1]])[1],object$m) )
+      for ( i in 1:object$m ) syn_keys[,i] <- ff(object$syn[[i]])
+    } 
+  } 
+  else {
+    data_keys <- data[, names(data) == keys, drop = FALSE]
+    if (object$m ==1 )    syn_keys <- object$syn
+    if (object$m > 1)  { syn_keys <-  as.data.frame(matrix(NA, object$k,object$m))
+    for ( i in 1:object$m ) syn_keys[,i] <- object$syn[[i]]
+    }
+  }
+  uniques_in_orig = names(table(data_keys)[table(data_keys) == 1])
+  if (object$m == 1) {
+    tab <- table(syn_keys)
+    uniques_in_syn = names(tab[tab == 1])
+    uniques_in_syn_in_orig = uniques_in_syn[uniques_in_syn %in% data_keys]  
+    replicated.uniques = uniques_in_syn[uniques_in_syn %in% uniques_in_orig] 
+    repU.rm <- synU.rm <- rep(FALSE,object$k)
+    repU.rm[syn_keys %in% replicated.uniques] <- TRUE
+    synU.rm[syn_keys %in% uniques_in_syn_in_orig] <- TRUE
+    res_tab <- matrix(NA,4,3)
+    dimnames(res_tab) <- list(c("Original","Synthetic","Synthetic uniques in original","Replicated uniques"),
+                              c("Number","from total","%"))
+    res_tab[,1] <- c( length(uniques_in_orig), length(uniques_in_syn),
+                      length(uniques_in_syn_in_orig),length(replicated.uniques))
+    res_tab[,2] <- c(object$n, rep(object$k,3))
+    res_tab[,3] <-  round(res_tab[,1]/res_tab[,2] *100,2)
+  }
+  if (object$m > 1) {
+    res_tab <- as.list(1:object$m)
+    repU.rm <- synU.rm <- matrix(FALSE, object$k, object$m)
+    for (i in 1:object$m) {
+      tab <- table(syn_keys[,i])
+      uniques_in_syn = names(tab[tab == 1])
+      uniques_in_syn_in_orig = uniques_in_syn[uniques_in_syn %in% data_keys]  
+      replicated.uniques = uniques_in_syn[uniques_in_syn %in% uniques_in_orig]
+      repU.rm[syn_keys[,i] %in% replicated.uniques, i] <- TRUE
+      synU.rm[syn_keys[,i] %in% uniques_in_syn_in_orig, i] <- TRUE
+      res_tab[[i]] <- matrix(NA,4,3)
+      dimnames(res_tab[[i]]) <- list(c("Original","Synthetic","Synthetic uniques in original","Replicated uniques"),
+                                     c("Number","from total","%"))
+      res_tab[[i]][,1] <- c( length(uniques_in_orig), length(uniques_in_syn),
+                             length(uniques_in_syn_in_orig),length(replicated.uniques))
+      res_tab[[i]][,2] <- c(object$n, rep(object$k,3))
+      res_tab[[i]][,3] <-  round(res_tab[[i]][,1]/res_tab[[i]][,2] *100,2)
+    }
   }
   
-  # exclude vars from the original data
-  if (!is.null(exclude)) data <- data[,-exclude.cols, drop = FALSE] else data <- data
-  # extract uniques from the original data
-  uReal <- data[!(duplicated(data) | duplicated(data,fromLast=TRUE)), , drop = FALSE]
-  no.uniques <- nrow(uReal)
-
-  if (is.null(no.uniques) || no.uniques == 0) {
-    no.uniques <- 0
-    no.duplicates <- per.duplicates <- rep(0,object$m)
-    if (object$m == 1) rm.Syn <- rep(FALSE,nrow(object$syn))
-    if (object$m > 1) rm.Syn <- matrix(FALSE,nrow=nrow(object$syn[[1]]),ncol=object$m)
-
-  } else {
-
-    if (object$m == 1){
-      if (!is.null(exclude)) Syn <- object$syn[,-exclude.cols, drop = FALSE] else Syn <- object$syn
-      rm.Syn <- rep(FALSE,nrow(Syn))
-      i.unique.Syn <- which(!(duplicated(Syn) | duplicated(Syn,fromLast=TRUE)))
-      if (length(i.unique.Syn)!=0) {
-        uSyn <- Syn[i.unique.Syn, , drop = FALSE]
-        uAll <- rbind.data.frame(uReal,uSyn)
-        dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
-        rm.Syn[i.unique.Syn] <- dup.of.unique
-      }
-      no.duplicates <- sum(rm.Syn)
-    }
-
-    if (object$m > 1){
-    rm.Syn <- matrix(FALSE,nrow=nrow(object$syn[[1]]),ncol=object$m)
-      for (i in 1:object$m){
-        if (!is.null(exclude)) Syn <- object$syn[[i]][,-exclude.cols,drop = FALSE] else Syn <- object$syn[[i]]
-        i.unique.Syn <- which(!(duplicated(Syn) | duplicated(Syn,fromLast=TRUE)))
-        if (length(i.unique.Syn)!=0) {
-          uSyn <- Syn[i.unique.Syn, , drop = FALSE]
-          uAll <- rbind.data.frame(uReal,uSyn)
-          dup.of.unique <- duplicated(uAll)[(nrow(uReal)+1):nrow(uAll)]
-          rm.Syn[i.unique.Syn,i] <- dup.of.unique
-        }
-      }
-      no.duplicates <- colSums(rm.Syn)
-    }
-    per.duplicates <- no.duplicates/nrow(data)*100
-  }
-
-  return(list(replications = rm.Syn, no.uniques = no.uniques,
-    no.replications = no.duplicates, per.replications = per.duplicates))
+  result <-  list(m = object$m, n = object$n, k = object$k, keys =keys, 
+                  res_tab = res_tab,
+                  repU.rm = repU.rm, synU.rm = synU.rm )
+  
+  class(result) <- "repuniq.synds"
+  return(result)
 }
-
-
 ###-----sdc----------------------------------------------------------------
 # sdc - statistical disclosure control:
 # labeling, removing unique replicates of unique real individuals
 
-sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE, 
- uniques.exclude = NULL, recode.vars = NULL, bottom.top.coding = NULL,
- recode.exclude = NULL, smooth.vars = NULL){
+sdc <- function(object, data, keys = NULL,  prefix = NULL, 
+        suffix = NULL, label = NULL,  rm.uniques.in.orig = FALSE,
+        rm.replicated.uniques = FALSE, recode.vars = NULL, 
+        bottom.top.coding = NULL, recode.exclude = NULL, smooth.vars = NULL){
+  
+  if (!inherits(object, "synds")) stop("object must have the class synds (synthetic data set object)", call. = FALSE)
+
+        if (is.null(keys)) {
+    if (object$m == 1) keys <- names(object$syn)
+    if (object$m >  1) keys <- names(object$syn[[1]])
+  }
+  else {
+    if (object$m == 1 & !all(keys %in% names(object$syn))) 
+      stop("keys must be in names(object$syn", call. = FALSE)
+    if (object$m >  1 & !all(keys %in% names(object$syn[[1]]))) 
+      stop("keys must be in names(object$syn[[1]]", call. = FALSE)
+  }
 
  if (!is.null(smooth.vars)) {
    if (object$m == 1) { 
@@ -105,13 +146,18 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
      }
    cat("\n")
    }
-   if (rm.replicated.uniques) {
-     du <- replicated.uniques(object, data, exclude = uniques.exclude) 
-     object$syn <- object$syn[!du$replications,]
-     cat("no. of replicated uniques: ", du$no.replications, "\n", sep = "")
+   if (rm.replicated.uniques & rm.uniques.in.orig) cat("You have asked for replicated uniques and uniques in original to be removed\n",
+   "Uniques in original will be removed and will include any replicated uniques.\n\n")
+   if (rm.uniques.in.orig) {
+     du <- replicated.uniques(object, data, keys) 
+     object$syn <- object$syn[!du$synU.rm,]
+     cat("no. of  uniques in original removed: ", sum(du$synU.rm), "\n", sep = "")
    }
-   if (!is.null(label)) object$syn <- cbind.data.frame(flag = label, object$syn)
-   
+   if (rm.replicated.uniques & !rm.uniques.in.orig) {
+     du <- replicated.uniques(object, data, keys) 
+     object$syn <- object$syn[!du$repU.rm,]
+     cat("no. of replicated uniques removed: ", sum(du$repU.rm), "\n", sep = "")
+   }
    if (!is.null(smooth.vars)) {
      numindx  <- which(names(object$syn) %in% smooth.vars)
      for (i in numindx) {
@@ -122,13 +168,16 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
        object$syn[,i][!(object$syn[,i] %in% object$cont.na[[i]])] <- yysmoothed$y[yyrank]  
      }     
    } 
+   if (!is.null(prefix)) names(object$syn) <- paste0(prefix,names(object$syn) )
+   if (!is.null(suffix)) names(object$syn) <- paste0(names(object$syn),suffix )
+   if (!is.null(label)) object$syn <- cbind.data.frame(flag = label, object$syn)
  }
   
  if (object$m > 1) {
    if (!is.null(recode.vars)) {
      cols <- match(recode.vars,colnames(object$syn[[1]])) 
      for (k in 1:object$m) {
-       cat("\nm =",k)
+
        for (i in cols) {
          j <- match(i,cols) 
          recoded <- bottom.top.recoding(object$syn[[k]][,i],bottom.top.coding[[j]][1],
@@ -139,19 +188,26 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
          recoded$no.recoded.top, sep = "")
        }
      }
-   cat("\n")
+cat("\n\n")
    }
-   if (rm.replicated.uniques) {
-     du <- replicated.uniques(object, data, exclude = uniques.exclude) 
+   if (rm.replicated.uniques & rm.uniques.in.orig) cat("You have asked for replicated uniques and uniques in original to be removed\n",
+      "Uniques in original will be removed and will include any replicated uniques.\n\n")
+   if (rm.uniques.in.orig) {
+     du <- replicated.uniques(object, data, keys) 
      for (i in 1:object$m) { 
-       object$syn[[i]] <- object$syn[[i]][!du$replications[,i],]
+       object$syn[[i]] <- object$syn[[i]][!du$synU.rm[,i],]
      }
-   cat("no. of replicated uniques: ", 
-     paste0(du$no.replications, collapse = ", "),"\n", sep="")
+     cat("no. of uniques in original removed from each synthetic data set:\n", 
+         paste0( apply(du$synU.rm,2,sum), collapse = ", "),"\n", sep="")
    }
-   if (!is.null(label)) object$syn <- mapply(cbind.data.frame, flag=label,
-     object$syn, SIMPLIFY=FALSE, USE.NAMES=FALSE)
-
+   if (rm.replicated.uniques & !rm.uniques.in.orig) {
+     du <- replicated.uniques(object, data, keys) 
+     for (i in 1:object$m) { 
+       object$syn[[i]] <- object$syn[[i]][!du$repU.rm[,i],]
+     }
+   cat("no. of replicated uniques removed from each synthetic data set:\n", 
+     paste0( apply(du$repU.rm,2,sum), collapse = ", "),"\n", sep="")
+   }
    if (!is.null(smooth.vars)){
      numindx  <- which(names(object$syn[[1]]) %in% smooth.vars)
      for (k in 1:object$m){
@@ -164,6 +220,10 @@ sdc <- function(object, data, label = NULL, rm.replicated.uniques = FALSE,
        }
      }
    }
+   if (!is.null(prefix)) for (i in 1:object$m) names(object$syn[[i]]) <- paste0(prefix,names(object$syn[[i]]))
+   if (!is.null(suffix)) for (i in 1:object$m) names(object$syn[[i]]) <- paste0(names(object$syn[[i]]), suffix)
+   if (!is.null(label)) object$syn <- mapply(cbind.data.frame, flag=label,
+                                             object$syn, SIMPLIFY=FALSE, USE.NAMES=FALSE)
  }
  return(object) 
 }
@@ -269,7 +329,7 @@ read.obs <- function(file, convert.factors = TRUE, lab.factors = FALSE,
 ###---- write.syn ---------------------------------------------------------
 
 write.syn <- function(object, filename,
-  filetype = c("SPSS","Stata","SAS","csv","tab","rda","RData","txt"),
+  filetype =c("csv",  "tab", "txt","SPSS", "Stata", "SAS",  "rda", "RData"),
   convert.factors = "numeric", data.labels = NULL,
   save.complete = TRUE, extended.info = TRUE, ...){
 

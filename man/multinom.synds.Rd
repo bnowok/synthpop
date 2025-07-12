@@ -59,7 +59,7 @@ s1 <- syn(ods, m = 3)
 f1 <- multinom.synds(edu  ~ sex + age, data = s1)
 summary(f1)
 print(f1, msel = 1:2)
-compare(f1, ods)
+compare(f1, SD2011)
 }
 \keyword{multivariate}
 

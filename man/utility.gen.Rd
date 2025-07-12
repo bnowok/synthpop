@@ -115,8 +115,8 @@
     \code{resamp.method} is not \code{NULL}. When \code{print.every = 0} 
     no progress is reported, otherwise the resample number is printed every 
     \code{print.every}.}
-  \item{\dots}{additional parameters passed to \code{\link{glm}},
-    \code{\link{rpart}}, or \code{\link{ctree}}.} 
+  \item{\dots}{additional parameters passed to \code{\link[stats]{glm}},
+    \code{\link[rpart]{rpart}}, or \code{\link[party]{ctree}}.} 
   \item{x}{an object of class \code{utility.gen}.}
   \item{digits}{number of digits to print in the default output values.}  
   \item{zthresh}{threshold value to use to suppress the printing of z-scores 

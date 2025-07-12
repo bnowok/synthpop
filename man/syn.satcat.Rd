@@ -3,9 +3,16 @@
 \title{Synthesis from a saturated model based on all combinations of the 
   predictor variables.}
 \description{Synthesises one variable (\code{y}) from all possible 
-  combinations of its precitors (\code{x}). A bootstrap sample is created 
+  combinations of its predictors (\code{x}). A bootstrap sample is created 
   from the original values of \code{y} within each unique combinations of 
-  of \code{xp} (the syntheisied values of the grouping variable).}
+  of \code{xp} (the synthesisied values of the grouping variable).
+  Note that only combinations of predictor variable levels that appear in the 
+  original data can be in the synthetic data. 
+  The related method 
+  (\code{syn.catall}) overcomes this by adding a small prior probability 
+  to all zero cells in the cross tabulation from the original data that are not 
+  structural zeros. But it has the limitation of requiring a complete 
+  cross tabulation of all the variables.}
 \usage{
 syn.satcat(y, x, xp, proper = FALSE, ...)
 }
@@ -34,10 +41,12 @@ A list with two components:
 \examples{
 ods <- SD2011[, c("region", "sex", "agegr", "placesize")]
 
-s1 <- syn(ods, method = c("sample", "cart", "satcat", "cart"))
+s1 <- syn(ods, method =  "satcat", seed = 7856)
+s2 <- syn(ods, method = c("sample", "cart", "satcat", "cart"), seed = 7856)
 
 \dontrun{
-### mostly fails because too many small categories
-s2 <- syn(ods, method = c("sample", "cart", "cart", "satcat"))}
+### mostly fails because previous synthesis has produced 
+### combinations not found in the original data
+s3 <- syn(ods, method = c("sample", "cart", "cart", "satcat"), seed = 7856)}
 }
 \keyword{datagen}

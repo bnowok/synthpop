@@ -168,7 +168,7 @@ As we move from $iS$ to $DiS$ and to $DiSCO$  we can see how the \%disclosive is
 the SD reduces this to 34\% and again to around 9\% for those with a correct attribution. This reduces it to around 6\% by restricting to 
 records disclosive in the original.
 
-The $Dorig$ and $DiSCO$ measures are not restricted to disclosures that are identified from unique records for $q$ in either the original or the SD. The number of records contributing to each disclosive $qt$ cell in the synthetic table is the denominator that applies to that record. The columns \texttt{max denom} and \texttt{mean denom} refer to the denominators for the records disclosive in the SD that contribute to $DiSCO$. We can see from the mean that here the majority of disclosive records had unique key combinations in the SD, and the maxima was 3 for the first synthesis and 4 for the others. Large denominators can be an indication that some of the disclosure may be coming from strong relationships between variables in the data that might even be expected 
+The $Dorig$ and $DiSCO$ measures are not restricted to disclosures that are identified from unique records for $q$ in either the original or the SD. The number of records contributing to each disclosive $qt$ cell in the synthetic table is the denominator that applies to that record. The columns \texttt{max denom} and \texttt{mean denom} refer to the denominators for the records disclosive in the original data that contribute to $DiSCO$. We can see from the mean that here the majority of disclosive records had unique key combinations in the SD, and the maxima was 3 for the first synthesis and 4 for the others. Large denominators can be an indication that some of the disclosure may be coming from strong relationships between variables in the data that might even be expected 
 a-priori. This aspect is discussed further in Section \ref{sec:onetwoway}. The disclosure measures can be restricted to those with small denominators by using
 the parameter \texttt{exclude\_over\_denom\_lim} to TRUE. The example in Section \ref{sec:simpexamp} is here run restricted to denominators of 1.
 \renewcommand{\baselinestretch}{1.0}
@@ -317,6 +317,7 @@ from version 1.8-0 available on CRAN at \url{https://CRAN.R-project.org/package=
 to include measures of disclosure control. We also thank the Scottish Centre for Administrative 
 Data Research for continue to support the development of the synthpop package since its creation was
 supported by the ESRC funded SYLLS poject in 2012-14.
+We would also like to thank Timon Huijser, for pointing out errros in a previous version of this vignette.
 
 \bibliographystyle{acm}
 \bibliography{disclosure}
@@ -417,14 +418,14 @@ As we comment above the intruder would not be able to tell if records were
 identified as $DiSDiO$ rather than $DiSCO$, so we prefer the latter measure.
 However, the intruder can identify when the apparently disclosive record
 is not unique in the SD. 
- This restriction can be imposed by requiring that the denominator for disclosive records in the SD does not exceed a 1,  as described
+ This restriction can be imposed by requiring that the denominator for disclosive records in the original does not exceed a 1,  as described
  and discussed in Section \ref{sec:exclusions}.
 
 \section*{Appendix 2: CAP measures }{\label{sec:app2}}
 
 The measures $baseCAPd$, $DCAP$, $TCAP$ are calculated by the function \texttt{disclosure} and are stored in the component \texttt{allCAPs} of the output object of class \texttt{disclosure}. This is printed when the parameter \texttt{to.print} includes \texttt{allCAPs}. The first measure is known as the baseline CAP and refers to an average of the predictions that would be made by someone who only has access to the marginal distribution of the target. The intruder then guesses the CAP for each level of the target according to the relative frequencies $pd_{t.}$. Averaging this over all observations gives
 \begin{equation}
-  \nonumber baseCAPd = \sum{(pd_{t.})^2}/N_d.
+  \nonumber baseCAPd = \sum{(pd_{t.})^2}.
 \end{equation}
 The \% of $t$ that would be correctly predicted from $q$ for someone with access to the original data is $CAPd$:
 \begin{equation}
@@ -440,7 +441,7 @@ The measure  DCAP is the percentage of $t$ correctly predicted in the SD  $q$. T
 \end{equation}
 The $DCAP$ score can be expressed  by scaling it from  $baseCAPD$ to 1 (see \cite{little2022,lotte}), although this can result in some negative values.
 The $TCAP$ measure as defined by \cite{little2022} uses the same count of disclosive records
-as $DISCO$, but uses as denominator the number of records that have keys represented in both the synthetic and the original data. It can also be scaled from $baseCAPD$ to 1,
+as $DISCO$, but uses as denominator the number of records in SD that have keys represented in the original data. It can also be scaled from $baseCAPD$ to 1,
 and as \cite{little2022} demonstrate this measure can also take negative values.
 \renewcommand{\baselinestretch}{1.0}
 <<>>=

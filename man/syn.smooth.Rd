@@ -30,7 +30,7 @@ syn.smooth(ysyn, yobs = NULL, smoothing = "spline", window = 5, ...)
 }
 \seealso{
   \code{\link{syn}}, \code{\link{syn.sample}}, \code{\link{syn.normrank}},
-  \code{\link{syn.pmm}}, \code{\link{syn.ctree}}, \code{\link{syn.cart}}, 
+  \code{\link{syn.ctree}}, \code{\link{syn.cart}}, 
   \code{\link{syn.bag}}, \code{\link{syn.rf}}, \code{\link{syn.ranger}},
   \code{\link{syn.nested}}
 }

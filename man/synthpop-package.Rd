@@ -3,13 +3,15 @@
 \alias{synthpop}
 \docType{package}
 \title{Generating synthetic versions of sensitive microdata for statistical disclosure control}
-\description{Generate synthetic versions of a data set using parametric or CART methods.}
+\description{Generate synthetic versions of a data set using conditional models
+   based on parametric or CART methods,  also low-fidelity synthetic data as well
+   as methods that fit the joint distributions of categorical variables (catall and ipf)}
 \details{
 \tabular{ll}{
 Package: \tab synthpop\cr
 Type: \tab Package\cr
-Version: \tab 1.9-2\cr
-Date: \tab 2025-07-12\cr
+Version: \tab 1.9-3\cr
+Date: \tab 2025-11-05\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 Synthetic data are generated from the original (observed) data by the function 

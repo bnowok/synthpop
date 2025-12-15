@@ -24,6 +24,7 @@ syn(data, method = "cart", visit.sequence = (1:ncol(data)),
 syn.strata(data, strata = NULL, 
     minstratumsize = 10 + 10 * length(visit.sequence),  
     tab.strataobs = TRUE, tab.stratasyn = FALSE,
+    synth.strata = TRUE,
     method = "cart", visit.sequence = (1:ncol(data)),
     predictor.matrix = NULL,
     m = 1, k = nrow(data), proper = FALSE, 
@@ -106,7 +107,7 @@ syn.strata(data, strata = NULL,
      (recommended), \code{"rmean"}, \code{"density"}, and \code{""}).
      Smoothing can only be applied to continuous variables synthesised using 
      \code{sample}, \code{ctree}, \code{cart}, \code{rf}, \code{bag}, 
-     \code{ranger}, \code{normrank}, \code{pmm} or \code{nested} method. 
+     \code{ranger}, \code{normrank} or \code{nested} method. 
      The names of the list elements must correspond to the names of the 
      variables whose values are to be smoothed. Smoothing is applied to the 
      synthesised values. For more details see \code{\link{syn.smooth}}.}
@@ -161,7 +162,9 @@ syn.strata(data, strata = NULL,
      printed.}   
   \item{tab.stratasyn}{a logical value indicating whether a frequency table of
      the number of observations in strata in the synthetic data set(s) should 
-     be printed.}           
+     be printed.}
+  \item{synth.strata}{a logical value indicating whether variables defining
+     stratum indicators should be synthesised.}
   \item{x}{an object of class \code{synds}; a result of a call to \code{syn()}.}
 }
 
@@ -209,7 +212,6 @@ syn.strata(data, strata = NULL,
    \item{polyreg}{unordered polytomous regression, see 
      \code{\link{syn.polyreg}}}
    \item{polr}{ordered polytomous regression, see \code{\link{syn.polr}}}
-   \item{pmm}{predictive mean matching, see \code{\link{syn.pmm}}}
    \item{sample}{random sample from the observed data, 
      see \code{\link{syn.sample}}}
    \item{passive}{function of other synthesised data,  

@@ -56,7 +56,7 @@ replicated.uniques <- function(object, data, keys = names(data)){
                               c("Number","from total","%"))
     res_tab[,1] <- c( length(uniques_in_orig), length(uniques_in_syn),
                       length(uniques_in_syn_in_orig),length(replicated.uniques))
-    res_tab[,2] <- c(object$n, rep(object$k,3))
+    res_tab[,2] <- c(object$n, object$k, rep(object$n,2))  ########################################## changed sept 2025
     res_tab[,3] <-  round(res_tab[,1]/res_tab[,2] *100,2)
   }
   if (object$m > 1) {
@@ -74,7 +74,7 @@ replicated.uniques <- function(object, data, keys = names(data)){
                                      c("Number","from total","%"))
       res_tab[[i]][,1] <- c( length(uniques_in_orig), length(uniques_in_syn),
                              length(uniques_in_syn_in_orig),length(replicated.uniques))
-      res_tab[[i]][,2] <- c(object$n, rep(object$k,3))
+      res_tab[[i]][,2] <- c(object$n,object$k, rep(object$n,2)) ########################################## formula corrected sept 25
       res_tab[[i]][,3] <-  round(res_tab[[i]][,1]/res_tab[[i]][,2] *100,2)
     }
   }

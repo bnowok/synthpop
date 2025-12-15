@@ -17,6 +17,7 @@
 syn.strata <- function(data, strata = NULL, 
                 minstratumsize = 10 + 10 * length(visit.sequence), 
                 tab.strataobs = TRUE, tab.stratasyn = FALSE,
+                synth.strata = TRUE,
                 method = "cart", visit.sequence = (1:ncol(data)),
                 predictor.matrix = NULL,
                 m = 1, k = nrow(data), proper = FALSE,
@@ -29,8 +30,7 @@ syn.strata <- function(data, strata = NULL,
                 numtocat = NULL, catgroups = rep(5,length(numtocat)), 
                 models = FALSE,
                 print.flag = TRUE,
-                seed = "sample",
-                ...){
+                seed = "sample",...){
  
  m0 <- max(1, m)
 
@@ -42,6 +42,9 @@ syn.strata <- function(data, strata = NULL,
  # CHECKS
  #--------
  if (is.null(strata)) stop("Argument strata is missing.", call. = FALSE) 
+ ################### new 10/25
+ if (synth.strata & k!=nrow(data)) stop("If strata are not synthesised k (records in synthetic data) must be the same as the original.", 
+                                        call. = FALSE)
  # If strata given as variable names (check if they exist) 
  # -> change into one factor with strata names 
  if (is.character(strata) & any(!duplicated(strata))) {
@@ -61,7 +64,7 @@ syn.strata <- function(data, strata = NULL,
    if (any(is.na(strata))) stop("Strata indicator cannot have missing values.", 
      call. = FALSE)
    strata.lab <- factor(strata)
- }
+ } 
  #--------
  
  # make sure stratification variables are included in visit.sequence
@@ -118,20 +121,32 @@ syn.strata <- function(data, strata = NULL,
    "semicont", "drop.not.used", "drop.pred.only",  "seed", "var.lab", 
    "val.lab", "obs.vars", "strata.lab","numtocat","catgroups")
  same.by.m.idx <- match(same.by.m, synds.names) 
-  
+
  syn.args <- as.list(match.call()[-1])
-   
+ ################################################### ##new 10/25
+ if  ("synth.strata" %in% names(syn.args) )   syn.args <- syn.args[!names(syn.args) == "synth.strata"]
  strata.n.syn <- vector("list", m0) 
- for (j in 1:m0){ 
-   synds[[j]]$strata.syn <- sort(factor(sample(stratalev.lab, k, replace = TRUE, 
-     prob = strata.n.obs), levels = stratalev.lab, exclude = NULL))   
-   synds[[j]]$strata.lab <- stratalev.lab
-   strata.n.syn[[j]] <- table(synds[[j]]$strata.syn, deparse.level = 0)
-   if (tab.stratasyn == TRUE) {  
-     cat("\nNumber of observations in strata (synthetic data, m = ", j, "):", sep="")
-     print(strata.n.syn[[j]])
+ 
+ if (synth.strata) {  ############################# new 10/25
+   
+   for (j in 1:m0){ 
+     synds[[j]]$strata.syn <- sort(factor(sample(stratalev.lab, k, replace = TRUE, 
+                                                 prob = strata.n.obs), levels = stratalev.lab, exclude = NULL))   
+     synds[[j]]$strata.lab <- stratalev.lab
+     strata.n.syn[[j]] <- table(synds[[j]]$strata.syn, deparse.level = 0)
+     if (tab.stratasyn == TRUE) {  
+       cat("\nNumber of observations in strata (synthetic data, m = ", j, "):", sep="")
+       print(strata.n.syn[[j]])
+     }
    }
- }
+ } else  { 
+  cat("\nStrata indicator variables are not synthesised\n") ###### new section 10/25
+  for (j in 1:m0){ 
+     synds[[j]]$strata.syn <- strata.lab
+    synds[[j]]$strata.lab <- stratalev.lab
+    strata.n.syn[[j]] <- strata.n.obs
+  }
+} 
  #Different way of printing (all syn in one table)  
  #cat("\nNumber of observations in strata (synthetic data):\n")
  #starta.n.syn.df <- do.call("rbind", strata.n.syn) 

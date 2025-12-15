@@ -507,8 +507,15 @@ print.compare.fit.synds <- function(x, print.coef = x$print.coef, ...){
   } else {
     cat("\nMeasures for ", x$m, " syntheses and ", x$ncoef, " coefficients", sep = "") 
   }   
+    
   cat("\nMean confidence interval overlap: ", x$mean.ci.overlap)
-  cat("\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
+  if (any(x$ci.overlap < 0 )) {
+    cat("\nNote some CI overlaps are negtive, indicating gaps between the two CIs.")
+    cio <- x$ci.overlap[,1]
+    cio[cio<0] <- 0
+    cat("\nMean overlap with gaps set to zero gives: ", mean(cio))
+  }
+  cat("\n\nMean absolute std. coef diff: ", x$mean.abs.std.diff)
   if (!is.null(x$lack.of.fit)){
     cat("\n\nMahalanobis distance ratio for lack-of-fit (target 1.0): ", 
         round(x$lack.of.fit/x$ncoef, 2), sep = "")

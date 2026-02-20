@@ -2,22 +2,21 @@ synthpop 1.9-3
 ---------------
 
 CHANGES
-* syn.strata now allows strata to be unsynthesised with new parameter 
-  ynth.strata = TRUE
-* method syn.pmm removed
-* syn.catall now includes a warning alerting to possible disclosure problems 
-  when a cross-tabulation has empty cells 
-* print out mean confidence interval overlap, with and without  negative
-  confidence interval overlaps set to zero (Requested by JOrg Dreschler)
+* syn.strata() now allows strata to be unsynthesised with new parameter 
+  `synth.strata = TRUE`.
+* Sythesising method `pmm` removed.
+* Sythesising method `catall` now includes a warning alerting to possible 
+  disclosure problems when a cross-tabulation has empty cells. 
+* Print out mean confidence interval overlap, with and without negative
+  confidence interval overlaps set to zero (requested by Joerg Dreschler).
+* Start-up message, package help file and DESCRIPTION all brought 
+  up-to-date.
 
-
-CORRECTIONS
-* start-up message, package help file and DESCRIPTION all brought 
-  up-to-date
+BUG FIXES
 * Corrections to disclosure functions. replicted.uniques and to disclosure 
-  vignette that Timon HUijser noted
+  vignette that Timon Huijser noted.
 
-#
+
 synthpop 1.9-2
 ---------------
 

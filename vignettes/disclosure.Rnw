@@ -86,7 +86,7 @@ Here we illustrate the basic use of \texttt{multi.disclosure}. If the parameter 
 The identity disclosure measures are \texttt{UiO} for original and \texttt{repU} for synthetic, and for attribute disclosure \texttt{Dorig} for original and \texttt{DiSCO} for synthetic. These and other measures will be explained in Sections \ref{subsec:ident} and \ref{subsec:attrib}.
 
 First, a subset of 9 variables are selected from the \texttt{SD2011} data (a survey on quality of life in Poland) that is available as part of the \texttt{synthpop} package. A single synthetic data set is created by the default method in \texttt{synthpop}: \texttt{cart} for each conditional distribution. Note that the variable \texttt{income} has values -8 that indicate not applicable, and the synthesis allows for this. The synthetic data object \texttt{s1}\footnote{an object of class \texttt{synds}} has a component \texttt{syn} that is a single synthetic data set. The disclosure functions can also be used with synthetic data created by other methods either as single synthetic data sets or lists of repeated syntheses from the same original. Here we select 4 keys that represent items that might be known
-for members of this sample, or of the Polish population in 2011. By default,the 5 other variables become the targets: \texttt{depress} \texttt{income} \texttt{ls} \texttt{marital} (marital status), \texttt{workab} (intention to work abroad). The second target, \texttt{income}, is grouped into 20 categories, plus the -8 category. 
+for members of this sample, or of the Polish population in 2011. By default,the 5 other variables become the targets: \texttt{depress} \texttt{income} \texttt{ls} \texttt{marital} (marital status), \texttt{workab} (intention to work abroad). The second target, \texttt{income}, is grouped with a target of 20 categories\footnote{The algorithm attempts to create this number of groups with approximately equal sizes. Skew data often result in fewer groups. In this case 18 groups are formed from the numeric values, plus two groups from the -8 code and the missing values, giving a total of 20}
 We first use \texttt{multi.disclosure} to create a \texttt{multi.disclosure} object for these keys, and we print out its identity component.
 \renewcommand{\baselinestretch}{1.0}
 <<synth, size="small">>=
@@ -104,7 +104,7 @@ For attribute disclosure we can examine the results as either a table or a plot.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=1\linewidth]{fig1dis.png}
+  \includegraphics[width = 1\linewidth]{fig1dis.png}
   \caption{Plot from \texttt{multi.disclosure} with \texttt{plot = TRUE}, the default value.}
   \label{fig:f1}
 \end{figure}
@@ -113,7 +113,6 @@ For attribute disclosure we can examine the results as either a table or a plot.
 The measure $Dorig$ tells us that these 4 keys would identify a unique value of each of these targets for over 50\% of the original records. We get lower values for $DiSCO$, the proportion of the original records that are disclosive in the original and also in the synthetic data with a correct attribution to the target. The first two variables shown in Figure \ref{fig:f1} have additional labels that 
 flag possible contributions to disclosure from knowledge of 1-way or 2-way relationships in the original data. This is detailed in Section 4. 
 
-Previous work on attribute disclosure \cite{elliot2014SYLLS,taub_PSD2018} has used the Correct Attribution Probability ($DCAP$) as a disclosure measure for synthetic data. This is calculated as the percentage of records correctly predicted from the synthetic data by a set of keys.  However it has been suggested \cite{ChenUNECE2019}, that it may be as much a measure of utility as disclosure risk and modifications have been suggested \cite{taubUNECE2019,little2022} one of which ($TCAP$) is close to our proposed measure, $DiSCO$. For completeness the measures $DCAP$ and $TCAP$ are calculated by \texttt{disclosure}; see Appendix 2.
 
 \section{Scenario and definitions}\label{sec:sc_def_not}
 \subsection{Setting the scene}\label{subsec:scen}
@@ -146,6 +145,24 @@ print(t5, to.print = c("ident"))
 
 
 \subsection{Attribute disclosure measures}\label{subsec:attrib} 
+
+The attribute disclosure measure for the SD that is displayed in Figure 1 is our preferred measure, $DiSCO$ \cite{raabPSD2024}. In section 3.3.1 we explain it via the example above. Other related disclosure measures, $DCAP$ and $TCAP$, have been proposed \cite{elliot2014SYLLS,taub_PSD2018,taubUNECE2019,little2022, little2025}. The disclosure function also computes these measures. Section 3.3.2 describes them and discusses circumstances where they differ from $DiSCO$. 
+
+The reason for our preference for 
+$DiSCO$  compared to other proposed methods is that it is a mesure computed for all the records in the original data. The
+other measures thus do not include aspects of disclosure, for example that some records in the original not appearing in the SD, 
+that are valid contributions to the disclosure reduction effected by the synthesis.
+The measure we describe as $DCAP$ is readily adapted to apply to all original records
+by replacing $N_s$ in its denominator with $N_d$. When the synthesis creates SD of the same size as the original $DCAP$ and $Dorig$ are identical. But, as we show in Figure 2, $DCAPorig$ assesses disclosure appropriately when synthetic data with fewer 
+records than the original are created. This measure is added to the component $attrib$ of the disclosure object created by 
+the disclosure function.
+
+The two measures $DiSCO$ and $DCAPorig$ can be considered as the extremities of a range of a more general disclosure measure when
+ a record is considered disclosive if its probability of correct attribution reaches a threshold $tau$. $DiSCO$ corresponds to a $tau$ of 1.0 while $DCAPorig$ corresponds to a $tau$ of zero. This more general approach may be included in future releases of $synthpop$. 
+
+Appendix 1  gives formal definitions of all disclosure measures discussed here. 
+\subsubsection{Our preferred measure: Disclosive in Synthetic Correct in Original ($DiSCO$)}
+
 We approach disclosure risk from the point of view of an intruder with access to the SD
 and to certain attributes (quasi-identifiers) known for one or more individuals in the original data.
 The quasi-identifiers for the known record(s) can be combined to create a composite variable $q$ that can be created for all records in the original and SD.
@@ -156,7 +173,7 @@ Modelling what an intruder might do we calculate the following measures, each of
 \item{Then check if these apparent disclosures correspond to the value of $t$ in the original data. The proportion of original records for which this is true
 becomes $DiSCO$ Disclosive in Synthetic Correct Original.}
 \end{itemize}
-Note that records contributing to $DiSCO$ may not be disclosive in the original data, as this information would not be available to the intruder. A further measure $DiSDiO$ (Disclosive in Synthetic Disclosive in Original) restricts the score to those disclosive in the original. These measures are defined formally in Appendix 1.
+Note that records contributing to $DiSCO$ may not be disclosive in the original data, as this information would not be available to the intruder. A further measure $DiSDiO$ (Disclosive in Synthetic Disclosive in Original) restricts the score to those disclosive in the original. 
 \renewcommand{\baselinestretch}{1.0}
 <<mof5a, size="small">>=
 print(t5, to.print = c("attrib"))
@@ -188,8 +205,45 @@ for \texttt{workab} and \texttt{marital}, the two targets that were flagged to c
 2-way relationships. Their original $DiSCO$ values were 37\% for \texttt{marital} and 53\%
 for \texttt{workab}. This and other methods of excluding certain apparent disclosures 
 are discussed in the next section.
+\subsubsection{Other attribute disclosure measures}
+Previous work on attribute disclosure \cite{elliot2014SYLLS,taub_PSD2018} has used the Correct Attribution Probability ($DCAP$) as a disclosure measure for synthetic data. This is calculated as the average percentage of records correctly predicted from the synthetic data by a set of keys. Two different versions are described to deal with the case when some key combinations in the SD do not occur in the original, so that the attribution probability is undefined. In one case, that we will designate as $DCAP$,  the undefined attribution probabilities are set to zero and the denominator is the total number of synthetic records. The second case $DCAP_{alt}$\footnote{This approach is sometimes referred to as $TCAP_{undefined}$ \cite{taub_PSD2018}.} uses the number of synthetic records present in the synthetic data as the denominator, so that  \(DCAP_{alt} \ge DCAP\).
 
- 
+
+The related quantity $TCAP$ restricts the probabilities to those over a certain limit, and most commonly this limit is $1.0$ making the numerator of the $TCAP$ measures identical to that
+for $DiSCO$. One possibility for a denominator would be to use just the number of synthetic records 
+with key combinations in the original, as for $DCAP_{alt}$\footnote{This measure was what was reported as $TCAP$ in Versions of $Synthpop$ before Version 1.9.3}. But evaluations using $TCAP$ \cite{little2022, little2025} use an even smaller denominator; the number of synthetic records with keys present in the original and where the target probaility is 1.0. This can be described as the proportion correctly predicted  for all apparently disclosive records; we  refer to this measure as $TCAP$ and note that its smaller denominator implies that \(TCAP \ge TCAP_{alt} \ge DiSCO\) when the synthetic data set(s) are the same size as the original.
+
+
+All of these measures are shown in Table 1  for 3 of the targets in the synthesis of the 5,000 records from the example above. We can see that the inequalities 
+above all hold. For  this case the ordering of the disclosive risk by target is consistent for all measures. For the three measures that share the same numerator ($DiSCO$, $TCAP_{alt}$ and $DCAP$) we see that the reduced denominators have a large effect in this example, so that $TCAP$ is around three times $DiSCO$.
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrrr}
+  \hline
+ & DiSCO & DCAP & DCAPalt & TCAPalt & TCAP \\ 
+  \hline
+    ls & 12.63 & 21.97 & 29.57 & 17.00 & 36.71 \\
+  depress & 9.21 & 16.23 & 21.85 & 12.40 & 28.57 \\ 
+ income & 6.16 & 11.34 & 15.27 & 8.29 & 19.96 \\ 
+\hline
+\end{tabular}
+\caption{Different disclosure measures (\%) for 3 targets from the example above  when number of synthetic records equals the number of original records (5000).}
+\label{table:1}
+\end{table}
+Another way thatt he disclosure risk to the original records can be reduced is to release  synthetic data sets that are smaller than the original. This is the approach that has been used when UK Census data has been released  \cite{DaleSARS} or for low-fidelity Census data from Scotland\footnote{\url{https://www.researchdata.scot/news-and-insights/synthetic-census-data-now-available-for-research/} accessed 7/5/25}.  Figure 2 illustrates how the different disclosure measures assess the risks in this example for sizes of SD from 5000, as the original, to only 250 records. Of the measures in Table 1, only $DiSCO$ and $DCAPorig$ 
+adjust the attribute disclosure risk for the reduced number of records in the SD. The $TCAP$ measure is almost independent of the size of the SD. The other measures all give misleadingly high disclosure risks for small samples. 
+
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1\linewidth]{fig2dis.png}
+\caption{Plot of disclosure measures for synthetic data of size ($k$) from 250 to 5000.}
+\label{fig:f2}
+\end{figure}
+
+Figure \ref{fig:f2}  displays 
+
  \section{Identifying disclosure from 1-way and 2-way relationships}\label{sec:onetwoway}
 As mentioned in the Introduction, what we can learn about disclosiveness of attributes can depend on our prior knowledge of the data set or the population from which it is drawn. It would not be practical to specify our prior probability for every possible combination of keys. However, checking two aspects
 of disclosure results can help us to check when we might have predicted the correct attribution with high probability without knowledge of all the keys.
@@ -238,11 +292,11 @@ for \texttt{multi.disclosure} and \texttt{disclosure} can be used for this.
 \end{itemize}
 \begin{figure}[ht]
 \centering
-\includegraphics[width=1\linewidth]{fig2dis.png}
+\includegraphics[width=1\linewidth]{fig3dis.png}
 \caption{Plot from \texttt{multi.disclosure} for variables flagged by checks.}
-\label{fig:f2}
+\label{fig:f3}
 \end{figure}
-To illustrate exclusions we will use the Adult data set from the UCI machine learning repository \cite{UCI} with almost 50 thousand records from the US Census income study, available as part of the \texttt{arules} package for \textbf{R} \cite{arules}. This is one of the data sets used in \cite{giomi2022anon} to evaluate privacy risks for SD. Note that the two variables, \texttt{capital gain} and textt{capital gain}, originally numeric data, have been truncated so that they have only 123 and 99 distinct values repsectively. They have not been grouped further in the results presented here.  Figure \ref{fig:f2} is the output of \texttt{multi.disclosure} from the keys \texttt{age, occupation, race and sex} for the other 10 variables that are not in the keys.
+To illustrate exclusions we will use the Adult data set from the UCI machine learning repository \cite{UCI} with almost 50 thousand records from the US Census income study, available as part of the \texttt{arules} package for \textbf{R} \cite{arules}. This is one of the data sets used in \cite{giomi2022anon} to evaluate privacy risks for SD. Note that the two variables, \texttt{capital gain} and textt{capital gain}, originally numeric data, have been truncated so that they have only 123 and 99 distinct values repsectively. They have not been grouped further in the results presented here.  Figure \ref{fig:f3} is the output of \texttt{multi.disclosure} from the keys \texttt{age, occupation, race and sex} for the other 10 variables that are not in the keys.
 The disclosiveness of the original data is relatievly low, compared to the previous example, because of the large sample size and the absence of any geographic identifiers. 
 Three of the 10 variables \texttt{capital.gain, capital.loss and native.country} are flagged to check one-way relationships. The check1 column of the attribute table tells us that the levels contributing to disclosure are
 zeros for the first two and \texttt{United-States} for \texttt{native.country}. These levels make up 95\%, 92\% and 89\% of all records.
@@ -278,11 +332,11 @@ workclass &   14.27 &   11.64 &  14.27 & 11.64 &  14.27 & 11.64 &  2.45 &  0.85 
   \hline
 \end{tabular}
 \caption{Disclosure results from Adult data with different exclusions.}
-\label{table:1}
+\label{table:2}
 \end{table}
 
 
-Table 1 gives the results of excluding different entries in the tables of $q$ and $t$ from the attribute disclosure measures.
+Table 2 gives the results of excluding different entries in the tables of $q$ and $t$ from the attribute disclosure measures.
 Excluding the levels of the target flagged by \texttt{check\_1way} reduces the $DiSCO$ to almost zero for these 3 variables.
 Adding exclusion of missing values reduced the disclosure for \texttt{workclass} and for some other variables a little. 
 Adding the restriction to denominators of 1, reduced the disclosure for variables identified by \texttt{check\_2way} to low 
@@ -387,7 +441,7 @@ Totals  &  & 0 &  & & $N_{s~both}$ &  &  &  & $N_{s\:only}$ & $N_s$ \\
       \%~replicated~Uniques = repU = 100\sum{(s_{.q} |d_{.q} = 1 \land s_{.q} = 1)}/N_d.
       \end{equation}
       
-      To find an attribute from a set of keys, it is necessary to examine the distribution of $s_{tq}$ for groups defined by $q$. We define column proportions for the original and SD as $pd_{tq} = d_{tq}/d_{.q}$ and for the synthetic as $ps_{tq} = s_{tq}/s_{.q}$.
+      To find an attribute from a set of keys, it is necessary to examine the distribution of $s_{tq}$ for groups defined by $q$. We define column proportions for the original and SD as $pd_{tq} = d_{tq}/d_{.q}$ and for the synthetic as $ps_{tq} = s_{tq}/s_{.q}$, and noting that we set $ps_{tq}$ and $pd_{tq}$ to zero whenever their denominators, $d_{.q}$ and $s_{.q}$ are zero.
      
 Returning to the scenario described in Section \ref{subsec:scen}, we must first define a measure of attribute disclosure for the original data. This is based on the concept of \textit{l-diversity} \cite{ldiv} that requires that each set of records defined by $q$ has at least $l(\ge{2}$ distinct values of the target. A data set is \textit{l2-diverse} for $q$ and $t$ if all records for every $q$ have the same level of $t$\footnote{This could be generalised to $l>2$, but in practice the levels of targets are not generally exchangeable and a more practical approach would be to aggregate levels for certain targets.} An attribute disclosure measure for the original data can be defined as \textit{\% Disclosive in Original} :
 \begin{equation}
@@ -435,19 +489,23 @@ and the equivalent measure for the SD treated as if it were the original is
 \begin{equation}
   \nonumber CAPs = \sum\limits_{tq}{(ps_{tq}s_{tq})}/N_s.
 \end{equation}
-The measure  DCAP is the percentage of $t$ correctly predicted in the SD  $q$. This gives
+The measures  $DCAP$ and $DCAP_{alt}$ are each based on the  percentage of  synthetic records where $t$ is correctly predicted in the SD  This gives
 \begin{equation}
-  \nonumber DCAP = \sum\limits_{tq}{(ps_{tq}d_{tq})}/N_d
+  \nonumber DCAP = \sum\limits_{tq}{(ps_{tq}d_{tq})}/N_{s~both}~~~DCAP_{alt} = \sum\limits_{tq}{(ps_{tq}d_{tq})}/N_s~~~DCAP_{alt} = \sum\limits_{tq}{(ps_{tq}d_{tq})}/N_d
 \end{equation}
-The $DCAP$ score can be expressed  by scaling it from  $baseCAPD$ to 1 (see \cite{little2022,lotte}), although this can result in some negative values.
-The $TCAP$ measure as defined by \cite{little2022} uses the same count of disclosive records
-as $DISCO$, but uses as denominator the number of records in SD that have keys represented in the original data. It can also be scaled from $baseCAPD$ to 1,
-and as \cite{little2022} demonstrate this measure can also take negative values.
+
+The $TCAP$ and $TCAP_{alt}$ measure  use the same count of disclosive records as $DiSCO$ in their numerators, but use different denominators. $TCAP_{alt}$ was 
+mistakenly quoted in earlier versions of this vignette as being the measure proposed in \cite{little2022}, using $N_{s~both}$ as its denominator:
+\begin{equation}
+ TCAP_{alt} = 100\sum^q{\sum^t{(d_{tq} | ps_{tq} = 1)}}/N_{s~both}.
+\end{equation}
+ but the measure used in \cite{little2022, little2025} had a smaller denominator restricted to all counts in the original datam with keys corresponding to those predicted with certainty from the SD, for any target: 
+\begin{equation}
+TCAP = 100\sum^q{\sum^t{(d_{tq} | ps_{tq} = 1)}}/\sum^q( d_{.q} \sum^t{(ps_{tq} = 1)}),
+\end{equation}
 \renewcommand{\baselinestretch}{1.0}
-<<>>=
-print(t5, to.print = "allCAPs")
-@
-\renewcommand{\baselinestretch}{1.5}
-As expected the lower denominator for $TCAP$ gives values higher than the equivalent $DiSCO$ values for the same example given in Section 3.3.
+where the summation over $t$ in the denominator indicates columns of the $tq$ tables where any target is predicted with certainty from the SD,
+
+See section 3.3.2 for examples of these measures.
 \end{document}
 

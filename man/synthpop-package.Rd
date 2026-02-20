@@ -3,9 +3,9 @@
 \alias{synthpop}
 \docType{package}
 \title{Generating synthetic versions of sensitive microdata for statistical disclosure control}
-\description{Generate synthetic versions of a data set using conditional models
-   based on parametric or CART methods,  also low-fidelity synthetic data as well
-   as methods that fit the joint distributions of categorical variables (catall and ipf)}
+\description{Generate high- or low-fidelity synthetic versions of a data set using conditional models
+   based on parametric or CART methods, or methods that fit the joint distributions of categorical 
+   variables (catall and ipf).}
 \details{
 \tabular{ll}{
 Package: \tab synthpop\cr

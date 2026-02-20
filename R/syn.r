@@ -79,6 +79,9 @@ if (dim(data)[1] <  size.warn & print.flag == TRUE) {
       "Please check your synthetic data carefully with functions\ncompare(), utility.tab(), and utility.gen().\n\n", sep = "")
   }
 
+if (any(method == "" &  k != nrow(data))) stop("When some variables are not synthesised the synthetic data must have the same size (param k) as the original
+                               in this case k should usually be left at the default value of (nrow(data)).\n", call. = FALSE)  
+                                               
 ##-----------------------code for numtocat------------------------------------------
 if (!is.null(numtocat)) {
   
@@ -514,7 +517,7 @@ check.method.syn <- function(setup, data, proper) {
    fullNames <- paste("syn", fullNames, sep = ".")               #!GR-29/8/16
    notFound  <- !(fullNames %in% c('syn.bag', 'syn.cart', 'syn.cartbboot', 'syn.collinear', 
       'syn.ctree', 'syn.cubertnorm', 'syn.lognorm', 'syn.logreg', 'syn.nested', 'syn.norm', 
-      'syn.normrank', 'syn.pmm', 'syn.polr', 'syn.polyreg', 'syn.ranknorm', 'syn.rf', 
+      'syn.normrank', 'syn.polr', 'syn.polyreg', 'syn.ranknorm', 'syn.rf', 
       'syn.sample', 'syn.satcat', 'syn.smooth', 'syn.sqrtnorm', 'syn.survctree') | 
       sapply(fullNames, exists, mode = "function", inherit = TRUE)) 
    if (any(notFound)) stop(paste("The following functions were not found:",

@@ -186,52 +186,6 @@ syn.normrank <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
   return(list(res = res, fit = parm))
 }
 
-
-###-----.pmm.match---------------------------------------------------------
-
-.pmm.match <- function(z, yhat = yhat, y = y, donors = 3, ...)
-{
-# Auxilary function for syn.pmm.
-# z    = target predicted value (scalar)
-# yhat = array of fitted values, to be matched against z
-# y    = array of donor data values
-
-# Finds the three cases for which abs(yhat-z) is minimal,
-# and makes a random draw from these.
-
-  d <- abs(yhat - z)
-  m <- sample(y[rank(d, ties.method = "random") <= donors], 1)
-  
-  return(m)
-}
-
-
-###-----syn.pmm------------------------------------------------------------
-
-syn.pmm <- function(y, x, xp, smoothing = "", proper = FALSE, ...)
-{
-# Synthesis of y by predictive mean matching
-# Warning: can be slow for large data sets 
-# for which syn.normrank may be a better choice
-  x       <- cbind(1, as.matrix(x))
-  xp      <- cbind(1, as.matrix(xp))
-  if (proper == FALSE) {
-    parm <- .norm.fix.syn(y, x, ...)
-  } else {
-    parm <- .norm.draw.syn(y, x, ...)
-  }
-  yhatobs <- x  %*% parm$coef
-  yhatmis <- xp %*% parm$beta
-  res <- apply(as.array(yhatmis), 1, .pmm.match, yhat = yhatobs, y = y, ...)
-  
-  if (smoothing != "") {
-    res <- syn.smooth(res, y, smoothing = smoothing)
-  }
-  
-  return(list(res = res, fit = parm))
-}
-
-
 ###-----augment.syn--------------------------------------------------------
 
 augment.syn <- function(y, x, ...)
@@ -868,7 +822,6 @@ syn.satcat <- function(y, x, xp, proper = FALSE, ...)
   return(list(res = yp, fit = fit))
 }
 
-
 ###-----syn.constant-------------------------------------------------------
 
 syn.constant <- function(y, xp, ...) 
@@ -927,8 +880,12 @@ syn.catall <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL, maxt
 WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero cells.
 ************************************************************************\n", sep = "")
    n <- length(tab[!sz])    ## not sure about this GR 9/24
+   nzeros <- sum(tab[!sz] == 0)
  }
- else n <- length(tab) 
+ else {
+   n <- length(tab) 
+   nzeros <- sum(tab==0)
+ }
  pn <- priorn
  if (noisetype == "Exponential" & !(epsilon == 0) ) {
     priorn <- n*N/(exp(epsilon) - 1 )
@@ -939,6 +896,21 @@ WARNING: We do not recommend this method because it adds far far too much noise
 and we expect that the utility measures from the synthetic data will be terrible.
 ************************************************************************\n", sep = "")
  }
+ # check for too many zero cells in the cross-tabulation warnings if any empty cells
+
+ if (nzeros > 0 )
+   {
+   p0 <- 1 -  exp(-( (priorn/n) * (k/sum(tab)) ))
+   expinzeros <- round(nzeros*p0,4)
+
+cat("\n****************************************************************************
+WARNING: The table used in catall has ", nzeros ," empty cells from ",n,"  expected 
+to contain only ", round(expinzeros,3) , " synthetic counts not in the original 
+out of ",k," This might lead to disclosure problems. Increasing catall.priorn
+from its current value of ", priorn ," might help but it might also  hurt utility.
+********************************************************************************\n", sep = "")
+}
+ 
 
  # Add extra to prior
  tab <- (tab + priorn/n)
@@ -1019,12 +991,10 @@ WARNING: Total of ", sum(tab[sz])," counts of original data in structural zero c
      n_margins  <- nv*(nv - 1)*(nv-2)*(n-3)/24
      mx_margins <- combn(1:nv, 4)
      margins <- split(mx_margins, col(mx_margins))
-     print(margins)
    }    else if (gmargins == "threeway") {
      n_margins  <- nv*(nv - 1)*(nv-2)/6
      mx_margins <- combn(1:nv, 3)
      margins <- split(mx_margins, col(mx_margins))
-     print(margins)
      }   else if (gmargins == "twoway") {
      n_margins  <- nv*(nv - 1)/2
      mx_margins <- combn(1:nv, 2)
@@ -1305,8 +1275,6 @@ makepos <- function(lap, tot) {  ## makes positive summing to total
   lap[olap[cumsum(abs(lapo)) >= tot]] <- 0
   abs(lap)
 }
-
-
 
 
 

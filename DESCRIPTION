@@ -2,7 +2,7 @@ Package: synthpop
 Type: Package
 Title: Generating Synthetic Versions of Sensitive Microdata for Statistical Disclosure Control
 Version: 1.9-3
-Date: 2025-08-14
+Date: 2026-04-15
 Authors@R: c(person(given = "Beata",
                     family = "Nowok",
                     role = c("aut", "cre"),

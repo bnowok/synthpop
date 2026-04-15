@@ -129,49 +129,55 @@
               "repU". See vignette disclosure.pdf for an explanation of these 
               and the following measures.}
   \item{attrib}{Table of measures of attribute disclosure  one for each 
-    synthesis. These include "DiO","DiS","iSO","DiSCO" and "DiSDiO".
-    The measures "DiO" and "DiS" are the percentage of the target that are
-    disclosed from the original and synthetic data with these keys. The next
-    measure "iSO" gives the percentage of the  key combinations 
-    in the synthetic data that are present in the original - 
-    one was in which the disclosure.  "DiSCO" gives the percentage 
-    of original records where the attribution to the target is correct as judged 
-    from the original. "DiSDiO" gives the \% of origina; records in "DISCO"
-    that are unique in the original data.
-    The table also as gives the maximum and mean of the denominators for the
-    "DiSCO" measure i.e. the distribution for every record that leads to a 
-    correct disclosure of the number of observations with
-    the same keys and the same correct target in the synthetic data. 
-    Large denominators are often an   indication that the disclosure is 
-    something that might be expected from   prior knowledge of relations.} 
+      synthesis. These include "DiO","DiS","iSO","DiSCO","DCAPd" and "DiSDiO".
+      The measures "DiO" and "DiS" are the percentage of the target that are
+      disclosed from the original and synthetic data with these keys. The next
+      measure "iSO" gives the percentage of the  key combinations 
+      in the synthetic data that are present in the original - 
+      one was in which the disclosure.  "DiSCO" gives the percentage 
+      of original records where the attribution to the target is correct as judged 
+      from the original. We also include in this table the measure DCAPd that
+      is the version of DCAP that uses the number of original records as a
+      denominator. 
+      "DiSDiO" gives the \% of origina; records in "DISCO"
+      that are unique in the original data.
+      The table also as gives the maximum and mean of the denominators for the
+      "DiSCO" measure i.e. the distribution for every record that leads to a 
+      correct disclosure of the number of observations with
+      the same keys and the same correct target in the synthetic data. 
+      Large denominators are often an   indication that the disclosure is 
+      something that might be expected from   prior knowledge of relations.} 
   \item{allCAPs}{Table of the following measures of correct attribution
-      probability: "baseCAPd","CAPd", "CAPs" , "DCAP" and  "TCAP"'} 
+      probability: "baseCAPd","CAPd", "CAPs" , "DCAPb","DCAPs", "TCAPb","TCAPs","TCAP"'} 
+  \item{attrib_denoms}{Vector of denominators used to calculate different  
+      attribute disclosure measures.  Items are 
+      "demon_DiSCO" "denom_TCAPb", "denom_TCAPs","denom_TCAP".}
   \item{check_1way}{A data frame with one record per synthesis
       identifying the level of the target with numbers of disclosive records
       that are above thresholds defined by \code{thresh_1way}, with default
-      value c(50,90). This means that there must be more than 50 disclosive       records
-    with this level of the target, and that 90\% or more of all disclosive 
-    records must have this target. The value of most_dis_lev will be blank 
-    if no level exceeds these thresholds.
-    Note this level will be identified  for data without 
-    excluded or missing values of keys if there are any excluded records.} 
+      value c(50,90). This means that there must be more than 50 disclosive      
+      records with this level of the target, and that 90\% or more of all  
+      disclosive records must have this target. The value of most_dis_lev will be  
+      blank if no level exceeds these thresholds.
+      Note this level will be identified  for data without 
+      excluded or missing values of keys if there are any excluded records.} 
   \item{check1}{The level of the target identified by check_1way
-   ` or blank if none}
+      or blank if none.}
   \item{check_2way}{A list of length number of syntheses giving details 
-    for each of the two-way combinations of target and keys where the
-    the numbers of disclosive records are above thresholds defined by 
-    \code{thresh_2way}. The default value for this is c(5, 80),
-    meaning that there must be at least 5 records with this combination
-    of targets and keys and that 80\% or more of records in the original
-    data with this level of the key will have this level of the target.
-    If no combinations exceed \code{thresh_2way} for one of the syntheses 
-    then the list element is NULL. 
-    Such disclosive combinations are often associated with a high prior 
-    probability of   the target from just this level of one of the  keys 
-    in the original data. 
-    Note these combinations will be identified  for data without 
-    excluded or missing values of keys if there are any excluded combinations 
-    or target if any of \code{usekeysNA} or \code{usetargetNA} are FALSE.}
+      for each of the two-way combinations of target and keys where the
+      the numbers of disclosive records are above thresholds defined by 
+      \code{thresh_2way}. The default value for this is c(5, 80),
+      meaning that there must be at least 5 records with this combination
+      of targets and keys and that 80\% or more of records in the original
+      data with this level of the key will have this level of the target.
+      If no combinations exceed \code{thresh_2way} for one of the syntheses 
+      then the list element is NULL. 
+      Such disclosive combinations are often associated with a high prior 
+      probability of   the target from just this level of one of the  keys 
+      in the original data. 
+      Note these combinations will be identified  for data without 
+      excluded or missing values of keys if there are any excluded combinations 
+      or target if any of \code{usekeysNA} or \code{usetargetNA} are FALSE.}
   \item{Nexclusions}{A list of length number of syntheses with number of 
       records excluded from attribute measures for different reasons.}
   \item{keys}{as input}

@@ -36,7 +36,6 @@ Imports: lattice, MASS, methods, nnet, ggplot2, graphics, stats, utils,
 Encoding: UTF-8
 LazyData: yes
 NeedsCompilation: no
-Packaged: 2026-04-16 13:03:24 UTC; beatan01
 Author: Beata Nowok [aut, cre],
   Gillian Raab [aut],
   Chris Dibben [ctb],

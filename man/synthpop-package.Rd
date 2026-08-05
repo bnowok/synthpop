@@ -11,7 +11,7 @@
 Package: \tab synthpop\cr
 Type: \tab Package\cr
 Version: \tab 1.9-3\cr
-Date: \tab 2026-04-15\cr
+Date: \tab 2026-08-05\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 Synthetic data are generated from the original (observed) data by the function 

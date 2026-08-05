@@ -13,8 +13,10 @@ CHANGES
   up-to-date.
 
 BUG FIXES
-* Corrections to disclosure functions. replicted.uniques and to disclosure 
-  vignette that Timon Huijser noted.
+* Corrections to disclosure function replicted.uniques() and to disclosure 
+  vignette (issues noted by Timon Huijser).
+* Correction of a bug in syn.ipf() that prevented IPF from running with DP.
+* Correction of a reference in the utility vignette.
 
 
 synthpop 1.9-2

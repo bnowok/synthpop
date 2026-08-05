@@ -974,10 +974,7 @@ syn.ipf <- function(x, k, proper = FALSE, priorn = 1, structzero = NULL,
  if (proper == TRUE) x <- x[sample(1:N, replace = TRUE),]
  tab <- table(x, useNA = "ifany")
  n <- length(tab)
- if (epsilon > 0) {eps <- epsilon / length(margins)
- cat("Overall epsilon for DP is ",epsilon," divided equally between ", 
-     length(margins)," margins to give ", eps, " each,\n")
- } 
+ 
 # Set structural zero cells to zeros 
  if (!is.null(structzero)) {
    sz <- checksz(structzero, x) # checks and converts var names to numbers
@@ -1021,6 +1018,10 @@ This means they will be fitted as having
 the same proportion in each level.
 **************************************************\n", sep = "")
 
+if (epsilon > 0) {eps <- epsilon / length(margins)
+ cat("Overall epsilon for DP is ",epsilon," divided equally between ", 
+     length(margins)," margins to give ", eps, " each,\n")
+ } 
 
 # Get data for margins
  margins.data <- vector("list", length(margins))

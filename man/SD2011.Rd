@@ -56,7 +56,7 @@
 \references{
   Czapinski J. and Panek T. (Eds.) (2011). Social Diagnosis 2011. Objective and 
   Subjective Quality of Life in Poland - full report. Contemporary Economics, 
-  Volume 5, Issue 3 (special issue) \url{http://ce.vizja.pl/en/issues/volume/5/issue/3#art254} 
+  Volume 5, Issue 3 (special issue) \url{https://ce.vizja.pl/en/issues/volume/5/issue/3#art254} 
 }
 \examples{
   spineplot(englang ~ agegr, data = SD2011, xlab = "Age group", ylab = "Knowledge of English")

@@ -17,6 +17,8 @@
 }
 
 \usage{
+utility.tables(object, data, \dots)
+
 \method{utility.tables}{synds}(object, data,
                tables = "twoway", maxtables = 5e4,
                vars = NULL, third.var = NULL,

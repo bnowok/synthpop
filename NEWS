@@ -11,10 +11,16 @@ CHANGES
   confidence interval overlaps set to zero (requested by Joerg Dreschler).
 * Start-up message, package help file and DESCRIPTION all brought 
   up-to-date.
-
+* The measure TCAP calculated by the disclosure function and the disclosure
+  vignette has been updated following input from Timon Huijser. In particular,
+  the denominators used for the different CAP measures are now fully explained
+  on page 11 of the new version of the vignette. The TCAP measure produced by
+  the disclosure function now uses a revised denominator so that it aligns with
+  the calculations in Little et al., Journal of Official Statistics 41(1), 2025,
+  as described at https://github.com/clairelittle/comparative_synthesis_methods
+ 
 BUG FIXES
-* Corrections to disclosure function replicted.uniques() and to disclosure 
-  vignette (issues noted by Timon Huijser).
+* Corrections to disclosure function replicted.uniques().
 * Correction of a bug in syn.ipf() that prevented IPF from running with DP.
 * Correction of a reference in the utility vignette.
 

@@ -14,6 +14,8 @@
   but then an additional parameter \code{cont.na} might need to be provided.
 }
 \usage{
+utility.tab(object, data, \dots)
+
 \method{utility.tab}{synds}(object, data, vars = NULL, ngroups = 5,
             useNA = TRUE, max.table = 1e6,
             print.tables = length(vars) < 4,

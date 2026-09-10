@@ -18,6 +18,8 @@
 }
 
 \usage{
+multi.disclosure(object, data, \dots)
+
 \method{multi.disclosure}{synds}(object, data, 
            keys , targets = NULL, print.flag = TRUE, 
            denom_lim = 5, exclude_ov_denom_lim = FALSE,
@@ -176,12 +178,9 @@
   \item{call}{R call used to create the object}
    }
       
-\references{
-to follow link to vignette
-}
-
 \seealso{
- \code{\link{disclosure}}
+ \code{\link{disclosure}},
+ \code{vignette("disclosure", package = "synthpop")}
 }
 
 \examples{

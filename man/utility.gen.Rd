@@ -14,6 +14,8 @@
  and \code{cont.na} might need to be provided.
 }
 \usage{
+utility.gen(object, data, \dots)
+
 \method{utility.gen}{synds}(object, data, 
             method = "cart", maxorder = 1, k.syn = FALSE, tree.method = "rpart",
             max.params = 400, print.stats = c("pMSE", "S_pMSE"), resamp.method = NULL, 

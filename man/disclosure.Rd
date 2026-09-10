@@ -11,6 +11,8 @@
   targets has been renamed as multi.disclosure from disclosure.summary.
 }
 \usage{
+disclosure(object, data, \dots)
+
 \method{disclosure}{synds}(object, data, keys , target , print.flag = TRUE,
            denom_lim = 5, exclude_ov_denom_lim = FALSE, not.targetlev = NULL,
            usetargetNA = TRUE, usekeysNA = TRUE, 
@@ -186,13 +188,11 @@
   \item{to.print}{as input}
   }
   
-\note{See package vignette disclosure.pdf for additional information including
-  formal definitions of all quantities and worked examples.}
-
-\references{
- See references in package vignette}
+\note{See  package vignette \code{vignette("disclosure", package = "synthpop")}
+  for additional information including formal definitions of all quantities and
+  worked examples.}
  
-\seealso{  \code{\link{syn}} \code{\link{multi.disclosure}}
+\seealso{\code{\link{syn}}, \code{\link{multi.disclosure}}
 }
 
 \examples{

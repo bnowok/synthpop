@@ -204,8 +204,8 @@ Previous work on attribute disclosure \cite{elliot2014SYLLS,taub_PSD2018} has us
 
 
 The related quantity $TCAP$, and its variants. restricts the probabilities to those over a certain limit, and most commonly this limit is $1.0$. With this choice the numerator of the $TCAP$ measures identical to that for $DiSCO$, the proportion of synthetic records correctly  predicted with certainty from the SD. 
-The same two choices of denominator as were used for $DCAP$ could be used. One choice $TCAP_{s}$ would be to use the denominator, $N_{s}$ and the other $TCAP_{b}$ would be to use the denominator, $N_{b}$. Note that when $N_s = N_d$, the measure $TCAP_s$ will be identical to $DiSCO$.  However the $TCAP$ that is defined in \cite{little2022, little2025} does not use either of these denominators, but uses as a denominator $N_{bp}$ the number of synthetic records with $q$ present in the original and where any level of the target $t$ is predicted with certainty, but not necessarily correct. Another way of describing this $TCAP$ is as the proportion of apparently disclosive records in the SD that are correct in the original. The numerators and denominators used for each of these measures are summarised in Table 1.
-
+The same two choices of denominator as were used for $DCAP$ could be used. One choice $TCAP_{s}$ would be to use the denominator, $N_{s}$ and the other $TCAP_{b}$ would be to use the denominator, $N_{b}$. Note that when $N_s = N_d$, the measure $TCAP_s$ will be identical to $DiSCO$.
+However the $TCAP$ that is defined in \cite{little2022, little2025} does not use either of these denominators, but uses as a denominator $N_{bp}$ the number of GT records with $q$ present in the SD and where any level of the target $t$ is predicted with certainty. These are the records identified at the second bullet point of the procedure described in Section 3.3.1 above. The numerators and denominators used for each of these measures are summarised in Table 1.
 
 \begin{table}[h]
 \centering
@@ -262,7 +262,7 @@ adjust the attribute disclosure risk correctly for the reduced number of records
 The $TCAP$ measure is almost independent of the size of the SD. The other measures all give misleadingly high disclosure risks for small samples. We can see how the pairs of 
 measures ($DiSCO$, $TCAP_s$) and ($DCAP_d$,$DCAP_s$) diverge for $N_s$ values lower than $N_d$. 
 
-Referring back to section 3.3.1 we can see how
+Referring back to Section 3.3.1 we can see how
 these measures relate to the three bullet points giving the stages by which an intruder takes to identify an attribute disclosure. The measure $TCAP$ assesses the intruder's success rate only at the final bullet point, starting with records in $DiS$. $TCAP_s$ measures the success of the last two steps, from $iS$, but only $DiSCO$ includes the disclosure risk from all 3 steps. 
 
  \section{Identifying disclosure from 1-way and 2-way relationships}\label{sec:onetwoway}
